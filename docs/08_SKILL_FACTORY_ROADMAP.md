@@ -3,7 +3,7 @@
 **Document ID:** SKILL-ROADMAP-2026-001  
 **Project:** Craftor — Universal MCP Platform for WordPress & Elementor  
 **Version:** 1.0.0  
-**Target Environment:** Antigravity AI Agent Customization System (`.agents/skills/`)  
+**Target Environment:** Antigravity AI Agent Customization System (`.agents/skills/`)
 
 ---
 
@@ -51,6 +51,7 @@ Every skill is strictly encapsulated in its dedicated directory under `.agents/s
 ```
 
 ### Mandatory Sections in Every `SKILL.md`:
+
 1. **YAML Frontmatter** (`name`, `description`)
 2. **Mission & Identity**
 3. **Core Responsibilities**
@@ -71,23 +72,23 @@ Every skill is strictly encapsulated in its dedicated directory under `.agents/s
 
 ## 3. The 15 Specialized Craftor Skills Taxonomy
 
-| # | Skill Slug | Primary Domain | Core Mission | Key Handoff Partner |
-| :-: | :--- | :--- | :--- | :--- |
-| **01** | `craftor-product-manager` | Product Strategy | Own PRDs, user stories, MCP tool priorities & client roadmaps. | Solution Architect |
-| **02** | `craftor-solution-architect` | System Architecture | Design system topology, JSON-RPC schemas, transaction models & ADRs. | All Engineering Skills |
-| **03** | `craftor-ui-ux-designer` | Design & UI Systems | Design WP Admin UI, Elementor Canvas overlays, visual diff viewers. | WordPress & Elementor Eng |
-| **04** | `craftor-wordpress-engineer` | WP Core Backend | Build WP REST API bridge, CPTs, taxonomies, `$wpdb` snapshots & hooks. | MCP & Elementor Eng |
-| **05** | `craftor-elementor-engineer` | Elementor AST Engine | Master Elementor Flexbox/Grid AST, widgets, dynamic tags & canvas sync. | MCP & Prompt Eng |
-| **06** | `craftor-mcp-engineer` | Protocol & Transports | Implement MCP JSON-RPC server daemon (`stdio`, `SSE`), client adapters. | Tool Registry & Devs |
-| **07** | `craftor-tool-registry-manager` | Tool Orchestration | Maintain, categorize, validate & index 240+ atomic & compound MCP tools. | MCP & Prompt Eng |
-| **08** | `craftor-woocommerce-engineer` | E-Commerce Engine | Build catalog, variation, inventory, order & checkout automation tools. | Elementor & MCP Eng |
-| **09** | `craftor-qa-engineer` | E2E & Verification | Build Playwright, PHPUnit, and visual regression test harnesses. | Debugging & Release Eng |
-| **10** | `craftor-debugging-engineer` | Triage & Root Cause | Trace JSON-RPC drops, fatal PHP halts, AST corruptions & fix regressions. | WP & Elementor Eng |
-| **11** | `craftor-devops-engineer` | CI/CD & Infrastructure | Maintain GitHub Actions, Docker test matrices, staging grids & builds. | Security & Release Eng |
-| **12** | `craftor-security-engineer` | Zero-Trust & Hardening | Enforce AES-256 token vaults, prompt injection shields, capability checks. | DevOps & WP Eng |
-| **13** | `craftor-documentation-writer` | Technical Docs & DX | Author 5-min client setup guides, 240-tool API catalog, troubleshooting. | All Skills |
-| **14** | `craftor-prompt-engineer` | System Prompts & Evals | Author tool descriptions, layout system prompts & Promptfoo eval suites. | Tool Registry & MCP Eng |
-| **15** | `craftor-release-manager` | Release Orchestration | Gatekeep stage gates, manage OTA update distribution & release packages. | QA, DevOps & Docs |
+|   #    | Skill Slug                      | Primary Domain         | Core Mission                                                               | Key Handoff Partner       |
+| :----: | :------------------------------ | :--------------------- | :------------------------------------------------------------------------- | :------------------------ |
+| **01** | `craftor-product-manager`       | Product Strategy       | Own PRDs, user stories, MCP tool priorities & client roadmaps.             | Solution Architect        |
+| **02** | `craftor-solution-architect`    | System Architecture    | Design system topology, JSON-RPC schemas, transaction models & ADRs.       | All Engineering Skills    |
+| **03** | `craftor-ui-ux-designer`        | Design & UI Systems    | Design WP Admin UI, Elementor Canvas overlays, visual diff viewers.        | WordPress & Elementor Eng |
+| **04** | `craftor-wordpress-engineer`    | WP Core Backend        | Build WP REST API bridge, CPTs, taxonomies, `$wpdb` snapshots & hooks.     | MCP & Elementor Eng       |
+| **05** | `craftor-elementor-engineer`    | Elementor AST Engine   | Master Elementor Flexbox/Grid AST, widgets, dynamic tags & canvas sync.    | MCP & Prompt Eng          |
+| **06** | `craftor-mcp-engineer`          | Protocol & Transports  | Implement MCP JSON-RPC server daemon (`stdio`, `SSE`), client adapters.    | Tool Registry & Devs      |
+| **07** | `craftor-tool-registry-manager` | Tool Orchestration     | Maintain, categorize, validate & index 240+ atomic & compound MCP tools.   | MCP & Prompt Eng          |
+| **08** | `craftor-woocommerce-engineer`  | E-Commerce Engine      | Build catalog, variation, inventory, order & checkout automation tools.    | Elementor & MCP Eng       |
+| **09** | `craftor-qa-engineer`           | E2E & Verification     | Build Playwright, PHPUnit, and visual regression test harnesses.           | Debugging & Release Eng   |
+| **10** | `craftor-debugging-engineer`    | Triage & Root Cause    | Trace JSON-RPC drops, fatal PHP halts, AST corruptions & fix regressions.  | WP & Elementor Eng        |
+| **11** | `craftor-devops-engineer`       | CI/CD & Infrastructure | Maintain GitHub Actions, Docker test matrices, staging grids & builds.     | Security & Release Eng    |
+| **12** | `craftor-security-engineer`     | Zero-Trust & Hardening | Enforce AES-256 token vaults, prompt injection shields, capability checks. | DevOps & WP Eng           |
+| **13** | `craftor-documentation-writer`  | Technical Docs & DX    | Author 5-min client setup guides, 240-tool API catalog, troubleshooting.   | All Skills                |
+| **14** | `craftor-prompt-engineer`       | System Prompts & Evals | Author tool descriptions, layout system prompts & Promptfoo eval suites.   | Tool Registry & MCP Eng   |
+| **15** | `craftor-release-manager`       | Release Orchestration  | Gatekeep stage gates, manage OTA update distribution & release packages.   | QA, DevOps & Docs         |
 
 ---
 
@@ -131,19 +132,19 @@ graph TD
     SA --> EL[craftor-elementor-engineer]
     SA --> WOO[craftor-woocommerce-engineer]
     SA --> MCP[craftor-mcp-engineer]
-    
+
     WP --> REG[craftor-tool-registry-manager]
     EL --> REG
     WOO --> REG
     REG --> MCP
-    
+
     MCP --> PRM[craftor-prompt-engineer]
     PRM --> QA[craftor-qa-engineer]
-    
+
     QA --> DBG[craftor-debugging-engineer]
     DBG --> WP
     DBG --> EL
-    
+
     SEC[craftor-security-engineer] --> DEVOPS[craftor-devops-engineer]
     DEVOPS --> REL[craftor-release-manager]
     DOC[craftor-documentation-writer] --> REL
@@ -154,6 +155,7 @@ graph TD
 ## 6. Verification and Validation Rules
 
 Before any skill is considered production-ready:
+
 1. **Frontmatter Validation:** Every `SKILL.md` must include valid YAML frontmatter with accurate `name` and descriptive `description`.
 2. **Completeness Check:** All 16 mandatory sections must be fully written with zero placeholder strings (e.g., no `TBD`, `TODO`, `lorem ipsum`).
 3. **Directory Verification:** Associated `examples/`, `resources/`, and `scripts/` directories must exist with concrete production-grade reference files.

@@ -4,7 +4,7 @@
 **Project Name:** Craftor  
 **Product Scope:** Universal Model Context Protocol (MCP) Platform for WordPress, Elementor & WooCommerce  
 **Version:** 2.0.0 (Master Optimized Architecture)  
-**Status:** Approved for Engineering Implementation  
+**Status:** Approved for Engineering Implementation
 
 ---
 
@@ -196,13 +196,16 @@ The MCP Server provides pluggable client adapters for seamless compatibility:
 ## 5. Tool Registry & Versioning Architecture
 
 ### Staged 4-Phase Tool Rollout Matrix
-* **Phase 1 (MVP Baseline):** 40 Essential Foundation Tools (Core WP CRUD, Basic Container AST, Hero/Pricing Compounds, Core Woo, Snapshots/Rollback).
-* **Phase 2 (Pro & Live Sync):** 100 Tools (Advanced Flex/Grid, Global Kits, Full Woo Orders & Stock, Theme Templates).
-* **Phase 3 (Advanced & Local Models):** 160 Tools (Woo Funnels, SEO/Schema JSON-LD, Media AI WebP, Dynamic Loop Grids).
-* **Phase 4 (Enterprise Suite):** 240+ Complete Catalog (WPMU Multi-Site, White-Label SDK, Addon Discovery).
+
+- **Phase 1 (MVP Baseline):** 40 Essential Foundation Tools (Core WP CRUD, Basic Container AST, Hero/Pricing Compounds, Core Woo, Snapshots/Rollback).
+- **Phase 2 (Pro & Live Sync):** 100 Tools (Advanced Flex/Grid, Global Kits, Full Woo Orders & Stock, Theme Templates).
+- **Phase 3 (Advanced & Local Models):** 160 Tools (Woo Funnels, SEO/Schema JSON-LD, Media AI WebP, Dynamic Loop Grids).
+- **Phase 4 (Enterprise Suite):** 240+ Complete Catalog (WPMU Multi-Site, White-Label SDK, Addon Discovery).
 
 ### Versioned Tool Schema Standard
+
 Every tool implements the strictly typed metadata schema:
+
 ```json
 {
   "id": "elementor_create_container",
@@ -245,9 +248,9 @@ Elementor Engine/
 
 ## 8. WooCommerce Engine Architecture
 
-* **HPOS Integration:** Full compatibility with WooCommerce High-Performance Order Storage tables.
-* **Catalog & Variations:** Direct abstraction via `WC_Product_Variable` and `WC_Product_Variation`.
-* **Dynamic E-Commerce AST:** Elementor Shop, Single Product, Cart, Checkout, and Upsell funnels.
+- **HPOS Integration:** Full compatibility with WooCommerce High-Performance Order Storage tables.
+- **Catalog & Variations:** Direct abstraction via `WC_Product_Variable` and `WC_Product_Variation`.
+- **Dynamic E-Commerce AST:** Elementor Shop, Single Product, Cart, Checkout, and Upsell funnels.
 
 ---
 
@@ -271,9 +274,9 @@ Craftor SaaS Dashboard (app.craftor.ai)
 
 ## 10. Authentication & Zero-Trust Architecture
 
-* **Zero-Trust Token Management:** Dynamic token generation with SHA-256 constant-time hashing (`hash_equals`).
-* **WordPress Capability Mapping:** Enforces standard WP capabilities (`edit_posts`, `manage_options`, `manage_woocommerce`).
-* **AES-256-GCM BYOK Vault:** Client API keys encrypted at rest with hardware/environment salts.
+- **Zero-Trust Token Management:** Dynamic token generation with SHA-256 constant-time hashing (`hash_equals`).
+- **WordPress Capability Mapping:** Enforces standard WP capabilities (`edit_posts`, `manage_options`, `manage_woocommerce`).
+- **AES-256-GCM BYOK Vault:** Client API keys encrypted at rest with hardware/environment salts.
 
 ---
 
@@ -283,7 +286,7 @@ Craftor SaaS Dashboard (app.craftor.ai)
 erDiagram
     WP_POSTS ||--o{ CRAFTOR_SNAPSHOTS : "has snapshots"
     WP_USERS ||--o{ CRAFTOR_ACTIVITY_LOGS : "triggered by"
-    
+
     CRAFTOR_SNAPSHOTS {
         bigint id PK
         varchar_64 uuid UK "Indexed UUIDv4"
@@ -320,46 +323,46 @@ erDiagram
 
 ## 12. API Architecture (REST & JSON-RPC 2.0)
 
-| Method | Endpoint | Description | Scope / Permission |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/auth/handshake` | Validates MCP token and returns site capabilities & versions. | `read` |
-| `GET` | `/tools/schema` | Retrieves full JSON Schema catalog for active tools. | `read` |
-| `POST` | `/tools/execute` | Primary batch/single tool dispatcher with snapshotting. | `edit_posts` / `manage_options` |
-| `GET` | `/elementor/ast/{id}` | Retrieves parsed JSON AST for an Elementor document. | `edit_posts` |
-| `POST` | `/elementor/mutate` | Mutates Elementor AST and triggers CSS cache purge. | `edit_posts` |
-| `POST` | `/snapshots/{uuid}/restore` | Restores database state to a specific snapshot UUID. | `manage_options` |
-| `GET` | `/snapshots/diff/{uuid}` | Generates JSON diff between current state and snapshot. | `edit_posts` |
-| `POST` | `/woocommerce/mutate` | Executes WooCommerce product/order/stock mutations. | `manage_woocommerce` |
+| Method | Endpoint                    | Description                                                   | Scope / Permission              |
+| :----- | :-------------------------- | :------------------------------------------------------------ | :------------------------------ |
+| `POST` | `/auth/handshake`           | Validates MCP token and returns site capabilities & versions. | `read`                          |
+| `GET`  | `/tools/schema`             | Retrieves full JSON Schema catalog for active tools.          | `read`                          |
+| `POST` | `/tools/execute`            | Primary batch/single tool dispatcher with snapshotting.       | `edit_posts` / `manage_options` |
+| `GET`  | `/elementor/ast/{id}`       | Retrieves parsed JSON AST for an Elementor document.          | `edit_posts`                    |
+| `POST` | `/elementor/mutate`         | Mutates Elementor AST and triggers CSS cache purge.           | `edit_posts`                    |
+| `POST` | `/snapshots/{uuid}/restore` | Restores database state to a specific snapshot UUID.          | `manage_options`                |
+| `GET`  | `/snapshots/diff/{uuid}`    | Generates JSON diff between current state and snapshot.       | `edit_posts`                    |
+| `POST` | `/woocommerce/mutate`       | Executes WooCommerce product/order/stock mutations.           | `manage_woocommerce`            |
 
 ---
 
 ## 13. Security Architecture (STRIDE & Shields)
 
-* **STRIDE Threat Modeling:** Full protection against Spoofing, Tampering, Repudiation, Information Disclosure, DoS, and Elevation of Privilege.
-* **Prompt Injection Shield:** Neutralizes hostile prompt injections and prevents unauthorized file system access.
-* **SSRF Protection:** Enforces strict public IP validation on media sideloading URLs to block local/metadata subnet access (`169.254.169.254`).
+- **STRIDE Threat Modeling:** Full protection against Spoofing, Tampering, Repudiation, Information Disclosure, DoS, and Elevation of Privilege.
+- **Prompt Injection Shield:** Neutralizes hostile prompt injections and prevents unauthorized file system access.
+- **SSRF Protection:** Enforces strict public IP validation on media sideloading URLs to block local/metadata subnet access (`169.254.169.254`).
 
 ---
 
 ## 14. Logging & Telemetry Architecture
 
-* **Dual-Tier Pipeline:**
-  * Local WordPress 30-day rotating audit table (`wp_craftor_activity_logs`).
-  * Centralized SaaS telemetry aggregation with automatic PII sanitization.
+- **Dual-Tier Pipeline:**
+  - Local WordPress 30-day rotating audit table (`wp_craftor_activity_logs`).
+  - Centralized SaaS telemetry aggregation with automatic PII sanitization.
 
 ---
 
 ## 15. Testing & Quality Architecture
 
-* **4-Tier Testing Pyramid:** Unit $\rightarrow$ Integration $\rightarrow$ E2E Playwright $\rightarrow$ Visual Regression (<0.01% diff) & Prompt Evals (>98.5%).
-* **Deterministic Mock Harnesses:** Full protocol validation without live LLM billing dependencies.
+- **4-Tier Testing Pyramid:** Unit $\rightarrow$ Integration $\rightarrow$ E2E Playwright $\rightarrow$ Visual Regression (<0.01% diff) & Prompt Evals (>98.5%).
+- **Deterministic Mock Harnesses:** Full protocol validation without live LLM billing dependencies.
 
 ---
 
 ## 16. CI/CD & OTA Distribution Architecture
 
-* **GitHub Actions Workflows:** Multi-version PHP (7.4–8.3) and WordPress (6.0–6.5) test grids.
-* **Progressive Canary Rollouts:** OTA auto-updates staged across Canary (1%) $\rightarrow$ Beta (10%) $\rightarrow$ General Availability (100%).
+- **GitHub Actions Workflows:** Multi-version PHP (7.4–8.3) and WordPress (6.0–6.5) test grids.
+- **Progressive Canary Rollouts:** OTA auto-updates staged across Canary (1%) $\rightarrow$ Beta (10%) $\rightarrow$ General Availability (100%).
 
 ---
 
@@ -393,4 +396,4 @@ erDiagram
 
 ---
 
-*This specification represents the official, optimized architectural standard for Craftor v2.0.*
+_This specification represents the official, optimized architectural standard for Craftor v2.0._

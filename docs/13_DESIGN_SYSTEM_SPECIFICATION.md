@@ -3,13 +3,14 @@
 **Document ID:** DS-SPEC-2026-001  
 **Project:** Craftor — Universal MCP Platform for WordPress, Elementor & WooCommerce  
 **Version:** 1.0.0 (Master Design System Baseline)  
-**Status:** Approved for Monorepo & UI Implementation  
+**Status:** Approved for Monorepo & UI Implementation
 
 ---
 
 ## 1. Design Philosophy
 
 ### 1.1 Design Principles
+
 Craftor’s design language fuses the hyper-refined aesthetics of **Linear**, the high-density editor ergonomics of **Cursor**, the geometric precision of **Vercel**, the native administrative harmony of **WordPress**, and the visual canvas fluency of **Elementor**.
 
 ```
@@ -135,63 +136,72 @@ Craftor uses **Inter** for all interface typography and **JetBrains Mono** for c
 ```
 
 ### Font Weights:
-* `Regular`: `400` (Body copy, descriptions, JSON string values)
-* `Medium`: `500` (Form labels, table headers, menu items)
-* `Semibold`: `600` (Card titles, active tabs, buttons, status pills)
-* `Bold`: `700` (Main headings, display numbers, metrics)
+
+- `Regular`: `400` (Body copy, descriptions, JSON string values)
+- `Medium`: `500` (Form labels, table headers, menu items)
+- `Semibold`: `600` (Card titles, active tabs, buttons, status pills)
+- `Bold`: `700` (Main headings, display numbers, metrics)
 
 ---
 
 ## 5. Spatial Grid, Radii, Elevation & Motion Tokens
 
 ### 5.1 Spacing Tokens (4px Baseline Grid)
+
 `--crf-space-1: 4px` • `--crf-space-2: 8px` • `--crf-space-3: 12px` • `--crf-space-4: 16px` • `--crf-space-5: 20px` • `--crf-space-6: 24px` • `--crf-space-8: 32px` • `--crf-space-10: 40px` • `--crf-space-12: 48px` • `--crf-space-16: 64px`
 
 ### 5.2 Radius Tokens
-* `--crf-radius-sm: 4px` (Small tags, inner badges, input checkboxes)
-* `--crf-radius-md: 6px` (Standard buttons, text input fields, dropdown items)
-* `--crf-radius-lg: 10px` (Cards, modal dialogs, drawer panels, popovers)
-* `--crf-radius-xl: 16px` (Large preview containers, dashboard hero panels)
-* `--crf-radius-full: 9999px` (Pills, user avatars, live streaming status dots)
+
+- `--crf-radius-sm: 4px` (Small tags, inner badges, input checkboxes)
+- `--crf-radius-md: 6px` (Standard buttons, text input fields, dropdown items)
+- `--crf-radius-lg: 10px` (Cards, modal dialogs, drawer panels, popovers)
+- `--crf-radius-xl: 16px` (Large preview containers, dashboard hero panels)
+- `--crf-radius-full: 9999px` (Pills, user avatars, live streaming status dots)
 
 ### 5.3 Elevation & Shadow Tokens
-* `--crf-shadow-subtle`: `0 1px 2px 0 rgba(0, 0, 0, 0.25)` (Flat cards)
-* `--crf-shadow-card`: `0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3)` (Standard card)
-* `--crf-shadow-popover`: `0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4)` (Dropdowns/Modals)
-* `--crf-shadow-glow-indigo`: `0 0 20px -2px rgba(99, 102, 241, 0.35)` (Active AI streaming border highlight)
-* `--crf-shadow-glow-emerald`: `0 0 20px -2px rgba(16, 185, 129, 0.35)` (Verified diff / Snapshot active)
+
+- `--crf-shadow-subtle`: `0 1px 2px 0 rgba(0, 0, 0, 0.25)` (Flat cards)
+- `--crf-shadow-card`: `0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3)` (Standard card)
+- `--crf-shadow-popover`: `0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4)` (Dropdowns/Modals)
+- `--crf-shadow-glow-indigo`: `0 0 20px -2px rgba(99, 102, 241, 0.35)` (Active AI streaming border highlight)
+- `--crf-shadow-glow-emerald`: `0 0 20px -2px rgba(16, 185, 129, 0.35)` (Verified diff / Snapshot active)
 
 ### 5.4 Motion & Transition Tokens
-* **Standard Easing:** `cubic-bezier(0.16, 1, 0.3, 1)` (Linear / Vercel spring-feel curve)
-* **Duration Fast:** `120ms` (Button hover, tab switch, focus ring glow)
-* **Duration Base:** `200ms` (Dropdown expansion, card slide-in, modal fade)
-* **Duration Smooth:** `350ms` (Drawer opening, visual diff split-slider movement)
+
+- **Standard Easing:** `cubic-bezier(0.16, 1, 0.3, 1)` (Linear / Vercel spring-feel curve)
+- **Duration Fast:** `120ms` (Button hover, tab switch, focus ring glow)
+- **Duration Base:** `200ms` (Dropdown expansion, card slide-in, modal fade)
+- **Duration Smooth:** `350ms` (Drawer opening, visual diff split-slider movement)
 
 ---
 
 ## 6. Core Component Library Specifications
 
 ### 6.1 Buttons (`Button`)
+
 ```
 [ Anatomy: Icon (Optional) + Label + Shortcut Badge (Optional) ]
 ```
-* **Variants:**
-  * `Primary`: Background `--crf-color-primary`, Text `#FFF`, Shadow `--crf-shadow-glow-indigo` on hover.
-  * `Secondary`: Background `--crf-color-surface-hover`, Border `1px solid --crf-color-border-subtle`, Text `--crf-color-text-primary`.
-  * `Ghost`: Background `transparent`, Hover `bg-surface-hover`, Text `--crf-color-text-secondary`.
-  * `Danger`: Background `rgba(239, 68, 68, 0.15)`, Border `1px solid #EF4444`, Text `#EF4444`.
-* **Sizes:** `sm` (28px height, text-xs), `md` (36px height, text-base), `lg` (44px height, text-md).
+
+- **Variants:**
+  - `Primary`: Background `--crf-color-primary`, Text `#FFF`, Shadow `--crf-shadow-glow-indigo` on hover.
+  - `Secondary`: Background `--crf-color-surface-hover`, Border `1px solid --crf-color-border-subtle`, Text `--crf-color-text-primary`.
+  - `Ghost`: Background `transparent`, Hover `bg-surface-hover`, Text `--crf-color-text-secondary`.
+  - `Danger`: Background `rgba(239, 68, 68, 0.15)`, Border `1px solid #EF4444`, Text `#EF4444`.
+- **Sizes:** `sm` (28px height, text-xs), `md` (36px height, text-base), `lg` (44px height, text-md).
 
 ### 6.2 Data Tables (`DataTable`)
-* Header row sticky with background `--crf-color-surface-hover`.
-* Row borders: Sub-pixel `1px solid --crf-color-border-subtle`.
-* Row hover transition: Background fades to `--crf-color-surface-hover` in $120\text{ms}$.
-* Monospaced alignment: Numeric data, UUIDs, dates, and latency metrics right-aligned or fixed font width.
+
+- Header row sticky with background `--crf-color-surface-hover`.
+- Row borders: Sub-pixel `1px solid --crf-color-border-subtle`.
+- Row hover transition: Background fades to `--crf-color-surface-hover` in $120\text{ms}$.
+- Monospaced alignment: Numeric data, UUIDs, dates, and latency metrics right-aligned or fixed font width.
 
 ### 6.3 Modal Dialogs & Drawers (`Modal` & `Drawer`)
-* Backdrop overlay: `rgba(9, 13, 22, 0.75)` with `backdrop-filter: blur(8px)`.
-* Entrance animation: Scale `0.96` to `1.0` and opacity `0` to `1` in $200\text{ms}$.
-* Dismissal: Clicking backdrop or pressing `Escape` triggers smooth exit.
+
+- Backdrop overlay: `rgba(9, 13, 22, 0.75)` with `backdrop-filter: blur(8px)`.
+- Entrance animation: Scale `0.96` to `1.0` and opacity `0` to `1` in $200\text{ms}$.
+- Dismissal: Clicking backdrop or pressing `Escape` triggers smooth exit.
 
 ---
 
@@ -200,6 +210,7 @@ Craftor uses **Inter** for all interface typography and **JetBrains Mono** for c
 ### 7.1 The 4-Registry Component Suite
 
 #### Tool Registry Card Component:
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │ [🧰 Icon] `elementor_create_container`                  [ v1.2.0 ] [ Edit_Posts ]│
@@ -214,6 +225,7 @@ Craftor uses **Inter** for all interface typography and **JetBrains Mono** for c
 ```
 
 #### Skill Registry Card Component:
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │ [🧠 Skill] `craftor-elementor-engineer`                       [ Accuracy: 99.2% ]│
@@ -226,6 +238,7 @@ Craftor uses **Inter** for all interface typography and **JetBrains Mono** for c
 ```
 
 #### Agent Marketplace Card Component:
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │ [🦾 Agent Persona] Visual Page Builder Agent               [ Official Verified ]│
@@ -241,46 +254,48 @@ Craftor uses **Inter** for all interface typography and **JetBrains Mono** for c
 
 ### 7.2 Dashboard Components
 
-* **Site Health Card:** Includes pulsing status dot (Green = Active, Amber = Pending Update, Red = Unreachable), tier badge (Core, Pro, Enterprise), and connected AI client chips (`Cursor`, `Claude`).
-* **Telemetry Metric Card:** Large display metric (`$42.10 Spent`, `14,209 Tool Calls`, `38ms Latency`) accompanied by a $+12.4\%$ trend pill and sparkline trend graph.
-* **AI Provider Vault Card:** Masked key preview with 1-click reveal, connection latency ping tester (`[ Test Ping ]`), and token spend meter.
+- **Site Health Card:** Includes pulsing status dot (Green = Active, Amber = Pending Update, Red = Unreachable), tier badge (Core, Pro, Enterprise), and connected AI client chips (`Cursor`, `Claude`).
+- **Telemetry Metric Card:** Large display metric (`$42.10 Spent`, `14,209 Tool Calls`, `38ms Latency`) accompanied by a $+12.4\%$ trend pill and sparkline trend graph.
+- **AI Provider Vault Card:** Masked key preview with 1-click reveal, connection latency ping tester (`[ Test Ping ]`), and token spend meter.
 
 ---
 
 ### 7.3 WordPress Plugin Components
 
-* **Snapshot History Item:**
-  * UUID badge in `JetBrains Mono` (`snp_8f921a`).
-  * Relative timestamp (`3 mins ago`).
-  * Target entity pill (`Page #104: Home`).
-  * Action buttons: `[ 🔍 Visual Diff ]` and `[ ⏪ Instant Rollback ]`.
-* **MCP Status Banner:**
-  * Active port and transport badges (`Port 8080`, `stdio active`, `SSE 1 stream`).
-  * Token security status (`AES-256 Hashed`).
+- **Snapshot History Item:**
+  - UUID badge in `JetBrains Mono` (`snp_8f921a`).
+  - Relative timestamp (`3 mins ago`).
+  - Target entity pill (`Page #104: Home`).
+  - Action buttons: `[ 🔍 Visual Diff ]` and `[ ⏪ Instant Rollback ]`.
+- **MCP Status Banner:**
+  - Active port and transport badges (`Port 8080`, `stdio active`, `SSE 1 stream`).
+  - Token security status (`AES-256 Hashed`).
 
 ---
 
 ### 7.4 Elementor Canvas Floating HUD
 
-* **Floating Position:** Top-center or bottom-right of the active Elementor canvas iframe.
-* **Design:** Pill-shaped glassmorphic bar (`rgba(15, 23, 42, 0.85)` with `backdrop-filter: blur(12px)`).
-* **Live Ingestion Pulse:** When AI is injecting nodes, an Emerald glow border pulses rhythmically (`animation: pulse 1.5s infinite`).
-* **Streaming Token Counter:** Displays real-time token ingestion count (`Ingested: 342 tokens`).
-* **Instant Step Revert:** `[ ⏪ Revert Step ]` button instantly restores the preceding micro-checkpoint without leaving the canvas.
+- **Floating Position:** Top-center or bottom-right of the active Elementor canvas iframe.
+- **Design:** Pill-shaped glassmorphic bar (`rgba(15, 23, 42, 0.85)` with `backdrop-filter: blur(12px)`).
+- **Live Ingestion Pulse:** When AI is injecting nodes, an Emerald glow border pulses rhythmically (`animation: pulse 1.5s infinite`).
+- **Streaming Token Counter:** Displays real-time token ingestion count (`Ingested: 342 tokens`).
+- **Instant Step Revert:** `[ ⏪ Revert Step ]` button instantly restores the preceding micro-checkpoint without leaving the canvas.
 
 ---
 
 ## 8. Accessibility & Responsive Systems
 
 ### 8.1 WCAG 2.1 AA Compliance Matrix
-* **Contrast:** Every text element against its surface guarantees $\ge 4.5:1$ contrast ratio.
-* **Focus States:** Every interactive element has an unambiguous $2\text{px}$ focus ring with $2\text{px}$ offset (`outline: 2px solid hsl(243, 75%, 59%); outline-offset: 2px`).
-* **ARIA Semantic Markup:**
-  * Modals have `role="dialog"` and `aria-modal="true"`.
-  * Diff viewer sliders have `role="slider"` with `aria-valuenow` and `aria-valuetext`.
-  * Status badges have `aria-live="polite"` for dynamic connection updates.
+
+- **Contrast:** Every text element against its surface guarantees $\ge 4.5:1$ contrast ratio.
+- **Focus States:** Every interactive element has an unambiguous $2\text{px}$ focus ring with $2\text{px}$ offset (`outline: 2px solid hsl(243, 75%, 59%); outline-offset: 2px`).
+- **ARIA Semantic Markup:**
+  - Modals have `role="dialog"` and `aria-modal="true"`.
+  - Diff viewer sliders have `role="slider"` with `aria-valuenow` and `aria-valuetext`.
+  - Status badges have `aria-live="polite"` for dynamic connection updates.
 
 ### 8.2 Responsive Breakpoint System
+
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
 │                               BREAKPOINT TOKENS                                │
@@ -324,4 +339,4 @@ Craftor uses **Inter** for all interface typography and **JetBrains Mono** for c
 
 ---
 
-*This specification establishes the official Design System for Craftor. All monorepo UI packages, WordPress admin styles, and Next.js dashboard components must strictly consume these token definitions and interaction rules.*
+_This specification establishes the official Design System for Craftor. All monorepo UI packages, WordPress admin styles, and Next.js dashboard components must strictly consume these token definitions and interaction rules._

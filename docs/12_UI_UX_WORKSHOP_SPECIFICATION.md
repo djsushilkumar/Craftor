@@ -3,7 +3,7 @@
 **Document ID:** UIUX-SPEC-2026-001  
 **Project:** Craftor — Universal MCP Platform for WordPress, Elementor & WooCommerce  
 **Version:** 1.0.0 (Master UX Blueprint)  
-**Status:** Approved for Design System & Monorepo Implementation  
+**Status:** Approved for Design System & Monorepo Implementation
 
 ---
 
@@ -30,6 +30,7 @@ This document establishes the comprehensive User Experience (UX) architecture, U
 ## 1. SaaS Dashboard Architecture (`app.craftor.ai`)
 
 ### 1.1 Global Layout & Shell Wireframe
+
 The SaaS control plane utilizes a collapsible sidebar, contextual breadcrumbs, a global site/tenant switcher, and a real-time system status indicator.
 
 ```
@@ -57,6 +58,7 @@ The SaaS control plane utilizes a collapsible sidebar, contextual breadcrumbs, a
 ```
 
 ### 1.2 Component Hierarchy
+
 ```
 DashboardAppShell
 ├── GlobalHeader
@@ -75,15 +77,17 @@ DashboardAppShell
 ```
 
 ### 1.3 Interaction Specifications
-* **Tenant Switcher:** Clicking the workspace dropdown opens a fuzzy-search popover displaying all available agency organizations and client sub-tenants.
-* **Omni-Search (`Cmd+K` / `Ctrl+K`):** Global modal searching across connected site names, 240+ tools, skills, active agent runs, and past snapshot UUIDs.
-* **Site Row Click:** Expands a slide-over panel displaying real-time MCP connection health, active client sessions, and recent snapshot diffs.
+
+- **Tenant Switcher:** Clicking the workspace dropdown opens a fuzzy-search popover displaying all available agency organizations and client sub-tenants.
+- **Omni-Search (`Cmd+K` / `Ctrl+K`):** Global modal searching across connected site names, 240+ tools, skills, active agent runs, and past snapshot UUIDs.
+- **Site Row Click:** Expands a slide-over panel displaying real-time MCP connection health, active client sessions, and recent snapshot diffs.
 
 ---
 
 ## 2. WordPress Plugin Interface (`craftor-core` / `pro` / `enterprise`)
 
 ### 2.1 Native WP Admin Settings Wireframe
+
 Located under WordPress Admin $\rightarrow$ **Craftor** $\rightarrow$ **Settings**:
 
 ```
@@ -130,6 +134,7 @@ Located under WordPress Admin $\rightarrow$ **Craftor** $\rightarrow$ **Settings
 ```
 
 ### 2.2 Snapshot & Rollback History View Wireframe
+
 Located under WordPress Admin $\rightarrow$ **Craftor** $\rightarrow$ **Snapshots**:
 
 ```
@@ -216,6 +221,7 @@ Located in SaaS Dashboard $\rightarrow$ **MCP Servers**:
 ## 5. The 4 Registries Interface Suite
 
 ### 5.1 Tool Registry Explorer Screen
+
 Located in SaaS Dashboard $\rightarrow$ **Tool Registry**:
 
 ```
@@ -240,6 +246,7 @@ Located in SaaS Dashboard $\rightarrow$ **Tool Registry**:
 ```
 
 ### 5.2 Skill Registry Screen
+
 Located in SaaS Dashboard $\rightarrow$ **Skill Registry**:
 
 ```
@@ -257,6 +264,7 @@ Located in SaaS Dashboard $\rightarrow$ **Skill Registry**:
 ```
 
 ### 5.3 Agent Marketplace Screen
+
 Located in SaaS Dashboard $\rightarrow$ **Agent Marketplace**:
 
 ```
@@ -275,6 +283,7 @@ Located in SaaS Dashboard $\rightarrow$ **Agent Marketplace**:
 ```
 
 ### 5.4 Visual Workflow Builder Screen
+
 Located in SaaS Dashboard $\rightarrow$ **Workflow Builder**:
 
 ```
@@ -393,16 +402,16 @@ This UI is dynamically rendered as a non-intrusive floating HUD inside the activ
 
 All interfaces strictly consume standard design tokens exported from `@craftor/design-tokens`:
 
-| Token Category | Token Name | Value | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Brand Primary** | `--crf-color-primary` | `hsl(243, 75%, 59%)` (`#6366F1`) | Primary CTAs, active badges |
-| **Brand Surface** | `--crf-color-surface-dark` | `hsl(222, 47%, 11%)` (`#0F172A`) | Dashboard background |
-| **Diff Added** | `--crf-color-diff-add` | `hsl(158, 64%, 52%)` (`#10B981`) | Injected nodes outline |
-| **Diff Modified** | `--crf-color-diff-mod` | `hsl(38, 92%, 50%)` (`#F59E0B`) | Modified control border |
-| **Diff Deleted** | `--crf-color-diff-del` | `hsl(0, 84%, 60%)` (`#EF4444`) | Deleted nodes container |
-| **Typography** | `--crf-font-family` | `'Inter', system-ui, sans-serif` | Clean, modern legibility |
-| **Radii** | `--crf-radius-md` | `8px` | Cards, buttons, modals |
+| Token Category    | Token Name                 | Value                            | Purpose                     |
+| :---------------- | :------------------------- | :------------------------------- | :-------------------------- |
+| **Brand Primary** | `--crf-color-primary`      | `hsl(243, 75%, 59%)` (`#6366F1`) | Primary CTAs, active badges |
+| **Brand Surface** | `--crf-color-surface-dark` | `hsl(222, 47%, 11%)` (`#0F172A`) | Dashboard background        |
+| **Diff Added**    | `--crf-color-diff-add`     | `hsl(158, 64%, 52%)` (`#10B981`) | Injected nodes outline      |
+| **Diff Modified** | `--crf-color-diff-mod`     | `hsl(38, 92%, 50%)` (`#F59E0B`)  | Modified control border     |
+| **Diff Deleted**  | `--crf-color-diff-del`     | `hsl(0, 84%, 60%)` (`#EF4444`)   | Deleted nodes container     |
+| **Typography**    | `--crf-font-family`        | `'Inter', system-ui, sans-serif` | Clean, modern legibility    |
+| **Radii**         | `--crf-radius-md`          | `8px`                            | Cards, buttons, modals      |
 
 ---
 
-*This UI/UX workshop specification defines the visual and interaction standard for Craftor. All upcoming design system tokens, database DDLs, and monorepo scaffolding will build directly upon these wireframes and user flows.*
+_This UI/UX workshop specification defines the visual and interaction standard for Craftor. All upcoming design system tokens, database DDLs, and monorepo scaffolding will build directly upon these wireframes and user flows._

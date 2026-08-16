@@ -9,15 +9,15 @@ export class VSCodeClientAdapter implements IClientAdapter {
       'mcp.servers': {
         craftor: {
           command: 'npx',
-          args: ['-y', '@craftor/mcp-server@latest', '--site', siteUrl, '--token', secretToken]
-        }
-      }
+          args: ['-y', '@craftor/mcp-server@latest', '--site', siteUrl, '--token', secretToken],
+        },
+      },
     };
 
     return {
       fileName: 'settings.json',
       filePathSnippet: '.vscode/settings.json',
-      configContent: JSON.stringify(config, null, 2)
+      configContent: JSON.stringify(config, null, 2),
     };
   }
 }

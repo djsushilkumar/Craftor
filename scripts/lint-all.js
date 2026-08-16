@@ -14,7 +14,7 @@ console.log('================================================================\n'
 try {
   execSync('npx eslint packages apps services tests --ext .ts --max-warnings 0', {
     cwd: ROOT_DIR,
-    stdio: 'inherit'
+    stdio: 'inherit',
   });
   console.log('\n🚀 ALL MONOREPO FILES PASSED ESLINT LINTING WITH 0 ERRORS & 0 WARNINGS!\n');
   process.exit(0);

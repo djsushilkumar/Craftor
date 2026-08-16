@@ -3,7 +3,7 @@
 **Document ID:** MONO-SPEC-2026-001  
 **Project:** Craftor — Universal MCP Platform for WordPress, Elementor & WooCommerce  
 **Version:** 1.0.0 (Master Monorepo Blueprint)  
-**Status:** Approved for Scaffolding & CI Integration  
+**Status:** Approved for Scaffolding & CI Integration
 
 ---
 
@@ -194,7 +194,7 @@ graph TD
     TYPES --> REG_SKILL[@craftor/skill-registry]
     TYPES --> REG_AGENT[@craftor/agent-registry]
     TYPES --> REG_WF[@craftor/workflow-registry]
-    
+
     %% Intermediate Package Integrations
     REG_TOOL --> MCP[@craftor/mcp-server]
     REG_SKILL --> MCP
@@ -203,20 +203,20 @@ graph TD
     AST --> MCP
     UTILS --> MCP
     ADAPTERS[@craftor/client-adapters] --> MCP
-    
+
     %% UI & App Integrations
     UI --> APP_DASH[apps/dashboard]
     UI --> APP_MKT[apps/marketing]
     TYPES --> APP_DASH
     TYPES --> APP_GATE[apps/api-gateway]
     MCP --> APP_GATE
-    
+
     %% Services
     TYPES --> SVC_AUTH[services/authentication]
     TYPES --> SVC_LIC[services/licensing]
     TYPES --> SVC_BILL[services/billing]
     TYPES --> SVC_UPD[services/update-service]
-    
+
     %% WordPress Plugins
     PLUG_CORE[plugins/craftor-core] --> PLUG_PRO[plugins/craftor-pro]
     PLUG_PRO --> PLUG_ENT[plugins/craftor-enterprise]
@@ -227,6 +227,7 @@ graph TD
 ## 4. Development Tooling & Configuration Standards
 
 ### 4.1 Workspace Definition (`pnpm-workspace.yaml`)
+
 ```yaml
 packages:
   - 'apps/*'
@@ -235,6 +236,7 @@ packages:
 ```
 
 ### 4.2 Turborepo Task Pipeline (`turbo.json`)
+
 ```json
 {
   "$schema": "https://turbo.build/schema.json",
@@ -263,15 +265,17 @@ packages:
 ```
 
 ### 4.3 TypeScript Configuration Hierarchy
-* `configs/tsconfig/base.json`: Strict mode (`"strict": true`), ESNext modules, target `ES2022`, isolated modules.
-* `configs/tsconfig/node.json`: Extends `base.json` for Node.js daemons and microservices.
-* `configs/tsconfig/react.json`: Extends `base.json` with JSX runtime for UI packages.
-* `configs/tsconfig/nextjs.json`: Extends `react.json` for Next.js applications.
+
+- `configs/tsconfig/base.json`: Strict mode (`"strict": true`), ESNext modules, target `ES2022`, isolated modules.
+- `configs/tsconfig/node.json`: Extends `base.json` for Node.js daemons and microservices.
+- `configs/tsconfig/react.json`: Extends `base.json` with JSX runtime for UI packages.
+- `configs/tsconfig/nextjs.json`: Extends `react.json` for Next.js applications.
 
 ### 4.4 Git Hooks & Quality Standards (Husky & Commitlint)
-* **Pre-Commit Hook:** Executes `lint-staged` running Prettier and ESLint on staged files.
-* **Commit-Msg Hook:** Enforces **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`).
-* **Pre-Push Hook:** Executes fast unit tests (`pnpm test`) across modified packages.
+
+- **Pre-Commit Hook:** Executes `lint-staged` running Prettier and ESLint on staged files.
+- **Commit-Msg Hook:** Enforces **Conventional Commits** (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`).
+- **Pre-Push Hook:** Executes fast unit tests (`pnpm test`) across modified packages.
 
 ---
 
@@ -315,4 +319,4 @@ graph LR
 
 ---
 
-*This monorepo specification serves as the master blueprint for all subsequent repository initialization, package scaffolding, and build pipeline setup.*
+_This monorepo specification serves as the master blueprint for all subsequent repository initialization, package scaffolding, and build pipeline setup._

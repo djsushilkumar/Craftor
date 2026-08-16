@@ -4,10 +4,7 @@
   "name": "E-Commerce Ops Agent",
   "version": "1.0.0",
   "role": "Autonomous WooCommerce Catalog & Order Specialist",
-  "skills": [
-    "craftor-woocommerce-engineer",
-    "craftor-tool-registry-manager"
-  ],
+  "skills": ["craftor-woocommerce-engineer", "craftor-tool-registry-manager"],
   "guardrails": {
     "require_snapshot": true,
     "allowed_capabilities": ["manage_woocommerce"]

@@ -3,7 +3,7 @@
 **Document ID:** CAT-2026-001  
 **Project Name:** Craftor  
 **Version:** 1.0.0  
-**Status:** Approved for Implementation  
+**Status:** Approved for Implementation
 
 ---
 
@@ -145,7 +145,7 @@ The Craftor Model Context Protocol (MCP) server exposes a categorized catalog of
 97. `elementor_set_global_custom_css` — Manage site-wide custom CSS injected via the Theme Style settings.
 98. `elementor_get_custom_fonts` — List custom uploaded web fonts (WOFF2/TTF) registered on the site.
 99. `elementor_upload_custom_font` — Register and upload new custom web font families and weight files.
-100. `elementor_sync_google_fonts` — Refresh and optimize local hosting of Google Font families.
+100.  `elementor_sync_google_fonts` — Refresh and optimize local hosting of Google Font families.
 
 ---
 

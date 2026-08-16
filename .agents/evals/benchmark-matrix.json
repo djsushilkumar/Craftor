@@ -6,6 +6,6 @@
     { "domain": "WordPress Core", "test_count": 50, "min_accuracy": 0.99 },
     { "domain": "Elementor AST", "test_count": 80, "min_accuracy": 0.98 },
     { "domain": "WooCommerce", "test_count": 40, "min_accuracy": 0.98 },
-    { "domain": "Snapshots & Rollback", "test_count": 30, "min_accuracy": 1.00 }
+    { "domain": "Snapshots & Rollback", "test_count": 30, "min_accuracy": 1.0 }
   ]
 }

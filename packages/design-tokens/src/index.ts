@@ -11,8 +11,8 @@ export const CRAFTOR_TOKENS = {
       primary: 'hsl(243, 75%, 59%)',
       diffAdded: 'hsl(158, 64%, 52%)',
       diffModified: 'hsl(38, 92%, 50%)',
-      diffDeleted: 'hsl(0, 84%, 60%)'
-    }
+      diffDeleted: 'hsl(0, 84%, 60%)',
+    },
   },
   spacing: {
     space1: '4px',
@@ -20,12 +20,12 @@ export const CRAFTOR_TOKENS = {
     space3: '12px',
     space4: '16px',
     space6: '24px',
-    space8: '32px'
+    space8: '32px',
   },
   radii: {
     sm: '4px',
     md: '6px',
     lg: '10px',
-    full: '9999px'
-  }
+    full: '9999px',
+  },
 } as const;

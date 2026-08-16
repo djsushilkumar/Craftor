@@ -2,7 +2,7 @@
 
 **Document ID:** ORG-2026-001  
 **Project Name:** Craftor  
-**Version:** 1.0.0  
+**Version:** 1.0.0
 
 ---
 
@@ -59,21 +59,26 @@ Legend: A = Accountable, C = Consulted, I = Informed
 ```
 
 ### Stage Gate 1: Specification & Invariants Sign-off
-* **Prerequisites:** PRD, Architecture Decision Records (ADRs), and JSON schemas finalized.
-* **Exit Criteria:** Solution Architect, Security Lead, and Product Manager formal approval.
+
+- **Prerequisites:** PRD, Architecture Decision Records (ADRs), and JSON schemas finalized.
+- **Exit Criteria:** Solution Architect, Security Lead, and Product Manager formal approval.
 
 ### Stage Gate 2: Core Subsystem Integration
-* **Prerequisites:** `craftor-core` plugin scaffolds WP REST endpoints; Elementor AST parser correctly serializes Flexbox containers; local `stdio` MCP server successfully completes handshake.
-* **Exit Criteria:** Unit tests pass with $\ge 90\%$ code coverage; zero uncaught PHP exceptions.
+
+- **Prerequisites:** `craftor-core` plugin scaffolds WP REST endpoints; Elementor AST parser correctly serializes Flexbox containers; local `stdio` MCP server successfully completes handshake.
+- **Exit Criteria:** Unit tests pass with $\ge 90\%$ code coverage; zero uncaught PHP exceptions.
 
 ### Stage Gate 3: Protocol & Complete Tool Implementation
-* **Prerequisites:** All 200+ MCP tools registered with formal JSON schemas; SSE remote transport active; dual BYOK and Managed AI modes operational.
-* **Exit Criteria:** Official Model Context Protocol Inspector test harness passes 100% of test assertions.
+
+- **Prerequisites:** All 200+ MCP tools registered with formal JSON schemas; SSE remote transport active; dual BYOK and Managed AI modes operational.
+- **Exit Criteria:** Official Model Context Protocol Inspector test harness passes 100% of test assertions.
 
 ### Stage Gate 4: Prompt Evals, Security & Visual Audit
-* **Prerequisites:** Automated Promptfoo/DeepEval benchmark suites executed across Claude 3.5 Sonnet, GPT-4o, and Gemini 2.0; SAST/DAST security scans completed; visual regression tests verified.
-* **Exit Criteria:** $\ge 98.5\%$ first-pass tool invocation accuracy; 0 critical or high security vulnerabilities; 100% successful rollback recovery on 500 fault-injection tests.
+
+- **Prerequisites:** Automated Promptfoo/DeepEval benchmark suites executed across Claude 3.5 Sonnet, GPT-4o, and Gemini 2.0; SAST/DAST security scans completed; visual regression tests verified.
+- **Exit Criteria:** $\ge 98.5\%$ first-pass tool invocation accuracy; 0 critical or high security vulnerabilities; 100% successful rollback recovery on 500 fault-injection tests.
 
 ### Stage Gate 5: Production Certification & Distribution
-* **Prerequisites:** Client configuration presets validated on all 8 AI clients; documentation site published; release packages cryptographically signed.
-* **Exit Criteria:** Public release readiness sign-off across all 10 teams.
+
+- **Prerequisites:** Client configuration presets validated on all 8 AI clients; documentation site published; release packages cryptographically signed.
+- **Exit Criteria:** Public release readiness sign-off across all 10 teams.

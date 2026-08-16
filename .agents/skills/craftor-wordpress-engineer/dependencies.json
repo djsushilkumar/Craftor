@@ -1,10 +1,4 @@
 {
-  "upstream_skills": [
-    "craftor-solution-architect",
-    "craftor-security-engineer"
-  ],
-  "required_packages": [
-    "@craftor/shared-types",
-    "@craftor/schemas"
-  ]
+  "upstream_skills": ["craftor-solution-architect", "craftor-security-engineer"],
+  "required_packages": ["@craftor/shared-types", "@craftor/schemas"]
 }

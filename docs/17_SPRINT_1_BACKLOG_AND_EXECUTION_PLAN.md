@@ -4,13 +4,14 @@
 **Project:** Craftor — Universal MCP Platform for WordPress, Elementor & WooCommerce  
 **Sprint Window:** Sprint 1 (Weeks 1–2 / 10 Working Days)  
 **Total Story Points:** 80 SP  
-**Status:** Approved for Engineering Execution  
+**Status:** Approved for Engineering Execution
 
 ---
 
 ## 1. Sprint 1 Goal & Scope
 
 ### 🎯 Primary Sprint Objective
+
 Establish the foundational monorepo workspace, core WordPress database persistence layer, transactional snapshot/rollback state machine, Elementor Flexbox AST mutation engine, universal Node.js MCP server daemon (`stdio` transport), and the **Phase 1 (40 Core Tools) MVP baseline** with full E2E testing across Cursor and Claude Desktop.
 
 ```
@@ -56,8 +57,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
 ### Epic 1: Monorepo Workspace & Development Tooling Setup (5 SP)
 
 #### US-101: Workspace Scaffolding & Turborepo Task Pipeline (3 SP)
-* **Description:** As an engineer, I need `pnpm-workspace.yaml`, `turbo.json`, and the shared TypeScript configuration hierarchy so that all packages build and test with cached parallelism.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As an engineer, I need `pnpm-workspace.yaml`, `turbo.json`, and the shared TypeScript configuration hierarchy so that all packages build and test with cached parallelism.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Monorepo builds cleanly across all packages
     Given a fresh clone of the Craftor repository
@@ -67,8 +69,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
   ```
 
 #### US-102: Git Quality Hooks & Linting Pipeline (2 SP)
-* **Description:** As a team lead, I need Husky, Commitlint, and ESLint/Prettier/PHPCS configs active so that malformed code or non-conventional commits are rejected before hitting origin.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As a team lead, I need Husky, Commitlint, and ESLint/Prettier/PHPCS configs active so that malformed code or non-conventional commits are rejected before hitting origin.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Non-conventional commit is rejected
     Given a staged code change
@@ -81,8 +84,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
 ### Epic 2: WordPress Persistence & Database Migration Engine (10 SP)
 
 #### US-201: WordPress Plugin Database Installer & Schema Migrations (5 SP)
-* **Description:** As the WordPress backend, I need automated database migration routines for all 12 core tables (`wp_craftor_*`) on plugin activation.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As the WordPress backend, I need automated database migration routines for all 12 core tables (`wp_craftor_*`) on plugin activation.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Plugin activation provisions all 12 core tables
     Given a clean WordPress 6.5 database
@@ -91,8 +95,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
   ```
 
 #### US-202: AES-256-GCM Local Credential Vault (5 SP)
-* **Description:** As a user, I need my BYOK API keys (OpenAI, Anthropic, Gemini) encrypted at rest in `wp_craftor_ai_providers`.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As a user, I need my BYOK API keys (OpenAI, Anthropic, Gemini) encrypted at rest in `wp_craftor_ai_providers`.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Stored API key is encrypted and decryptable
     Given an Anthropic API key `sk-ant-12345`
@@ -106,8 +111,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
 ### Epic 3: WordPress Plugin REST Bridge & Auth Middleware (10 SP)
 
 #### US-301: PSR-4 Service Container & Route Registrar (5 SP)
-* **Description:** As the plugin backend, I need a PSR-4 service container and REST route registrar under `/wp-json/craftor/v1/`.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As the plugin backend, I need a PSR-4 service container and REST route registrar under `/wp-json/craftor/v1/`.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: REST endpoint responds with valid JSON schema
     Given an activated `craftor-core` plugin
@@ -116,8 +122,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
   ```
 
 #### US-302: Constant-Time Token Auth Middleware (5 SP)
-* **Description:** As a security engineer, I need incoming bearer tokens validated with constant-time SHA-256 `hash_equals()`.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As a security engineer, I need incoming bearer tokens validated with constant-time SHA-256 `hash_equals()`.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Unauthenticated or invalid token is immediately rejected
     Given an incoming request with an invalid bearer token
@@ -130,8 +137,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
 ### Epic 4: Transactional Snapshot & Micro-Rollback Engine (16 SP)
 
 #### US-401: Pre-Mutation State Capture with Gzip Compression (8 SP)
-* **Description:** As an AI builder, I need an automated snapshot captured prior to every AI write operation.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As an AI builder, I need an automated snapshot captured prior to every AI write operation.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: State snapshot is captured with SHA-256 checksum
     Given a target post #104 containing 12 Elementor widgets
@@ -141,8 +149,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
   ```
 
 #### US-402: Atomic 1-Click Rollback State Machine (8 SP)
-* **Description:** As a user, I need to restore an exact previous page revision in $<50\text{ms}$ with zero layout artifacts.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As a user, I need to restore an exact previous page revision in $<50\text{ms}$ with zero layout artifacts.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Snapshot rollback restores exact pre-mutation state
     Given a page modified by an AI mutation with snapshot `snp_8f921a44c0`
@@ -157,8 +166,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
 ### Epic 5: Elementor AST Parser & Flexbox Container Mutator (16 SP)
 
 #### US-501: Bi-Directional JSON AST Parser & 7-Char UUID Engine (8 SP)
-* **Description:** As the Elementor engine, I need to deserialize `_elementor_data` JSON into a strongly typed AST tree and assign unique 7-character hexadecimal node IDs.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As the Elementor engine, I need to deserialize `_elementor_data` JSON into a strongly typed AST tree and assign unique 7-character hexadecimal node IDs.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: AST deserialization and serialization roundtrip
     Given a valid Elementor page JSON document
@@ -167,8 +177,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
   ```
 
 #### US-502: Flexbox Container Mutation & CSS Cache Invalidation (8 SP)
-* **Description:** As an AI client, I need to insert, style, and reorder modern Flexbox containers on a live page.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As an AI client, I need to insert, style, and reorder modern Flexbox containers on a live page.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Flexbox container insertion
     Given a valid page ID #104
@@ -182,8 +193,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
 ### Epic 6: Universal MCP Server Core Daemon (stdio Transport) (13 SP)
 
 #### US-601: Asynchronous Node/TS stdio Daemon & JSON-RPC 2.0 Router (8 SP)
-* **Description:** As an AI IDE (Cursor / Claude Desktop), I need to spawn `craftor-mcp` over `stdio` and execute JSON-RPC 2.0 calls.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As an AI IDE (Cursor / Claude Desktop), I need to spawn `craftor-mcp` over `stdio` and execute JSON-RPC 2.0 calls.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: MCP stdio handshake and tool call
     Given a running `craftor-mcp` stdio process
@@ -193,8 +205,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
   ```
 
 #### US-602: Outbound HTTP/2 Keep-Alive Client with 30s Timeout (5 SP)
-* **Description:** As the MCP server, I need a high-performance outbound HTTP/2 client connecting to the WordPress REST API bridge.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As the MCP server, I need a high-performance outbound HTTP/2 client connecting to the WordPress REST API bridge.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Outbound tool execution with timeout protection
     Given an active MCP server session
@@ -208,8 +221,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
 ### Epic 7: Phase 1 (40 Core Tools) Registry & Client Adapters (10 SP)
 
 #### US-701: 40 Phase 1 Tools Schema Registration (5 SP)
-* **Description:** As a developer, I need all 40 Phase 1 foundation tools strictly registered with JSON Schema Draft-07 definitions and version metadata.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As a developer, I need all 40 Phase 1 foundation tools strictly registered with JSON Schema Draft-07 definitions and version metadata.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: All 40 Phase 1 tools pass schema validation
     Given the master tool registry package `@craftor/tool-registry`
@@ -218,8 +232,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
   ```
 
 #### US-702: Client Configuration Generators (5 SP)
-* **Description:** As a user, I need ready-to-use configuration presets for Claude Desktop, Cursor, Claude Code, and VS Code.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As a user, I need ready-to-use configuration presets for Claude Desktop, Cursor, Claude Code, and VS Code.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Generating Cursor MCP configuration
     Given an active site `https://mysite.local` and token `crf_sec_123`
@@ -232,8 +247,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
 ### Epic 8: CI/CD Testing Harness & Multi-Client E2E Verification (10 SP)
 
 #### US-801: Virtualized Multi-Version Docker Test Beds (5 SP)
-* **Description:** As a QA engineer, I need a Docker Compose matrix testing PHP 7.4–8.3 and WordPress 6.0–6.5.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As a QA engineer, I need a Docker Compose matrix testing PHP 7.4–8.3 and WordPress 6.0–6.5.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: Docker matrix provisions and passes health check
     Given `docker-compose up -d` is executed in `docker/`
@@ -242,8 +258,9 @@ Establish the foundational monorepo workspace, core WordPress database persisten
   ```
 
 #### US-802: Automated Playwright E2E & Visual Regression Suite (5 SP)
-* **Description:** As a release manager, I need automated Playwright tests asserting end-to-end page generation and snapshot rollback in headless browsers.
-* **Acceptance Criteria (Gherkin):**
+
+- **Description:** As a release manager, I need automated Playwright tests asserting end-to-end page generation and snapshot rollback in headless browsers.
+- **Acceptance Criteria (Gherkin):**
   ```gherkin
   Scenario: E2E suite execution passes with >=90% coverage
     Given the complete Sprint 1 build
@@ -263,26 +280,27 @@ graph TD
     US201 --> US202[US-202: AES-256 Key Vault]
     US201 --> US301[US-301: WP REST Bridge & Service Container]
     US301 --> US302[US-302: Token Auth Middleware]
-    
+
     US301 --> US401[US-401: Pre-Mutation Snapshot Engine]
     US401 --> US402[US-402: Atomic Rollback Engine]
-    
+
     US101 --> US501[US-501: AST Parser & 7-Char UUID]
     US501 --> US502[US-502: Flexbox Container Mutator]
-    
+
     US101 --> US601[US-601: MCP stdio Daemon Core]
     US601 --> US602[US-602: Outbound HTTP/2 Client]
-    
+
     US502 --> US701[US-701: 40 Phase 1 Tools Registry]
     US402 --> US701
     US602 --> US701
     US701 --> US702[US-702: Client Adapters]
-    
+
     US702 --> US801[US-801: Docker Matrix]
     US801 --> US802[US-802: Playwright E2E Suite]
 ```
 
 ### 🔴 Critical Path:
+
 `US-101` $\rightarrow$ `US-201` $\rightarrow$ `US-301` $\rightarrow$ `US-401` $\rightarrow$ `US-402` $\rightarrow$ `US-501` $\rightarrow$ `US-502` $\rightarrow$ `US-701` $\rightarrow$ `US-802`.
 
 ---
@@ -328,4 +346,4 @@ Day 10: [US-801, US-802] Docker test matrix execution, Playwright E2E certificat
 
 ---
 
-*This backlog serves as the official Sprint 1 execution blueprint. All 10 autonomous AI engineering teams will implement tasks strictly in accordance with these user stories and dependency orders.*
+_This backlog serves as the official Sprint 1 execution blueprint. All 10 autonomous AI engineering teams will implement tasks strictly in accordance with these user stories and dependency orders._

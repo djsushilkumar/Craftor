@@ -48,7 +48,7 @@ const BUILD_TARGETS = [
   'apps/marketing',
 
   // 6. Test Suites
-  'tests/contracts'
+  'tests/contracts',
 ];
 
 console.log('================================================================');
@@ -58,7 +58,7 @@ console.log('================================================================\n'
 let successCount = 0;
 let failCount = 0;
 
-BUILD_TARGETS.forEach(target => {
+BUILD_TARGETS.forEach((target) => {
   const tsconfigPath = path.join(ROOT_DIR, target, 'tsconfig.json');
   process.stdout.write(`[BUILDING] ${target}... `);
   try {
@@ -73,7 +73,9 @@ BUILD_TARGETS.forEach(target => {
 });
 
 console.log('\n================================================================');
-console.log(`BUILD SUMMARY: ${successCount} Packages/Apps Compiled Successfully | ${failCount} Failed`);
+console.log(
+  `BUILD SUMMARY: ${successCount} Packages/Apps Compiled Successfully | ${failCount} Failed`,
+);
 console.log('================================================================\n');
 
 if (failCount > 0) {

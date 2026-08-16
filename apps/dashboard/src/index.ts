@@ -4,6 +4,6 @@ export const DASHBOARD_METADATA = {
   endpoints: {
     sites: '/api/sites',
     providers: '/api/providers',
-    licenses: '/api/licenses'
-  }
+    licenses: '/api/licenses',
+  },
 };

@@ -9,14 +9,14 @@ export class CodexClientAdapter implements IClientAdapter {
       mcp: {
         server: 'craftor',
         endpoint: siteUrl,
-        token: secretToken
-      }
+        token: secretToken,
+      },
     };
 
     return {
       fileName: 'codex.config.json',
       filePathSnippet: 'codex.config.json',
-      configContent: JSON.stringify(config, null, 2)
+      configContent: JSON.stringify(config, null, 2),
     };
   }
 }

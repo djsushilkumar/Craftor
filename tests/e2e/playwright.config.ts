@@ -3,6 +3,6 @@ export default {
   timeout: 30000,
   use: {
     headless: true,
-    viewport: { width: 1440, height: 900 }
-  }
+    viewport: { width: 1440, height: 900 },
+  },
 };

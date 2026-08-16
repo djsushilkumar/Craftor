@@ -4,11 +4,7 @@
   "name": "Visual Page Builder Agent",
   "version": "1.0.0",
   "role": "Autonomous Elementor UI/UX Page Builder",
-  "skills": [
-    "craftor-elementor-engineer",
-    "craftor-ui-ux-designer",
-    "craftor-prompt-engineer"
-  ],
+  "skills": ["craftor-elementor-engineer", "craftor-ui-ux-designer", "craftor-prompt-engineer"],
   "guardrails": {
     "require_snapshot": true,
     "max_mutations_per_session": 50,

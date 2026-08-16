@@ -1,10 +1,4 @@
 {
-  "upstream_skills": [
-    "craftor-elementor-engineer",
-    "craftor-prompt-engineer"
-  ],
-  "required_packages": [
-    "@craftor/shared-types",
-    "@craftor/schemas"
-  ]
+  "upstream_skills": ["craftor-elementor-engineer", "craftor-prompt-engineer"],
+  "required_packages": ["@craftor/shared-types", "@craftor/schemas"]
 }

@@ -1,5 +1,3 @@
 {
-  "required_capabilities": [
-    "read"
-  ]
+  "required_capabilities": ["read"]
 }

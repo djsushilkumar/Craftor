@@ -1,5 +1,3 @@
 {
-  "required_capabilities": [
-    "manage_woocommerce"
-  ]
+  "required_capabilities": ["manage_woocommerce"]
 }

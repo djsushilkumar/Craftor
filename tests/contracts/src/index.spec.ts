@@ -1,4 +1,7 @@
-import { JSON_RPC_2_0_SCHEMA, TOOL_REGISTRY_ENTRY_SCHEMA } from '../../../packages/schemas/dist/index';
+import {
+  JSON_RPC_2_0_SCHEMA,
+  TOOL_REGISTRY_ENTRY_SCHEMA,
+} from '../../../packages/schemas/dist/index';
 
 console.log('[Contract Test] Validating JSON-RPC 2.0 Schema contract...');
 if (!JSON_RPC_2_0_SCHEMA.required.includes('jsonrpc')) {

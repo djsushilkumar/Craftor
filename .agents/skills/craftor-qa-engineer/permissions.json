@@ -1,6 +1,3 @@
 {
-  "required_capabilities": [
-    "read",
-    "manage_options"
-  ]
+  "required_capabilities": ["read", "manage_options"]
 }

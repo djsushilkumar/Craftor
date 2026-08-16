@@ -6,7 +6,10 @@
   "properties": {
     "adr_id": { "type": "string", "pattern": "^ADR-[0-9]{3}$" },
     "title": { "type": "string" },
-    "status": { "type": "string", "enum": ["Proposed", "Accepted", "Rejected", "Deprecated", "Superseded"] },
+    "status": {
+      "type": "string",
+      "enum": ["Proposed", "Accepted", "Rejected", "Deprecated", "Superseded"]
+    },
     "date": { "type": "string", "format": "date" },
     "context": { "type": "string" },
     "decision": { "type": "string" },

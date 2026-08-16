@@ -2,13 +2,24 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "CraftorPRDSchema",
   "type": "object",
-  "required": ["feature_id", "title", "version", "target_personas", "moscow_tier", "user_stories", "tool_mappings"],
+  "required": [
+    "feature_id",
+    "title",
+    "version",
+    "target_personas",
+    "moscow_tier",
+    "user_stories",
+    "tool_mappings"
+  ],
   "properties": {
     "feature_id": { "type": "string", "pattern": "^PRD-[0-9]{4}-[0-9]{3}$" },
     "title": { "type": "string" },
     "version": { "type": "string" },
     "target_personas": { "type": "array", "items": { "type": "string" } },
-    "moscow_tier": { "type": "string", "enum": ["Must Have", "Should Have", "Could Have", "Won't Have"] },
+    "moscow_tier": {
+      "type": "string",
+      "enum": ["Must Have", "Should Have", "Could Have", "Won't Have"]
+    },
     "rice_score": {
       "type": "object",
       "required": ["reach", "impact", "confidence", "effort", "total_score"],

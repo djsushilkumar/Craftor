@@ -14,7 +14,7 @@ export class McpServerDaemon {
     logger.info('Craftor MCP Server Daemon started over stdio', {
       siteUrl: this.siteUrl,
       tokenConfigured: Boolean(this.secretToken),
-      toolsCount: ToolRegistry.count()
+      toolsCount: ToolRegistry.count(),
     });
   }
 }

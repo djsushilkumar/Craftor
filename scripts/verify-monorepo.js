@@ -27,20 +27,20 @@ const REQUIRED_PACKAGES = [
   'packages/client-adapters/claude-code',
   'packages/client-adapters/codex',
   'packages/shared-ui',
-  'packages/mcp-server'
+  'packages/mcp-server',
 ];
 
 const REQUIRED_APPS = [
   'apps/dashboard',
   'apps/api-gateway',
   'apps/documentation',
-  'apps/marketing'
+  'apps/marketing',
 ];
 
 const REQUIRED_PLUGINS = [
   'plugins/craftor-core',
   'plugins/craftor-pro',
-  'plugins/craftor-enterprise'
+  'plugins/craftor-enterprise',
 ];
 
 const REQUIRED_SERVICES = [
@@ -49,14 +49,14 @@ const REQUIRED_SERVICES = [
   'services/analytics',
   'services/billing',
   'services/update-service',
-  'services/notification-service'
+  'services/notification-service',
 ];
 
 const REQUIRED_ADRS = [
   'docs/adr/001-dual-database.md',
   'docs/adr/002-four-registry-architecture.md',
   'docs/adr/003-client-adapter-pattern.md',
-  'docs/adr/004-three-tier-plugin-model.md'
+  'docs/adr/004-three-tier-plugin-model.md',
 ];
 
 const SKILL_NAMES = [
@@ -74,7 +74,7 @@ const SKILL_NAMES = [
   'craftor-tool-registry-manager',
   'craftor-ui-ux-designer',
   'craftor-woocommerce-engineer',
-  'craftor-wordpress-engineer'
+  'craftor-wordpress-engineer',
 ];
 
 const SKILL_FILES = [
@@ -85,7 +85,7 @@ const SKILL_FILES = [
   'examples.md',
   'evals.json',
   'dependencies.json',
-  'permissions.json'
+  'permissions.json',
 ];
 
 console.log('================================================================');
@@ -120,20 +120,20 @@ assertFile('.changeset/config.json', 'Changeset Config');
 
 // 2. Packages Layer
 console.log('\n--- 2. Core Packages Layer ---');
-REQUIRED_PACKAGES.forEach(pkg => {
+REQUIRED_PACKAGES.forEach((pkg) => {
   assertFile(path.join(pkg, 'package.json'), `Package Manifest (${pkg})`);
   assertFile(path.join(pkg, 'tsconfig.json'), `Tsconfig (${pkg})`);
 });
 
 // 3. Apps Layer
 console.log('\n--- 3. Applications Layer ---');
-REQUIRED_APPS.forEach(app => {
+REQUIRED_APPS.forEach((app) => {
   assertFile(path.join(app, 'package.json'), `App Manifest (${app})`);
 });
 
 // 4. WordPress Plugins Layer
 console.log('\n--- 4. WordPress Plugin Ecosystem ---');
-REQUIRED_PLUGINS.forEach(plugin => {
+REQUIRED_PLUGINS.forEach((plugin) => {
   assertFile(path.join(plugin, 'composer.json'), `Composer Manifest (${plugin})`);
   const baseName = path.basename(plugin);
   assertFile(path.join(plugin, `${baseName}.php`), `Plugin Entrypoint (${plugin})`);
@@ -141,13 +141,13 @@ REQUIRED_PLUGINS.forEach(plugin => {
 
 // 5. Services Layer
 console.log('\n--- 5. Microservices Layer ---');
-REQUIRED_SERVICES.forEach(svc => {
+REQUIRED_SERVICES.forEach((svc) => {
   assertFile(path.join(svc, 'package.json'), `Service Manifest (${svc})`);
 });
 
 // 6. ADR Documentation
 console.log('\n--- 6. Architecture Decision Records (ADRs) ---');
-REQUIRED_ADRS.forEach(adr => {
+REQUIRED_ADRS.forEach((adr) => {
   assertFile(adr, 'ADR Document');
 });
 
@@ -183,8 +183,8 @@ assertFile('.agents/evals/promptfoo-suite.yaml', 'Eval: Promptfoo Suite');
 
 // 10. Standardized 15 Skills (8 Files Each)
 console.log('\n--- 10. 15 Standardized Skills (8 Files Each) ---');
-SKILL_NAMES.forEach(skill => {
-  SKILL_FILES.forEach(file => {
+SKILL_NAMES.forEach((skill) => {
+  SKILL_FILES.forEach((file) => {
     assertFile(`.agents/skills/${skill}/${file}`, `Skill File (${skill}/${file})`);
   });
 });

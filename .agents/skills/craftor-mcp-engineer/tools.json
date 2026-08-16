@@ -1,6 +1,3 @@
 {
-  "bound_tools": [
-    "tools_get_schema",
-    "site_get_system_health"
-  ]
+  "bound_tools": ["tools_get_schema", "site_get_system_health"]
 }

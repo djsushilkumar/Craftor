@@ -4,7 +4,7 @@ services:
   wordpress:
     image: wordpress:6.5-php8.2-apache
     ports:
-      - "8080:80"
+      - '8080:80'
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wordpress
@@ -25,4 +25,4 @@ services:
       MYSQL_USER: wordpress
       MYSQL_PASSWORD: password
     ports:
-      - "3306:3306"
+      - '3306:3306'

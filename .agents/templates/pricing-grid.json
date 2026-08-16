@@ -15,7 +15,11 @@
         "settings": { "width": "30%" },
         "elements": [
           { "elType": "widget", "widgetType": "heading", "settings": { "title": "Starter Plan" } },
-          { "elType": "widget", "widgetType": "heading", "settings": { "title": "$29/mo", "header_size": "h3" } }
+          {
+            "elType": "widget",
+            "widgetType": "heading",
+            "settings": { "title": "$29/mo", "header_size": "h3" }
+          }
         ]
       },
       {
@@ -23,7 +27,11 @@
         "settings": { "width": "30%" },
         "elements": [
           { "elType": "widget", "widgetType": "heading", "settings": { "title": "Pro Plan" } },
-          { "elType": "widget", "widgetType": "heading", "settings": { "title": "$79/mo", "header_size": "h3" } }
+          {
+            "elType": "widget",
+            "widgetType": "heading",
+            "settings": { "title": "$79/mo", "header_size": "h3" }
+          }
         ]
       },
       {
@@ -31,7 +39,11 @@
         "settings": { "width": "30%" },
         "elements": [
           { "elType": "widget", "widgetType": "heading", "settings": { "title": "Enterprise" } },
-          { "elType": "widget", "widgetType": "heading", "settings": { "title": "$199/mo", "header_size": "h3" } }
+          {
+            "elType": "widget",
+            "widgetType": "heading",
+            "settings": { "title": "$199/mo", "header_size": "h3" }
+          }
         ]
       }
     ]

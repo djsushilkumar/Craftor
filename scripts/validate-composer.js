@@ -16,7 +16,7 @@ console.log('================================================================\n'
 let passCount = 0;
 let failCount = 0;
 
-PLUGINS.forEach(pluginName => {
+PLUGINS.forEach((pluginName) => {
   const pluginDir = path.join(PLUGINS_DIR, pluginName);
   const composerFile = path.join(pluginDir, 'composer.json');
 
@@ -69,12 +69,15 @@ PLUGINS.forEach(pluginName => {
 
     // 4. Verify PHP classes match namespace & filename
     const files = fs.readdirSync(targetDir);
-    files.forEach(file => {
+    files.forEach((file) => {
       if (file.endsWith('.php')) {
         const content = fs.readFileSync(path.join(targetDir, file), 'utf8');
         const expectedClass = file.replace('.php', '');
         const cleanNs = namespace.replace(/\\+$/, '');
-        if (content.includes(`namespace ${cleanNs};`) && content.includes(`class ${expectedClass}`)) {
+        if (
+          content.includes(`namespace ${cleanNs};`) &&
+          content.includes(`class ${expectedClass}`)
+        ) {
           console.log(`  ✅ PSR-4 Class '${cleanNs}\\${expectedClass}' matches file '${file}'`);
           passCount++;
         } else {

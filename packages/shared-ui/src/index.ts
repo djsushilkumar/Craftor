@@ -8,6 +8,6 @@ export interface ButtonProps {
 export const ButtonComponent = (props: ButtonProps) => {
   return {
     type: 'button',
-    props
+    props,
   };
 };

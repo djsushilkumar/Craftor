@@ -7,12 +7,20 @@
     "elType": "container",
     "settings": { "flex_direction": "row" },
     "elements": [
-      { "elType": "widget", "widgetType": "image", "settings": { "image": { "url": "placeholder" } } },
+      {
+        "elType": "widget",
+        "widgetType": "image",
+        "settings": { "image": { "url": "placeholder" } }
+      },
       {
         "elType": "container",
         "settings": { "flex_direction": "column" },
         "elements": [
-          { "elType": "widget", "widgetType": "heading", "settings": { "title": "Premium Sneaker" } },
+          {
+            "elType": "widget",
+            "widgetType": "heading",
+            "settings": { "title": "Premium Sneaker" }
+          },
           { "elType": "widget", "widgetType": "button", "settings": { "text": "Add to Cart" } }
         ]
       }

@@ -9,15 +9,15 @@ export class AntigravityClientAdapter implements IClientAdapter {
       mcpServers: {
         craftor: {
           command: 'npx',
-          args: ['-y', '@craftor/mcp-server@latest', '--site', siteUrl, '--token', secretToken]
-        }
-      }
+          args: ['-y', '@craftor/mcp-server@latest', '--site', siteUrl, '--token', secretToken],
+        },
+      },
     };
 
     return {
       fileName: 'mcp_config.json',
       filePathSnippet: '.agents/mcp_config.json',
-      configContent: JSON.stringify(config, null, 2)
+      configContent: JSON.stringify(config, null, 2),
     };
   }
 }

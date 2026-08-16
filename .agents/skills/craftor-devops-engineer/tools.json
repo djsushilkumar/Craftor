@@ -1,6 +1,3 @@
 {
-  "bound_tools": [
-    "site_get_system_health",
-    "craftor_verify_license"
-  ]
+  "bound_tools": ["site_get_system_health", "craftor_verify_license"]
 }

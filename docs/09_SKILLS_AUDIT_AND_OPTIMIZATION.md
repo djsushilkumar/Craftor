@@ -3,13 +3,14 @@
 **Document ID:** AUD-2026-001  
 **Project:** Craftor (Universal MCP Platform for WordPress, Elementor & WooCommerce)  
 **Version:** 1.0.0 (Optimized Baseline)  
-**Target Environment:** Antigravity AI Agent Customization System (`.agents/skills/`)  
+**Target Environment:** Antigravity AI Agent Customization System (`.agents/skills/`)
 
 ---
 
 ## 1. Executive Audit Summary
 
 A rigorous structural and operational audit of the 15 Craftor skills was conducted to identify:
+
 1. **Functional Overlaps & Duplicated Responsibilities**
 2. **Missing Capabilities & Edge-Case Blindspots**
 3. **Dependency Conflicts & Blocking Race Conditions**
@@ -54,6 +55,7 @@ This document establishes the **Optimized Skills Taxonomy**, the **Definitive RA
 ## 2. In-Depth Boundary Disambiguation
 
 ### 2.1 Tool Schema Disambiguation Contract
+
 To prevent duplicated or conflicting tool signatures across the 240-tool catalog:
 
 ```
@@ -86,14 +88,14 @@ To prevent duplicated or conflicting tool signatures across the 240-tool catalog
 
 ### 2.2 Dual AI Mode Responsibility Matrix (BYOK vs Managed Cloud)
 
-* **Mode 1: Bring Your Own API Key (BYOK)**
-  * *Security Engineer:* Enforces local AES-256 encryption in `wp_options` using site salts; ensures zero plaintext key leaks.
-  * *WordPress Engineer:* Implements the settings UI key storage and verification callback.
-  * *MCP Engineer:* Routes LLM requests locally via the client's direct API endpoint.
-* **Mode 2: Managed AI Services (Cloud Gateway)**
-  * *Solution Architect:* Designs the secure cloud proxy handshake, quota tokens, and failover routing protocol.
-  * *DevOps & Security:* Hardens the SaaS API gateway, manages rate limits, and protects against tenant cross-contamination.
-  * *Product Manager:* Monitors usage metrics, token credit balances, and subscription tiers.
+- **Mode 1: Bring Your Own API Key (BYOK)**
+  - _Security Engineer:_ Enforces local AES-256 encryption in `wp_options` using site salts; ensures zero plaintext key leaks.
+  - _WordPress Engineer:_ Implements the settings UI key storage and verification callback.
+  - _MCP Engineer:_ Routes LLM requests locally via the client's direct API endpoint.
+- **Mode 2: Managed AI Services (Cloud Gateway)**
+  - _Solution Architect:_ Designs the secure cloud proxy handshake, quota tokens, and failover routing protocol.
+  - _DevOps & Security:_ Hardens the SaaS API gateway, manages rate limits, and protects against tenant cross-contamination.
+  - _Product Manager:_ Monitors usage metrics, token credit balances, and subscription tiers.
 
 ---
 
@@ -256,6 +258,7 @@ sequenceDiagram
 ```
 
 ### Gate Breakdown & Thresholds:
+
 1. **Gate 1 (Spec & Architecture):** Sign-off by `craftor-product-manager` + `craftor-solution-architect`.
 2. **Gate 2 (Registry & Platform Integration):** Sign-off by `craftor-tool-registry-manager` + Domain Leads (`craftor-wordpress-engineer`, `craftor-elementor-engineer`).
 3. **Gate 3 (Protocol Conformance):** Sign-off by `craftor-mcp-engineer` (100% pass on official MCP inspector).
@@ -268,19 +271,19 @@ sequenceDiagram
 
 When exceptions occur during execution, strict automated feedback loops redirect tasks to the designated remediation skill:
 
-* **Path A — LLM Tool Hallucination / Selection Failure:**
-  * *Trigger:* Promptfoo eval score drops below $98.5\%$ or model calls non-existent parameters.
-  * *Action:* `craftor-prompt-engineer` refines the tool docstring, parameter descriptions, and few-shot examples; re-evaluates until threshold is satisfied.
-* **Path B — Elementor AST Layout Corruption:**
-  * *Trigger:* Elementor canvas throws "Invalid Data" or CSS cache fails to regenerate.
-  * *Action:* `craftor-debugging-engineer` captures the raw JSON payload $\rightarrow$ isolates missing default control properties $\rightarrow$ `craftor-elementor-engineer` updates `AstParser.php`.
-* **Path C — Security / Capability Breach:**
-  * *Trigger:* SAST/DAST detects unescaped query or missing permission check.
-  * *Action:* Pipeline halts immediately; `craftor-security-engineer` drafts mitigation patch $\rightarrow$ `craftor-wordpress-engineer` applies strict capability verification.
-* **Path D — High Canary Rollout Error Rate:**
-  * *Trigger:* Error rate exceeds $0.05\%$ during 1% OTA canary deployment.
-  * *Action:* `craftor-release-manager` automatically rolls back OTA flag to previous stable release $\rightarrow$ `craftor-debugging-engineer` conducts post-mortem.
+- **Path A — LLM Tool Hallucination / Selection Failure:**
+  - _Trigger:_ Promptfoo eval score drops below $98.5\%$ or model calls non-existent parameters.
+  - _Action:_ `craftor-prompt-engineer` refines the tool docstring, parameter descriptions, and few-shot examples; re-evaluates until threshold is satisfied.
+- **Path B — Elementor AST Layout Corruption:**
+  - _Trigger:_ Elementor canvas throws "Invalid Data" or CSS cache fails to regenerate.
+  - _Action:_ `craftor-debugging-engineer` captures the raw JSON payload $\rightarrow$ isolates missing default control properties $\rightarrow$ `craftor-elementor-engineer` updates `AstParser.php`.
+- **Path C — Security / Capability Breach:**
+  - _Trigger:_ SAST/DAST detects unescaped query or missing permission check.
+  - _Action:_ Pipeline halts immediately; `craftor-security-engineer` drafts mitigation patch $\rightarrow$ `craftor-wordpress-engineer` applies strict capability verification.
+- **Path D — High Canary Rollout Error Rate:**
+  - _Trigger:_ Error rate exceeds $0.05\%$ during 1% OTA canary deployment.
+  - _Action:_ `craftor-release-manager` automatically rolls back OTA flag to previous stable release $\rightarrow$ `craftor-debugging-engineer` conducts post-mortem.
 
 ---
 
-*This optimization model guarantees deterministic collaboration, strict boundary isolation, and maximum engineering velocity across the entire Craftor multi-agent development lifecycle.*
+_This optimization model guarantees deterministic collaboration, strict boundary isolation, and maximum engineering velocity across the entire Craftor multi-agent development lifecycle._

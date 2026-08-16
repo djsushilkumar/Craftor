@@ -15,8 +15,8 @@ module.exports = {
         'build',
         'ci',
         'chore',
-        'revert'
-      ]
+        'revert',
+      ],
     ],
     'scope-enum': [
       2,
@@ -41,8 +41,8 @@ module.exports = {
         'api-gateway',
         'documentation',
         'marketing',
-        'monorepo'
-      ]
-    ]
-  }
+        'monorepo',
+      ],
+    ],
+  },
 };

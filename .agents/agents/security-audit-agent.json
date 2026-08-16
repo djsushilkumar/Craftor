@@ -4,10 +4,7 @@
   "name": "Security Audit Agent",
   "version": "1.0.0",
   "role": "Autonomous Zero-Trust & Capability Auditor",
-  "skills": [
-    "craftor-security-engineer",
-    "craftor-qa-engineer"
-  ],
+  "skills": ["craftor-security-engineer", "craftor-qa-engineer"],
   "guardrails": {
     "read_only": true,
     "allowed_capabilities": ["manage_options"]

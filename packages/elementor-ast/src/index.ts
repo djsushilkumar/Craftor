@@ -7,9 +7,9 @@ export class ElementorAstEngine {
       id: generateHexUuid(7),
       elType: 'container',
       settings: {
-        flex_direction: direction
+        flex_direction: direction,
       },
-      elements: []
+      elements: [],
     };
   }
 

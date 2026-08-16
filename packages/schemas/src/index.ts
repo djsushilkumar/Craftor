@@ -7,8 +7,8 @@ export const JSON_RPC_2_0_SCHEMA = {
     jsonrpc: { type: 'string', enum: ['2.0'] },
     method: { type: 'string' },
     id: { type: ['string', 'number'] },
-    params: { type: 'object' }
-  }
+    params: { type: 'object' },
+  },
 } as const;
 
 export const TOOL_REGISTRY_ENTRY_SCHEMA = {
@@ -23,8 +23,8 @@ export const TOOL_REGISTRY_ENTRY_SCHEMA = {
     permissions: { type: 'array', items: { type: 'string' } },
     deprecated: { type: 'boolean', default: false },
     inputs: { type: 'object' },
-    outputs: { type: 'object' }
-  }
+    outputs: { type: 'object' },
+  },
 } as const;
 
 export const ELEMENTOR_CONTAINER_MUTATION_SCHEMA = {
@@ -35,7 +35,10 @@ export const ELEMENTOR_CONTAINER_MUTATION_SCHEMA = {
   properties: {
     page_id: { type: 'integer', minimum: 1 },
     flex_direction: { type: 'string', enum: ['row', 'column', 'row-reverse', 'column-reverse'] },
-    justify_content: { type: 'string', enum: ['flex-start', 'center', 'flex-end', 'space-between', 'space-around', 'space-evenly'] },
-    align_items: { type: 'string', enum: ['flex-start', 'center', 'flex-end', 'stretch'] }
-  }
+    justify_content: {
+      type: 'string',
+      enum: ['flex-start', 'center', 'flex-end', 'space-between', 'space-around', 'space-evenly'],
+    },
+    align_items: { type: 'string', enum: ['flex-start', 'center', 'flex-end', 'stretch'] },
+  },
 } as const;

@@ -1,6 +1,3 @@
 {
-  "required_capabilities": [
-    "edit_posts",
-    "read"
-  ]
+  "required_capabilities": ["edit_posts", "read"]
 }

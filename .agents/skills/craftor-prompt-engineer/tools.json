@@ -1,5 +1,3 @@
 {
-  "bound_tools": [
-    "tools_get_schema"
-  ]
+  "bound_tools": ["tools_get_schema"]
 }

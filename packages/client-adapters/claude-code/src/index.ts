@@ -8,7 +8,7 @@ export class ClaudeCodeClientAdapter implements IClientAdapter {
     return {
       fileName: 'claude-code-setup.sh',
       filePathSnippet: 'terminal command',
-      configContent: `claude mcp add craftor npx -y @craftor/mcp-server@latest --site ${siteUrl} --token ${secretToken}`
+      configContent: `claude mcp add craftor npx -y @craftor/mcp-server@latest --site ${siteUrl} --token ${secretToken}`,
     };
   }
 }

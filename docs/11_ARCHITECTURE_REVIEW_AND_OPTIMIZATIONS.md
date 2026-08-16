@@ -3,7 +3,7 @@
 **Document ID:** ARCH-REV-2026-001  
 **Project:** Craftor — Universal MCP Platform for WordPress, Elementor & WooCommerce  
 **Version:** 2.0.0 (Master Optimized Architecture)  
-**Status:** Approved & Formally Integrated  
+**Status:** Approved & Formally Integrated
 
 ---
 
@@ -90,6 +90,7 @@ To guarantee maximum reliability and $>99\%$ tool calling accuracy, tool release
 ```
 
 ### Phase 1 (MVP) — The 40 Core Foundation Tools:
+
 1. `wp_get_post` (#001)
 2. `wp_create_post` (#002)
 3. `wp_update_post` (#003)
@@ -151,7 +152,10 @@ Every tool in the Tool Registry strictly implements the versioned schema standar
     "required": ["page_id", "flex_direction"],
     "properties": {
       "page_id": { "type": "integer", "description": "Target WordPress Post ID" },
-      "flex_direction": { "type": "string", "enum": ["row", "column", "row-reverse", "column-reverse"] }
+      "flex_direction": {
+        "type": "string",
+        "enum": ["row", "column", "row-reverse", "column-reverse"]
+      }
     }
   },
   "outputs": {
