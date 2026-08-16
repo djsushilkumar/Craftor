@@ -1,0 +1,24 @@
+{
+  "name": "@craftor/client-adapters",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@craftor/client-adapter-shared": "workspace:*",
+    "@craftor/client-adapter-cursor": "workspace:*",
+    "@craftor/client-adapter-claude-desktop": "workspace:*",
+    "@craftor/client-adapter-antigravity": "workspace:*",
+    "@craftor/client-adapter-vscode": "workspace:*",
+    "@craftor/client-adapter-claude-code": "workspace:*",
+    "@craftor/client-adapter-codex": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.2"
+  }
+}

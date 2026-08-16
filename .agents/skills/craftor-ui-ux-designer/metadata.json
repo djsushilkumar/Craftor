@@ -1,0 +1,8 @@
+{
+  "id": "craftor-ui-ux-designer",
+  "name": "Craftor UI/UX Designer",
+  "role": "Autonomous UI/UX Design Specialist",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

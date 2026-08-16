@@ -1,0 +1,12 @@
+{
+  "gold_standard_categories": [
+    "wordpress_core_crud",
+    "elementor_container_layout",
+    "elementor_global_styling",
+    "woocommerce_product_management",
+    "woocommerce_order_operations",
+    "multi_site_batch_dispatch"
+  ],
+  "min_accuracy_threshold": 0.985,
+  "max_token_ceiling_per_tool": 220
+}

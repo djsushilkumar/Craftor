@@ -1,0 +1,32 @@
+name: Docker Multi-Version Matrix
+
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'
+
+jobs:
+  matrix-test:
+    name: PHP ${{ matrix.php }} x WP ${{ matrix.wordpress }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
+        wordpress: ['6.0', '6.2', '6.4', '6.5']
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, pdo, pdo_mysql
+
+      - name: Validate Plugin Syntax
+        run: |
+          php -l plugins/craftor-core/craftor-core.php
+          php -l plugins/craftor-pro/craftor-pro.php
+          php -l plugins/craftor-enterprise/craftor-enterprise.php

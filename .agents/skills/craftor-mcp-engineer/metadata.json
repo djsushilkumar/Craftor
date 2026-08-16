@@ -1,0 +1,8 @@
+{
+  "id": "craftor-mcp-engineer",
+  "name": "Craftor MCP Engineer",
+  "role": "Autonomous Model Context Protocol (MCP) Specialist",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

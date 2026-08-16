@@ -1,0 +1,19 @@
+{
+  "name": "@craftor/dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@craftor/design-tokens": "workspace:*",
+    "@craftor/shared-ui": "workspace:*",
+    "@craftor/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.2"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "bound_tools": [
+    "elementor_get_global_kit",
+    "elementor_get_global_colors",
+    "elementor_get_global_typography"
+  ]
+}

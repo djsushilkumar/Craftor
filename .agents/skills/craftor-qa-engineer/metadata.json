@@ -1,0 +1,8 @@
+{
+  "id": "craftor-qa-engineer",
+  "name": "Craftor QA Engineer",
+  "role": "Autonomous QA & Test Harness Engineer",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

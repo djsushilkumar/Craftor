@@ -1,0 +1,32 @@
+# Example: Flash Sale Coupon Creation Tool Invocation
+
+## Request Payload:
+```json
+{
+  "tool": "woo_create_coupon",
+  "arguments": {
+    "code": "SUMMERFLASH25",
+    "discount_type": "percent",
+    "amount": "25",
+    "description": "25% off summer collection flash sale",
+    "expiry_date": "2026-08-31",
+    "minimum_amount": "50.00",
+    "individual_use": true,
+    "exclude_sale_items": true,
+    "product_categories": [18, 24]
+  }
+}
+```
+
+## Response Payload:
+```json
+{
+  "success": true,
+  "coupon_id": 8412,
+  "code": "SUMMERFLASH25",
+  "discount": "25%",
+  "status": "publish",
+  "expires": "2026-08-31T23:59:59Z",
+  "snapshot_id": "snp_woo_7781a"
+}
+```

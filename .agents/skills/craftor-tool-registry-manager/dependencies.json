@@ -1,0 +1,10 @@
+{
+  "upstream_skills": [
+    "craftor-solution-architect",
+    "craftor-mcp-engineer"
+  ],
+  "required_packages": [
+    "@craftor/shared-types",
+    "@craftor/schemas"
+  ]
+}

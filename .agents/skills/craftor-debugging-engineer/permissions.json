@@ -1,0 +1,6 @@
+{
+  "required_capabilities": [
+    "manage_options",
+    "edit_posts"
+  ]
+}

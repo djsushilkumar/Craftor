@@ -1,0 +1,21 @@
+{
+  "name": "craftor/craftor-enterprise",
+  "description": "Craftor Enterprise — Universal MCP Platform for WPMU Multi-Site & Enterprise Networks",
+  "type": "wordpress-plugin",
+  "license": "Commercial",
+  "authors": [
+    {
+      "name": "Craftor AI Core Organization",
+      "homepage": "https://craftor.ai"
+    }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "craftor/craftor-pro": ">=1.0.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Craftor\\Enterprise\\": "includes/"
+    }
+  }
+}

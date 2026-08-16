@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "name": "CraftorDesignTokens",
+  "version": "1.0.0",
+  "tokens": {
+    "colors": {
+      "dark": {
+        "bg-canvas": "hsl(222, 47%, 7%)",
+        "bg-surface": "hsl(222, 47%, 11%)",
+        "bg-surface-hover": "hsl(222, 47%, 16%)",
+        "bg-surface-elev": "hsl(222, 47%, 20%)",
+        "border-subtle": "hsl(222, 30%, 18%)",
+        "border-focus": "hsl(243, 75%, 59%)",
+        "text-primary": "hsl(210, 40%, 98%)",
+        "text-secondary": "hsl(215, 20%, 65%)",
+        "text-muted": "hsl(215, 16%, 47%)",
+        "primary": "hsl(243, 75%, 59%)",
+        "primary-hover": "hsl(243, 75%, 68%)",
+        "accent-cyan": "hsl(189, 94%, 43%)",
+        "accent-purple": "hsl(270, 95%, 65%)",
+        "diff-added": "hsl(158, 64%, 52%)",
+        "diff-modified": "hsl(38, 92%, 50%)",
+        "diff-deleted": "hsl(0, 84%, 60%)"
+      },
+      "light": {
+        "bg-canvas": "hsl(210, 40%, 98%)",
+        "bg-surface": "hsl(0, 0%, 100%)",
+        "bg-surface-hover": "hsl(210, 40%, 96%)",
+        "bg-surface-elev": "hsl(0, 0%, 100%)",
+        "border-subtle": "hsl(214, 32%, 91%)",
+        "border-focus": "hsl(243, 75%, 59%)",
+        "text-primary": "hsl(222, 47%, 11%)",
+        "text-secondary": "hsl(215, 16%, 47%)",
+        "text-muted": "hsl(215, 20%, 65%)",
+        "primary": "hsl(243, 75%, 59%)",
+        "primary-hover": "hsl(243, 75%, 50%)",
+        "diff-added": "hsl(158, 64%, 40%)",
+        "diff-modified": "hsl(38, 92%, 44%)",
+        "diff-deleted": "hsl(0, 84%, 55%)"
+      }
+    },
+    "typography": {
+      "fontFamilies": {
+        "sans": "Inter, system-ui, -apple-system, sans-serif",
+        "mono": "JetBrains Mono, Menlo, Monaco, monospace"
+      },
+      "sizes": {
+        "display-2xl": "2.5rem",
+        "display-xl": "2.0rem",
+        "heading-lg": "1.5rem",
+        "heading-md": "1.25rem",
+        "body-base": "0.875rem",
+        "body-sm": "0.8125rem",
+        "caption-xs": "0.6875rem",
+        "code-mono": "0.75rem"
+      },
+      "weights": {
+        "regular": 400,
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700
+      }
+    },
+    "spacing": {
+      "space-1": "4px",
+      "space-2": "8px",
+      "space-3": "12px",
+      "space-4": "16px",
+      "space-5": "20px",
+      "space-6": "24px",
+      "space-8": "32px",
+      "space-10": "40px",
+      "space-12": "48px",
+      "space-16": "64px"
+    },
+    "radii": {
+      "sm": "4px",
+      "md": "6px",
+      "lg": "10px",
+      "xl": "16px",
+      "full": "9999px"
+    },
+    "motion": {
+      "easing": "cubic-bezier(0.16, 1, 0.3, 1)",
+      "duration-fast": "120ms",
+      "duration-base": "200ms",
+      "duration-smooth": "350ms"
+    },
+    "breakpoints": {
+      "sm": "640px",
+      "md": "768px",
+      "lg": "1024px",
+      "xl": "1280px",
+      "2xl": "1536px"
+    }
+  }
+}

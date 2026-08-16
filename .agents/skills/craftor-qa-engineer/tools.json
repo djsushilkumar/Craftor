@@ -1,0 +1,6 @@
+{
+  "bound_tools": [
+    "site_get_system_health",
+    "craftor_get_visual_diff"
+  ]
+}

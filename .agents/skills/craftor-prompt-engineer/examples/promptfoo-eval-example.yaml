@@ -1,0 +1,23 @@
+# Example: Promptfoo Automated Evaluation Configuration
+
+```yaml
+# prompts/evals/promptfoo.yaml
+description: "Craftor MCP Tool Selection & Accuracy Benchmark"
+
+prompts:
+  - "file://prompts/system-prompts/elementor-builder.md"
+
+providers:
+  - id: "anthropic:claude-3-5-sonnet-20241022"
+  - id: "openai:gpt-4o"
+  - id: "google:gemini-1.5-pro-latest"
+
+tests:
+  - description: "User asks for a 3-tier pricing table"
+    vars:
+      user_message: "Create a modern 3-tier SaaS pricing table matching our site's active global colors."
+    assert:
+      - type: "is-json"
+      - type: "javascript"
+        value: "output.includes('elementor_build_pricing_table') || output.includes('elementor_create_container')"
+```

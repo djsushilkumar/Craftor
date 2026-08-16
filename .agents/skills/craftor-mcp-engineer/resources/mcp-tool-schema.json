@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCPToolDefinitionSchema",
+  "type": "object",
+  "required": ["name", "description", "inputSchema"],
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "description": { "type": "string", "minLength": 10 },
+    "inputSchema": {
+      "type": "object",
+      "required": ["type", "properties"],
+      "properties": {
+        "type": { "type": "string", "enum": ["object"] },
+        "properties": { "type": "object" },
+        "required": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

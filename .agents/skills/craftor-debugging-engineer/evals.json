@@ -1,0 +1,10 @@
+{
+  "benchmark_id": "eval_craftor-debugging-engineer",
+  "target_pass_rate": 0.985,
+  "test_cases": [
+    {
+      "id": "test_001",
+      "expected_tool": "site_get_system_health"
+    }
+  ]
+}

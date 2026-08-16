@@ -1,0 +1,15 @@
+{
+  "categories": [
+    "WordPress Core & Content Management",
+    "Elementor Canvas, Containers & Layouts",
+    "Elementor Global Kits, Styling & Design Tokens",
+    "Elementor Theme Builder & Dynamic Data",
+    "WooCommerce Catalog, Products & Variations",
+    "WooCommerce Orders, Customers, Inventory & Coupons",
+    "Media Library, Assets & Optimization",
+    "SEO, Metadata, Taxonomies & Schema Markup",
+    "Site Operations, DB, WP-CLI & Cache Performance",
+    "Multi-Site, Security, Licensing & Rollback"
+  ],
+  "naming_convention": "^(wp|elementor|woo|seo|site|craftor|multisite)_[a-z0-9_]+$"
+}

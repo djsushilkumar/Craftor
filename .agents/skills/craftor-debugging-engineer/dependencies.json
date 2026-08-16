@@ -1,0 +1,10 @@
+{
+  "upstream_skills": [
+    "craftor-wordpress-engineer",
+    "craftor-solution-architect"
+  ],
+  "required_packages": [
+    "@craftor/shared-types",
+    "@craftor/schemas"
+  ]
+}

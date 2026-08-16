@@ -1,0 +1,13 @@
+{
+  "name": "@craftor/documentation",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "serve": "vitepress serve docs"
+  },
+  "devDependencies": {
+    "vitepress": "^1.2.3"
+  }
+}

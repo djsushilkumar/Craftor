@@ -1,0 +1,13 @@
+{
+  "matrix": {
+    "php_versions": ["7.4", "8.0", "8.1", "8.2", "8.3"],
+    "wordpress_versions": ["6.2", "6.3", "6.4", "6.5", "latest"],
+    "elementor_versions": ["3.16", "3.18", "3.20", "latest"],
+    "browsers": ["chromium", "firefox", "webkit"]
+  },
+  "coverage_targets": {
+    "lines": 90,
+    "functions": 95,
+    "branches": 85
+  }
+}

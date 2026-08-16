@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WooCommerceProductSchema",
+  "type": "object",
+  "required": ["name", "regular_price", "type"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "type": { "type": "string", "enum": ["simple", "variable", "grouped", "external"] },
+    "regular_price": { "type": "string", "pattern": "^[0-9]+(\\.[0-9]{1,2})?$" },
+    "sale_price": { "type": "string", "pattern": "^[0-9]+(\\.[0-9]{1,2})?$" },
+    "sku": { "type": "string" },
+    "manage_stock": { "type": "boolean" },
+    "stock_quantity": { "type": "integer", "minimum": 0 },
+    "categories": { "type": "array", "items": { "type": "integer" } },
+    "attributes": { "type": "array" }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ElementorASTNodeSchema",
+  "type": "object",
+  "required": ["id", "elType", "settings", "elements"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-zA-Z0-9_-]{3,16}$" },
+    "elType": { "type": "string", "enum": ["container", "section", "column", "widget"] },
+    "widgetType": { "type": "string" },
+    "isInner": { "type": "boolean" },
+    "settings": { "type": "object" },
+    "elements": {
+      "type": "array",
+      "items": { "$ref": "#" }
+    }
+  }
+}

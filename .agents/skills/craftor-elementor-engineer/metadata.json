@@ -1,0 +1,8 @@
+{
+  "id": "craftor-elementor-engineer",
+  "name": "Craftor Elementor Engineer",
+  "role": "Autonomous Elementor AST & Canvas Specialist",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

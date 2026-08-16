@@ -1,0 +1,8 @@
+{
+  "name": "@craftor/test-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:e2e": "echo 'Playwright E2E Test Suite Configured'"
+  }
+}

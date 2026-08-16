@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": "req_001",
+  "method": "tools/call",
+  "params": {
+    "name": "elementor_create_container",
+    "arguments": {
+      "page_id": 104,
+      "flex_direction": "row"
+    }
+  }
+}

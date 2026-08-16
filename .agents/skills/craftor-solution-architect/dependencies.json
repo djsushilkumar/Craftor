@@ -1,0 +1,10 @@
+{
+  "upstream_skills": [
+    "craftor-product-manager",
+    "craftor-mcp-engineer"
+  ],
+  "required_packages": [
+    "@craftor/shared-types",
+    "@craftor/schemas"
+  ]
+}

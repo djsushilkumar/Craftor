@@ -1,0 +1,17 @@
+# Example: Dynamic Tool Filter Category Slice
+
+```json
+{
+  "active_task_context": "woocommerce_flash_sale",
+  "recommended_tool_slice": [
+    "woo_get_product",
+    "woo_update_product",
+    "woo_set_product_sale",
+    "woo_create_coupon",
+    "elementor_build_cta_banner",
+    "craftor_create_snapshot"
+  ],
+  "filtered_tool_count": 6,
+  "token_savings_percentage": "97.5%"
+}
+```

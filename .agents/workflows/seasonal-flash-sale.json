@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "wf_seasonal_flash_sale",
+  "name": "Seasonal Flash Sale Campaign",
+  "version": "1.0.0",
+  "description": "Orchestrates coupon generation, hero banner construction, and inventory stock balancing with automatic rollback safety.",
+  "steps": [
+    {
+      "step_id": "step_1_snapshot",
+      "tool": "craftor_create_snapshot",
+      "args": { "post_id": 104, "action_context": "wf_flash_sale_init" },
+      "rollback_on_failure": true
+    },
+    {
+      "step_id": "step_2_coupon",
+      "tool": "woo_create_coupon",
+      "args": { "code": "SALE30", "discount_type": "percent", "amount": "30" },
+      "rollback_on_failure": true
+    },
+    {
+      "step_id": "step_3_banner",
+      "tool": "elementor_build_hero_section",
+      "args": { "page_id": 104, "headline": "Flash Sale — 30% Off Everything!" },
+      "rollback_on_failure": true
+    }
+  ]
+}

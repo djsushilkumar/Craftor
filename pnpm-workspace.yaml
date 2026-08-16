@@ -1,0 +1,12 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'packages/client-adapters/*'
+  - 'services/*'
+  - 'tests/*'
+
+allowBuilds:
+  esbuild: set this to true or false
+
+onlyBuiltDependencies:
+  - esbuild

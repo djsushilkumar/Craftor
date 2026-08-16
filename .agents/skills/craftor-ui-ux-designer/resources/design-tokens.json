@@ -1,0 +1,42 @@
+{
+  "colors": {
+    "brand": {
+      "primary": "#6366F1",
+      "primary-hover": "#4F46E5",
+      "accent": "#06B6D4",
+      "background-dark": "#0F172A",
+      "surface-dark": "#1E293B"
+    },
+    "feedback": {
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "danger": "#EF4444",
+      "info": "#3B82F6"
+    },
+    "diff": {
+      "added-border": "#10B981",
+      "added-bg": "rgba(16, 185, 129, 0.15)",
+      "modified-border": "#F59E0B",
+      "modified-bg": "rgba(245, 158, 11, 0.15)",
+      "deleted-border": "#EF4444",
+      "deleted-bg": "rgba(239, 68, 68, 0.15)"
+    }
+  },
+  "typography": {
+    "font-family": "Inter, system-ui, -apple-system, sans-serif",
+    "sizes": {
+      "xs": "0.75rem",
+      "sm": "0.875rem",
+      "base": "1rem",
+      "lg": "1.125rem",
+      "xl": "1.25rem",
+      "2xl": "1.5rem"
+    }
+  },
+  "radii": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "12px",
+    "full": "9999px"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "craftor-debugging-engineer",
+  "name": "Craftor Debugging Engineer",
+  "role": "Autonomous Debugging & Triage Engineer",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

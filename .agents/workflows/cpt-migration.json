@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "wf_cpt_migration",
+  "name": "Custom Post Type & Schema Migration",
+  "version": "1.0.0",
+  "description": "Registers CPT, creates taxonomy terms, and scaffolds archive templates.",
+  "steps": [
+    {
+      "step_id": "step_1_register_cpt",
+      "tool": "wp_register_cpt",
+      "args": { "post_type": "portfolio", "singular_name": "Portfolio Item" },
+      "rollback_on_failure": true
+    },
+    {
+      "step_id": "step_2_create_term",
+      "tool": "wp_create_term",
+      "args": { "taxonomy": "portfolio_category", "name": "Featured" },
+      "rollback_on_failure": true
+    }
+  ]
+}

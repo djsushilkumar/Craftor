@@ -1,0 +1,18 @@
+description: 'Craftor Benchmark Suite for AI Agent Evaluation'
+prompts:
+  - 'Construct an Elementor hero container with a heading and CTA button'
+  - 'Create a WooCommerce simple product priced at $49.99'
+  - 'Rollback to snapshot snp_8f921a'
+providers:
+  - 'anthropic:claude-3-5-sonnet-20241022'
+  - 'openai:gpt-4o'
+tests:
+  - assert:
+      - type: contains-json
+        value: { tool: 'elementor_create_container' }
+  - assert:
+      - type: contains-json
+        value: { tool: 'woo_create_simple_product' }
+  - assert:
+      - type: contains-json
+        value: { tool: 'craftor_restore_snapshot' }

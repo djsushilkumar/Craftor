@@ -1,0 +1,8 @@
+{
+  "id": "craftor-prompt-engineer",
+  "name": "Craftor Prompt Engineer",
+  "role": "Autonomous Prompt & Eval Specialist",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

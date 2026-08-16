@@ -1,0 +1,11 @@
+description: 'Craftor Phase 1 Tool Calling Benchmark Evaluation'
+prompts:
+  - 'You are Craftor AI. Construct a responsive 2-column hero container in Elementor.'
+providers:
+  - 'openai:gpt-4o'
+  - 'anthropic:claude-3-5-sonnet-20241022'
+tests:
+  - assert:
+      - type: contains-json
+        value:
+          tool: 'elementor_create_container'

@@ -1,0 +1,14 @@
+{
+  "production_excludes": [
+    ".git",
+    ".github",
+    "tests",
+    "node_modules",
+    "composer.json",
+    "composer.lock",
+    "phpunit.xml",
+    ".gitignore",
+    ".editorconfig"
+  ],
+  "checksum_algorithm": "sha256"
+}

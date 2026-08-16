@@ -1,0 +1,16 @@
+{
+  "name": "@craftor/service-authentication",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@craftor/shared-types": "workspace:*",
+    "@craftor/shared-utils": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.2"
+  }
+}

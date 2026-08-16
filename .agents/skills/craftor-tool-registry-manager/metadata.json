@@ -1,0 +1,8 @@
+{
+  "id": "craftor-tool-registry-manager",
+  "name": "Craftor Tool Registry Manager",
+  "role": "Autonomous Tool Registry & Schema Curator",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

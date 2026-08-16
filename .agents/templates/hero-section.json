@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "tpl_hero_section",
+  "name": "Modern Flexbox Hero Section",
+  "category": "Hero Sections",
+  "ast_template": {
+    "elType": "container",
+    "settings": {
+      "flex_direction": "column",
+      "align_items": "center",
+      "padding": { "top": "80px", "bottom": "80px" }
+    },
+    "elements": [
+      {
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "Build Websites at the Speed of Thought",
+          "header_size": "h1"
+        }
+      },
+      {
+        "elType": "widget",
+        "widgetType": "button",
+        "settings": {
+          "text": "Get Started with AI",
+          "size": "lg"
+        }
+      }
+    ]
+  }
+}

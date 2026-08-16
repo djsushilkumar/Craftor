@@ -1,0 +1,8 @@
+{
+  "id": "craftor-devops-engineer",
+  "name": "Craftor DevOps Engineer",
+  "role": "Autonomous DevOps & CI/CD Engineer",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

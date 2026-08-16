@@ -1,0 +1,8 @@
+{
+  "id": "craftor-security-engineer",
+  "name": "Craftor Security Engineer",
+  "role": "Autonomous Zero-Trust Security Engineer",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

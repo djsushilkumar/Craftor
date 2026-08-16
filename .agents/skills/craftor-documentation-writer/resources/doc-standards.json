@@ -1,0 +1,21 @@
+{
+  "style_guide": "Google Developer Documentation Style Guide",
+  "framework": "Diátaxis",
+  "supported_clients": [
+    "Claude Code",
+    "Claude Desktop",
+    "Cursor",
+    "Codex",
+    "Antigravity",
+    "VS Code",
+    "Gemini clients",
+    "OpenAI-compatible clients"
+  ],
+  "required_tool_doc_sections": [
+    "Description",
+    "Parameters Table",
+    "Example Request",
+    "Example Response",
+    "Error Scenarios"
+  ]
+}

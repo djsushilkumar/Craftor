@@ -1,0 +1,10 @@
+{
+  "benchmark_id": "eval_craftor-release-manager",
+  "target_pass_rate": 0.985,
+  "test_cases": [
+    {
+      "id": "test_001",
+      "expected_tool": "craftor_verify_license"
+    }
+  ]
+}

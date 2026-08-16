@@ -1,0 +1,8 @@
+{
+  "id": "craftor-product-manager",
+  "name": "Craftor Product Manager",
+  "role": "Autonomous Product Manager",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

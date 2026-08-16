@@ -1,0 +1,9 @@
+{
+  "bound_tools": [
+    "woo_get_product",
+    "woo_create_simple_product",
+    "woo_update_product",
+    "woo_get_order",
+    "woo_create_coupon"
+  ]
+}

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:6.5-php8.2-apache
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: craftor_test
+    volumes:
+      - ../plugins/craftor-core:/var/www/html/wp-content/plugins/craftor-core
+      - ../plugins/craftor-pro:/var/www/html/wp-content/plugins/craftor-pro
+      - ../plugins/craftor-enterprise:/var/www/html/wp-content/plugins/craftor-enterprise
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: craftor_test
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"

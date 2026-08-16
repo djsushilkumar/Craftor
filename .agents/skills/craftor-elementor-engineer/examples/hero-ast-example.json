@@ -1,0 +1,64 @@
+# Example: Complete Hero Section AST JSON Payload
+
+```json
+[
+  {
+    "id": "hero_c1",
+    "elType": "container",
+    "isInner": false,
+    "settings": {
+      "flex_direction": "column",
+      "flex_align_items": "center",
+      "flex_justify_content": "center",
+      "min_height": { "unit": "vh", "size": 85 },
+      "padding": { "unit": "px", "top": "100", "right": "32", "bottom": "100", "left": "32", "isLinked": false },
+      "background_background": "gradient",
+      "background_color": "#0F172A",
+      "background_color_b": "#1E1B4B",
+      "background_gradient_angle": { "unit": "deg", "size": 135 }
+    },
+    "elements": [
+      {
+        "id": "hero_badge",
+        "elType": "widget",
+        "widgetType": "text-editor",
+        "settings": {
+          "editor": "<p style=\"text-align: center;\"><span style=\"background: rgba(99,102,241,0.2); color: #818CF8; padding: 6px 14px; border-radius: 999px; font-weight: 600; font-size: 0.875rem;\">🚀 Powered by Craftor Universal MCP</span></p>"
+        },
+        "elements": []
+      },
+      {
+        "id": "hero_h1",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "Build WordPress Sites with AI at Light Speed",
+          "header_size": "h1",
+          "align": "center",
+          "title_color": "#FFFFFF",
+          "typography_typography": "custom",
+          "typography_font_size": { "unit": "px", "size": 56 },
+          "typography_font_weight": "800",
+          "typography_line_height": { "unit": "em", "size": 1.15 }
+        },
+        "elements": []
+      },
+      {
+        "id": "hero_btn_cta",
+        "elType": "widget",
+        "widgetType": "button",
+        "settings": {
+          "text": "Start Building in Cursor / Claude",
+          "link": { "url": "#get-started", "is_external": false, "nofollow": false },
+          "align": "center",
+          "size": "lg",
+          "button_background_color": "#6366F1",
+          "button_text_color": "#FFFFFF",
+          "border_radius": { "unit": "px", "top": "8", "right": "8", "bottom": "8", "left": "8", "isLinked": true }
+        },
+        "elements": []
+      }
+    ]
+  }
+]
+```

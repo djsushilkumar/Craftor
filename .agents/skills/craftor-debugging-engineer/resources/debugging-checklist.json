@@ -1,0 +1,9 @@
+{
+  "troubleshooting_steps": [
+    "1. Check if stdio transport is emitting non-JSON text to stdout.",
+    "2. Verify WordPress REST API response headers (Content-Type: application/json).",
+    "3. Inspect wp-content/debug.log for fatal PHP errors or memory limit exhaustion.",
+    "4. Validate Elementor AST with scripts/validate_elementor_ast.py.",
+    "5. Check whether active token has expired or lacks requisite WP capabilities."
+  ]
+}

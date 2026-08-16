@@ -1,0 +1,10 @@
+{
+  "benchmark_id": "eval_craftor-wordpress-engineer",
+  "target_pass_rate": 0.985,
+  "test_cases": [
+    {
+      "id": "test_001",
+      "expected_tool": "wp_get_post"
+    }
+  ]
+}

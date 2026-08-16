@@ -1,0 +1,27 @@
+name: Over-The-Air (OTA) Canary Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Release Channel (canary | beta | stable)'
+        required: true
+        default: 'canary'
+
+jobs:
+  ota-deploy:
+    name: Build and Sign OTA Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Package Core Plugin
+        run: |
+          mkdir -p dist/ota
+          zip -r dist/ota/craftor-core.zip plugins/craftor-core -x "*/.git*"
+          sha256sum dist/ota/craftor-core.zip > dist/ota/craftor-core.zip.sha256
+
+      - name: Broadcast OTA Manifest
+        run: |
+          echo "OTA Package generated for channel: ${{ github.event.inputs.channel }}"

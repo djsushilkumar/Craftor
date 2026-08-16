@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "tpl_pricing_grid",
+  "name": "3-Tier Responsive Pricing Grid",
+  "category": "Pricing Tables",
+  "ast_template": {
+    "elType": "container",
+    "settings": {
+      "flex_direction": "row",
+      "justify_content": "space-between"
+    },
+    "elements": [
+      {
+        "elType": "container",
+        "settings": { "width": "30%" },
+        "elements": [
+          { "elType": "widget", "widgetType": "heading", "settings": { "title": "Starter Plan" } },
+          { "elType": "widget", "widgetType": "heading", "settings": { "title": "$29/mo", "header_size": "h3" } }
+        ]
+      },
+      {
+        "elType": "container",
+        "settings": { "width": "30%" },
+        "elements": [
+          { "elType": "widget", "widgetType": "heading", "settings": { "title": "Pro Plan" } },
+          { "elType": "widget", "widgetType": "heading", "settings": { "title": "$79/mo", "header_size": "h3" } }
+        ]
+      },
+      {
+        "elType": "container",
+        "settings": { "width": "30%" },
+        "elements": [
+          { "elType": "widget", "widgetType": "heading", "settings": { "title": "Enterprise" } },
+          { "elType": "widget", "widgetType": "heading", "settings": { "title": "$199/mo", "header_size": "h3" } }
+        ]
+      }
+    ]
+  }
+}

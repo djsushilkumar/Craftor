@@ -1,0 +1,8 @@
+{
+  "id": "craftor-release-manager",
+  "name": "Craftor Release Manager",
+  "role": "Autonomous Release & SemVer Coordinator",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

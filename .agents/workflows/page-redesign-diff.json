@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "id": "wf_page_redesign_diff",
+  "name": "Elementor Page Redesign with Visual Diff",
+  "version": "1.0.0",
+  "description": "Performs container flex mutations, captures pre-flight snapshot, and outputs visual diff for review.",
+  "steps": [
+    {
+      "step_id": "step_1_snapshot",
+      "tool": "craftor_create_snapshot",
+      "args": { "post_id": 42, "action_context": "wf_redesign" }
+    },
+    {
+      "step_id": "step_2_mutate",
+      "tool": "elementor_create_container",
+      "args": { "page_id": 42, "flex_direction": "row" }
+    },
+    {
+      "step_id": "step_3_diff",
+      "tool": "craftor_get_visual_diff",
+      "args": { "snapshot_uuid": "AUTO" }
+    }
+  ]
+}

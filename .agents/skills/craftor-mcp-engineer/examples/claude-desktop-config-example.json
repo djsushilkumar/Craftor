@@ -1,0 +1,19 @@
+# Example: Client Configuration Preset (Claude Desktop)
+
+```json
+{
+  "mcpServers": {
+    "craftor": {
+      "command": "node",
+      "args": [
+        "c:/Users/420/Crafter/mcp-server/dist/index.js",
+        "--site=https://mysite.local",
+        "--token=crf_sec_89f1a23b98c74e"
+      ],
+      "env": {
+        "CRAFTOR_LOG_LEVEL": "info"
+      }
+    }
+  }
+}
+```

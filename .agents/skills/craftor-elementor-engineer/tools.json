@@ -1,0 +1,9 @@
+{
+  "bound_tools": [
+    "elementor_get_page_ast",
+    "elementor_set_page_ast",
+    "elementor_create_container",
+    "elementor_add_widget",
+    "elementor_clear_css_cache"
+  ]
+}

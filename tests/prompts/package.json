@@ -1,0 +1,8 @@
+{
+  "name": "@craftor/test-prompts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "eval": "promptfoo eval"
+  }
+}

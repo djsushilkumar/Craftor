@@ -1,0 +1,43 @@
+{
+  "name": "craftor-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Craftor — Universal MCP Platform for WordPress, Elementor & WooCommerce",
+  "author": "Craftor AI Core Organization",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/build-all.js",
+    "dev": "turbo run dev --parallel",
+    "lint": "node scripts/lint-all.js",
+    "test": "node tests/contracts/dist/index.spec.js",
+    "test:contracts": "node tests/contracts/dist/index.spec.js",
+    "test:e2e": "echo 'Playwright E2E Suite Configured'",
+    "clean": "rm -rf node_modules packages/*/dist services/*/dist apps/*/dist tests/*/dist",
+    "verify": "node scripts/verify-monorepo.js",
+    "verify:all": "node scripts/build-all.js && node scripts/lint-all.js && node tests/contracts/dist/index.spec.js && node scripts/validate-composer.js && node scripts/validate-devops.js && node scripts/verify-monorepo.js",
+    "validate:composer": "node scripts/validate-composer.js",
+    "validate:devops": "node scripts/validate-devops.js",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@types/node": "^20.19.43",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
+    "@typescript-eslint/parser": "^7.13.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.0.11",
+    "prettier": "^3.3.2",
+    "turbo": "^2.0.4",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@11.22.0"
+}

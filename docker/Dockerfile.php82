@@ -1,0 +1,9 @@
+FROM php:8.2-cli-alpine
+
+RUN apk add --no-cache git unzip bash \
+    && docker-php-ext-install mysqli pdo pdo_mysql
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+CMD ["php", "-v"]

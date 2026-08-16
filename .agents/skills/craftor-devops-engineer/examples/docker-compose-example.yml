@@ -1,0 +1,31 @@
+# Example: Docker Compose Virtualized Test Environment
+
+```yaml
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:6.5-php8.2-apache
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: craftor_test
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: rootpassword
+    volumes:
+      - ./craftor-core:/var/www/html/wp-content/plugins/craftor-core
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: craftor_test
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
+```

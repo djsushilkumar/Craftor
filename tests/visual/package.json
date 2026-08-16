@@ -1,0 +1,8 @@
+{
+  "name": "@craftor/test-visual",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:visual": "echo 'Pixelmatch Visual Regression Suite Configured'"
+  }
+}

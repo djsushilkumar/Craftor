@@ -1,0 +1,21 @@
+{
+  "name": "craftor/craftor-pro",
+  "description": "Craftor Pro — Universal MCP Platform for WordPress, WooCommerce & Global Kits (Commercial Tier)",
+  "type": "wordpress-plugin",
+  "license": "Commercial",
+  "authors": [
+    {
+      "name": "Craftor AI Core Organization",
+      "homepage": "https://craftor.ai"
+    }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "craftor/craftor-core": ">=1.0.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Craftor\\Pro\\": "includes/"
+    }
+  }
+}

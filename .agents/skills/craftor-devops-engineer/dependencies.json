@@ -1,0 +1,10 @@
+{
+  "upstream_skills": [
+    "craftor-release-manager",
+    "craftor-security-engineer"
+  ],
+  "required_packages": [
+    "@craftor/shared-types",
+    "@craftor/schemas"
+  ]
+}

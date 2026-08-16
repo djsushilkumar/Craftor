@@ -1,0 +1,8 @@
+{
+  "id": "craftor-documentation-writer",
+  "name": "Craftor Documentation Writer",
+  "role": "Autonomous Technical Documentation Engineer",
+  "version": "1.0.0",
+  "accuracy_target": 0.985,
+  "status": "active"
+}

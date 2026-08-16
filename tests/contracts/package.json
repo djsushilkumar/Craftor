@@ -1,0 +1,16 @@
+{
+  "name": "@craftor/test-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@craftor/shared-types": "workspace:*",
+    "@craftor/schemas": "workspace:*"
+  },
+  "scripts": {
+    "test": "node dist/index.spec.js",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.2"
+  }
+}

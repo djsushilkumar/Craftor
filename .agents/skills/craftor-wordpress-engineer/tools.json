@@ -1,0 +1,10 @@
+{
+  "bound_tools": [
+    "wp_get_post",
+    "wp_create_post",
+    "wp_update_post",
+    "wp_create_page",
+    "wp_register_cpt",
+    "wp_create_term"
+  ]
+}

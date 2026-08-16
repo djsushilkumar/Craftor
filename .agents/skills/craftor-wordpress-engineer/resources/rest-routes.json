@@ -1,0 +1,22 @@
+{
+  "routes": [
+    {
+      "namespace": "craftor/v1",
+      "route": "/posts",
+      "methods": ["GET", "POST"],
+      "permission_callback": "check_edit_posts_permission"
+    },
+    {
+      "namespace": "craftor/v1",
+      "route": "/posts/(?P<id>\\d+)",
+      "methods": ["GET", "PUT", "DELETE"],
+      "permission_callback": "check_edit_post_permission"
+    },
+    {
+      "namespace": "craftor/v1",
+      "route": "/snapshots/(?P<uuid>[a-f0-9\\-]+)/restore",
+      "methods": ["POST"],
+      "permission_callback": "check_manage_options_permission"
+    }
+  ]
+}
