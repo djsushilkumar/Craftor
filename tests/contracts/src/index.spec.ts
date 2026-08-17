@@ -564,7 +564,6 @@ async function runContractTests(): Promise<void> {
     grantCapability,
     SessionManager,
   } = await import('../../../services/authentication/dist/index.js');
-  const { generateSecureKey } = await import('../../../packages/shared-utils/dist/index.js');
 
   // 8B.1 Application Password Verification
   const appPassValid = verifyApplicationPassword(
@@ -657,10 +656,10 @@ async function runContractTests(): Promise<void> {
   }
 
   // Token AES-256-GCM Vault Encryption & Decryption
-  const vaultKey = generateSecureKey();
-  const encrypted = tokenManager.encryptSecret(rawToken, vaultKey);
-  const decrypted = tokenManager.decryptSecret(encrypted, vaultKey);
-  if (decrypted !== rawToken) {
+  const tokenVaultKey = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+  const encryptedToken = tokenManager.encryptSecret(rawToken, tokenVaultKey);
+  const decryptedToken = tokenManager.decryptSecret(encryptedToken, tokenVaultKey);
+  if (decryptedToken !== rawToken) {
     throw new Error('Token AES-256-GCM vault encryption/decryption roundtrip failed');
   }
 
