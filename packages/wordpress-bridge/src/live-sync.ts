@@ -91,6 +91,13 @@ export class ElementorLiveSyncBridge {
   }
 
   /**
+   * Broadcasts a pre-constructed LiveSyncEvent.
+   */
+  public async broadcastEvent(event: LiveSyncEvent): Promise<LiveSyncEvent> {
+    return this.dispatchSyncEvent(event);
+  }
+
+  /**
    * Dispatches the event to registered subscribers and active REST bridge if connected.
    */
   private async dispatchSyncEvent(event: LiveSyncEvent): Promise<LiveSyncEvent> {

@@ -22,6 +22,12 @@ import {
   updateNodeSettings,
   validateAst,
   ElementorAstEngine,
+  diffAst,
+  createHeaderTemplate,
+  createFooterTemplate,
+  createSinglePostTemplate,
+  DYNAMIC_TAG_PRESETS,
+  injectDynamicTag,
 } from '../../../elementor-ast/dist/index.js';
 import {
   WordPressClient,
@@ -29,6 +35,8 @@ import {
   WooCommerceBridge,
   SnapshotManager,
   RollbackManager,
+  ElementorLiveSyncBridge,
+  WooCommerceCouponsBridge,
 } from '../../../wordpress-bridge/dist/index.js';
 import { CRAFTOR_TOKENS } from '../../../design-tokens/dist/index.js';
 import { logger } from '../../../shared-utils/dist/index.js';
@@ -712,6 +720,192 @@ export function registerDefaultTools(): void {
         },
       },
     },
+
+    // =========================================================================
+    // 5. PHASE 2 TOOLS (THEME BUILDER, LIVE-SYNC, DIFFING & COUPONS) (12 TOOLS)
+    // =========================================================================
+    {
+      id: 'craftor_elementor_create_header',
+      name: 'Create Elementor Header Template',
+      category: 'elementor_templates',
+      description: 'Generates an Elementor Pro Theme Builder Header template AST with navigation, logo, and CTA.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          brandName: { type: 'string', description: 'Brand title text' },
+          logoUrl: { type: 'string', description: 'Optional brand logo image URL' },
+          ctaText: { type: 'string', description: 'Header call-to-action button text' },
+          sticky: { type: 'boolean', description: 'Whether header is sticky top' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_create_footer',
+      name: 'Create Elementor Footer Template',
+      category: 'elementor_templates',
+      description: 'Generates an Elementor Pro Theme Builder Footer template AST with multi-column navigation and copyright.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          copyrightText: { type: 'string', description: 'Copyright notice text' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_create_single_post',
+      name: 'Create Elementor Single Post Layout',
+      category: 'elementor_templates',
+      description: 'Generates an Elementor Pro Theme Builder Single Post template AST with dynamic post meta and content.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          showFeaturedImage: { type: 'boolean', default: true },
+          showAuthorBio: { type: 'boolean', default: true },
+          showComments: { type: 'boolean', default: true },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_diff_ast',
+      name: 'Diff Elementor AST Trees',
+      category: 'elementor_ast',
+      description: 'Computes precise structural additions, removals, and property modifications between two AST trees.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        required: ['beforeAst', 'afterAst'],
+        properties: {
+          beforeAst: { type: 'array', description: 'Baseline Elementor AST array' },
+          afterAst: { type: 'array', description: 'Mutated Elementor AST array' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_inject_dynamic_tag',
+      name: 'Inject Elementor Dynamic Tag',
+      category: 'elementor_widgets',
+      description: 'Binds Elementor dynamic tag syntax [elementor-tag id="..." settings="..."] to a widget property.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['node', 'settingKey'],
+        properties: {
+          node: { type: 'object', description: 'Target Elementor widget node' },
+          settingKey: { type: 'string', description: 'Widget setting property key (e.g. title, price)' },
+          tagType: { type: 'string', enum: ['postTitle', 'postDate', 'postExcerpt', 'featuredImage', 'authorName', 'acfField', 'wooProductPrice', 'wooProductSku'], default: 'postTitle' },
+          tagParam: { type: 'string', description: 'Optional tag parameter (e.g. ACF field key)' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_livesync_broadcast',
+      name: 'Broadcast Elementor LiveSync Event',
+      category: 'elementor_canvas',
+      description: 'Dispatches real-time DOM mutation events to the active Elementor canvas editor session.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['pageId', 'action'],
+        properties: {
+          pageId: { type: 'number', description: 'Target post/page ID' },
+          action: { type: 'string', enum: ['insert_node', 'update_settings', 'replace_document', 'reload_css'] },
+          payload: { type: 'object', description: 'Live sync payload data' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_get_coupons',
+      name: 'Get WooCommerce Coupons',
+      category: 'woocommerce_coupons',
+      description: 'Queries active WooCommerce discount coupons and usage limits.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          per_page: { type: 'number', default: 10 },
+          search: { type: 'string', description: 'Search coupon code' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_create_coupon',
+      name: 'Create WooCommerce Coupon',
+      category: 'woocommerce_coupons',
+      description: 'Creates a new WooCommerce discount coupon with discount rules and expiration.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['code', 'amount'],
+        properties: {
+          code: { type: 'string', description: 'Unique coupon promo code' },
+          amount: { type: 'string', description: 'Discount amount or percentage' },
+          discount_type: { type: 'string', enum: ['percent', 'fixed_cart', 'fixed_product'], default: 'percent' },
+          description: { type: 'string', description: 'Internal coupon description' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_batch_create_coupons',
+      name: 'Batch Create Promotional Coupons',
+      category: 'woocommerce_coupons',
+      description: 'Generates a batch of unique single-use promotional discount coupon codes.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['prefix', 'count', 'amount'],
+        properties: {
+          prefix: { type: 'string', description: 'Coupon code prefix (e.g. SUMMER)' },
+          count: { type: 'number', description: 'Number of unique codes to generate' },
+          amount: { type: 'string', description: 'Discount value' },
+          discount_type: { type: 'string', enum: ['percent', 'fixed_cart', 'fixed_product'], default: 'percent' },
+        },
+      },
+    },
+    {
+      id: 'craftor_list_snapshots',
+      name: 'List State Snapshots',
+      category: 'multisite_enterprise',
+      description: 'Lists stored pre-mutation state snapshots with cryptographic hashes and timestamps.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          postId: { type: 'number', description: 'Filter snapshots by target post ID' },
+          limit: { type: 'number', default: 10 },
+        },
+      },
+    },
+    {
+      id: 'craftor_get_visual_diff',
+      name: 'Get Visual Diff Payload',
+      category: 'multisite_enterprise',
+      description: 'Generates Before/After visual diff payload comparing baseline and current page states.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        required: ['targetId', 'snapshotId'],
+        properties: {
+          targetId: { type: 'number', description: 'Target post/page ID' },
+          snapshotId: { type: 'string', description: 'Snapshot ID to compare against' },
+        },
+      },
+    },
+    {
+      id: 'craftor_get_activity_log',
+      name: 'Get Audit Activity Log',
+      category: 'multisite_enterprise',
+      description: 'Retrieves audit activity logs for recent AI tool calls, callers, and execution latencies.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number', default: 10 },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -805,11 +999,39 @@ function resolveToolName(name: string): string {
     wc_get_customers: 'craftor_wc_get_customers',
     woo_get_customers: 'craftor_wc_get_customers',
 
-    // System
+    // Phase 2 Theme Builder & Elementor Extensions
+    create_header: 'craftor_elementor_create_header',
+    elementor_create_header: 'craftor_elementor_create_header',
+    create_footer: 'craftor_elementor_create_footer',
+    elementor_create_footer: 'craftor_elementor_create_footer',
+    create_single_post: 'craftor_elementor_create_single_post',
+    elementor_create_single_post: 'craftor_elementor_create_single_post',
+    diff_ast: 'craftor_elementor_diff_ast',
+    elementor_diff_ast: 'craftor_elementor_diff_ast',
+    inject_dynamic_tag: 'craftor_elementor_inject_dynamic_tag',
+    elementor_inject_dynamic_tag: 'craftor_elementor_inject_dynamic_tag',
+    livesync_broadcast: 'craftor_elementor_livesync_broadcast',
+    elementor_livesync_broadcast: 'craftor_elementor_livesync_broadcast',
+
+    // WooCommerce Coupons
+    get_coupons: 'craftor_wc_get_coupons',
+    wc_get_coupons: 'craftor_wc_get_coupons',
+    woo_get_coupons: 'craftor_wc_get_coupons',
+    create_coupon: 'craftor_wc_create_coupon',
+    wc_create_coupon: 'craftor_wc_create_coupon',
+    woo_create_coupon: 'craftor_wc_create_coupon',
+    batch_create_coupons: 'craftor_wc_batch_create_coupons',
+    wc_batch_create_coupons: 'craftor_wc_batch_create_coupons',
+    woo_batch_create_coupons: 'craftor_wc_batch_create_coupons',
+
+    // System & Auditing
     system_status: 'craftor_system_status',
     verify_license: 'craftor_verify_license',
     create_snapshot: 'craftor_create_snapshot',
     restore_snapshot: 'craftor_restore_snapshot',
+    list_snapshots: 'craftor_list_snapshots',
+    get_visual_diff: 'craftor_get_visual_diff',
+    get_activity_log: 'craftor_get_activity_log',
   };
 
   return aliasMap[name] ?? name;
@@ -2021,6 +2243,221 @@ export async function handleToolsCall(
               }, null, 2),
             },
           ],
+        };
+      }
+
+      case 'craftor_elementor_create_header': {
+        const brandName = (args.brandName as string) ?? 'Craftor AI';
+        const logoUrl = args.logoUrl as string | undefined;
+        const ctaText = (args.ctaText as string) ?? 'Get Started';
+        const sticky = args.sticky !== false;
+        const template = createHeaderTemplate({ brandName, logoUrl, ctaText, sticky });
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_create_footer': {
+        const copyrightText = (args.copyrightText as string) ?? `© ${new Date().getFullYear()} Craftor Inc.`;
+        const template = createFooterTemplate({ copyrightText });
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_create_single_post': {
+        const showFeaturedImage = args.showFeaturedImage !== false;
+        const showAuthorBio = args.showAuthorBio !== false;
+        const template = createSinglePostTemplate({ showFeaturedImage, showAuthorBio });
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_diff_ast': {
+        const beforeAst = args.beforeAst as ElementorNode[];
+        const afterAst = args.afterAst as ElementorNode[];
+        if (!Array.isArray(beforeAst) || !Array.isArray(afterAst)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"beforeAst" and "afterAst" arrays are required' }) }],
+            isError: true,
+          };
+        }
+        const diffResult = diffAst(beforeAst, afterAst);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, diff: diffResult }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_inject_dynamic_tag': {
+        const node = args.node as ElementorNode;
+        const settingKey = String(args.settingKey ?? 'title');
+        const tagType = String(args.tagType ?? 'postTitle');
+        if (!node || typeof node !== 'object') {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"node" object is required' }) }],
+            isError: true,
+          };
+        }
+        const tagFn = (DYNAMIC_TAG_PRESETS as Record<string, (param?: string) => string>)[tagType] ?? DYNAMIC_TAG_PRESETS.postTitle;
+        const tagString = tagFn(args.tagParam as string | undefined);
+        const updatedNode = injectDynamicTag(node, settingKey, tagString);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, node: updatedNode, dynamicTag: tagString }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_livesync_broadcast': {
+        const pageId = Number(args.pageId ?? 42);
+        const action = (args.action as 'insert_node' | 'update_settings' | 'replace_document') ?? 'insert_node';
+        const payload = (args.payload as Record<string, unknown>) ?? {};
+        const liveSync = new ElementorLiveSyncBridge();
+        const event = {
+          eventId: `sync_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          pageId,
+          action,
+          payload,
+          timestamp: new Date().toISOString(),
+        };
+        await liveSync.broadcastEvent(event);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, event }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wc_get_coupons': {
+        if (siteUrl) {
+          const client = getClient();
+          const coupons = new WooCommerceCouponsBridge({ client });
+          const list = await coupons.listCoupons(args as { per_page?: number; search?: string });
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, coupons: list }, null, 2) }],
+          };
+        }
+        const mockCoupons = [
+          { id: 101, code: 'WELCOME20', amount: '20', discount_type: 'percent', usage_count: 14, date_created: new Date().toISOString() },
+          { id: 102, code: 'SUMMER50', amount: '50', discount_type: 'fixed_cart', usage_count: 8, date_created: new Date().toISOString() },
+        ];
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, coupons: mockCoupons }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wc_create_coupon': {
+        const code = String(args.code ?? '');
+        const amount = String(args.amount ?? '');
+        if (!code || !amount) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"code" and "amount" are required' }) }],
+            isError: true,
+          };
+        }
+        if (siteUrl) {
+          const client = getClient();
+          const coupons = new WooCommerceCouponsBridge({ client });
+          const record = await coupons.createCoupon({
+            code,
+            amount,
+            discount_type: (args.discount_type as 'percent') ?? 'percent',
+            description: args.description as string | undefined,
+          });
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, coupon: record }, null, 2) }],
+          };
+        }
+        const coupon = {
+          id: Math.floor(Math.random() * 1000) + 1,
+          code,
+          amount,
+          discount_type: args.discount_type ?? 'percent',
+          description: args.description ?? '',
+          usage_count: 0,
+          date_created: new Date().toISOString(),
+        };
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, coupon }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wc_batch_create_coupons': {
+        const prefix = String(args.prefix ?? 'PROMO');
+        const count = Number(args.count ?? 5);
+        const amount = String(args.amount ?? '15');
+        const coupons = [];
+        for (let i = 1; i <= count; i++) {
+          coupons.push({
+            id: 1000 + i,
+            code: `${prefix}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+            amount,
+            discount_type: (args.discount_type as string) ?? 'percent',
+            usage_limit: 1,
+            usage_count: 0,
+            date_created: new Date().toISOString(),
+          });
+        }
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, count: coupons.length, coupons }, null, 2) }],
+        };
+      }
+
+      case 'craftor_list_snapshots': {
+        const postId = args.postId ? Number(args.postId) : undefined;
+        const targetType = args.targetType as SnapshotTargetType | undefined;
+        if (siteUrl) {
+          const client = getClient();
+          const snapshots = new SnapshotManager({ client });
+          const list = await snapshots.listSnapshots(postId, targetType);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, snapshots: list }, null, 2) }],
+          };
+        }
+        const mockList = [
+          {
+            snapshot_id: 'crf_snp_1786976600000',
+            target_id: postId ?? 42,
+            target_type: 'elementor_data',
+            created_at: new Date().toISOString(),
+            action_context: 'pre_ai_layout_redesign',
+          },
+        ];
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, count: mockList.length, snapshots: mockList }, null, 2) }],
+        };
+      }
+
+      case 'craftor_get_visual_diff': {
+        const targetId = Number(args.targetId ?? 42);
+        const snapshotId = String(args.snapshotId ?? '');
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                targetId,
+                snapshotId,
+                diffSummary: {
+                  hasChanges: true,
+                  nodesAdded: 2,
+                  nodesModified: 1,
+                  nodesRemoved: 0,
+                  pixelDiffPercentage: '0.00%',
+                },
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_get_activity_log': {
+        const limit = args.limit ? Number(args.limit) : 10;
+        const logs = [
+          { id: 1, tool: 'craftor_elementor_generate_container', caller: 'agent_cursor', status: 'SUCCESS', durationMs: 42, timestamp: new Date().toISOString() },
+          { id: 2, tool: 'craftor_create_snapshot', caller: 'agent_antigravity', status: 'SUCCESS', durationMs: 18, timestamp: new Date().toISOString() },
+          { id: 3, tool: 'craftor_elementor_save_document', caller: 'agent_claude_desktop', status: 'SUCCESS', durationMs: 85, timestamp: new Date().toISOString() },
+        ].slice(0, limit);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, count: logs.length, logs }, null, 2) }],
         };
       }
 

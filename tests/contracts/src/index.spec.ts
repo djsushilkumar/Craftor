@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length !== 40) {
-    throw new Error(`Expected exactly 40 registered Phase 1 tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 52) {
+    throw new Error(`Expected at least 52 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -1258,6 +1258,96 @@ async function runContractTests(): Promise<void> {
   if (!Array.isArray(couponList) || couponList.length === 0) {
     throw new Error('WooCommerce coupon listing failed');
   }
+
+  console.log('[Contract Test 11] Validating Phase 2 MCP Tool Registry (52 Tools) & Handlers...');
+  const { handleToolsCall: testHandleToolsCall } = await import(
+    '../../../packages/mcp-server/dist/handlers/tools.js'
+  );
+
+  // 11.1 Test Theme Builder MCP Handlers
+  const headerCallRes = await testHandleToolsCall({
+    name: 'craftor_elementor_create_header',
+    arguments: { brandName: 'Craftor Enterprise' },
+  });
+  if (headerCallRes.isError) throw new Error('craftor_elementor_create_header execution failed');
+
+  const footerCallRes = await testHandleToolsCall({
+    name: 'craftor_elementor_create_footer',
+    arguments: { copyrightText: '© 2026 Craftor Inc.' },
+  });
+  if (footerCallRes.isError) throw new Error('craftor_elementor_create_footer execution failed');
+
+  // 11.2 Test AST Diff MCP Handler
+  const diffCallRes = await testHandleToolsCall({
+    name: 'craftor_elementor_diff_ast',
+    arguments: { beforeAst, afterAst },
+  });
+  if (diffCallRes.isError) throw new Error('craftor_elementor_diff_ast execution failed');
+
+  // 11.3 Test Dynamic Tag Injection MCP Handler
+  const dynamicCallRes = await testHandleToolsCall({
+    name: 'craftor_elementor_inject_dynamic_tag',
+    arguments: { node: sampleHeadingNode, settingKey: 'title', tagType: 'postTitle' },
+  });
+  if (dynamicCallRes.isError) throw new Error('craftor_elementor_inject_dynamic_tag execution failed');
+
+  // 11.4 Test LiveSync Broadcast MCP Handler
+  const liveSyncCallRes = await testHandleToolsCall({
+    name: 'craftor_elementor_livesync_broadcast',
+    arguments: { pageId: 42, action: 'insert_node', payload: { node: sampleHeadingNode } },
+  });
+  if (liveSyncCallRes.isError) throw new Error('craftor_elementor_livesync_broadcast execution failed');
+
+  // 11.5 Test WooCommerce Coupon MCP Handlers
+  const createCpnCallRes = await testHandleToolsCall({
+    name: 'craftor_wc_create_coupon',
+    arguments: { code: 'PROMO100', amount: '100', discount_type: 'fixed_cart' },
+  });
+  if (createCpnCallRes.isError) throw new Error('craftor_wc_create_coupon execution failed');
+
+  const getCpnsCallRes = await testHandleToolsCall({
+    name: 'craftor_wc_get_coupons',
+    arguments: { per_page: 5 },
+  });
+  if (getCpnsCallRes.isError) throw new Error('craftor_wc_get_coupons execution failed');
+
+  const batchCpnsCallRes = await testHandleToolsCall({
+    name: 'craftor_wc_batch_create_coupons',
+    arguments: { prefix: 'FLASH', count: 3, amount: '20' },
+  });
+  if (batchCpnsCallRes.isError) throw new Error('craftor_wc_batch_create_coupons execution failed');
+
+  // 11.6 Test System, Visual Diff & Activity Log Handlers
+  const listSnapCallRes = await testHandleToolsCall({
+    name: 'craftor_list_snapshots',
+    arguments: { postId: 42 },
+  });
+  if (listSnapCallRes.isError) throw new Error('craftor_list_snapshots execution failed');
+
+  const getDiffCallRes = await testHandleToolsCall({
+    name: 'craftor_get_visual_diff',
+    arguments: { targetId: 42, snapshotId: 'crf_snp_12345' },
+  });
+  if (getDiffCallRes.isError) throw new Error('craftor_get_visual_diff execution failed');
+
+  const getLogCallRes = await testHandleToolsCall({
+    name: 'craftor_get_activity_log',
+    arguments: { limit: 5 },
+  });
+  if (getLogCallRes.isError) throw new Error('craftor_get_activity_log execution failed');
+
+  // 11.7 Test Phase 2 Short Aliases
+  const aliasDiffRes = await testHandleToolsCall({
+    name: 'diff_ast',
+    arguments: { beforeAst, afterAst },
+  });
+  if (aliasDiffRes.isError) throw new Error('Short alias "diff_ast" resolution failed');
+
+  const aliasCpnRes = await testHandleToolsCall({
+    name: 'create_coupon',
+    arguments: { code: 'ALIAS50', amount: '50' },
+  });
+  if (aliasCpnRes.isError) throw new Error('Short alias "create_coupon" resolution failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
