@@ -2,7 +2,10 @@
   "extends": "../../configs/tsconfig/nextjs.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "noEmit": false,
+    "declaration": true
   },
   "include": ["src/**/*"]
 }
+

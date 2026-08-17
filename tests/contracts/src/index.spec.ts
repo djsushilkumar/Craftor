@@ -1674,6 +1674,58 @@ async function runContractTests(): Promise<void> {
     }
   }
 
+  console.log('[Contract Test 18] Validating Phase 6 Cloud Dashboard, Web Studio & AST Canvas...');
+  const { SiteMonitor, AstCanvasRenderer, PromptPlayground, PaletteManager, DashboardApp } = await import('../../../apps/dashboard/dist/index.js');
+
+  // 18.1 Test SiteMonitor
+  const monitor = new SiteMonitor();
+  const sites = monitor.getSites();
+  if (sites.length < 2) {
+    throw new Error('SiteMonitor default tenants missing');
+  }
+  const siteHtml = monitor.renderHtml();
+  if (!siteHtml.includes('site-monitor-grid') || !siteHtml.includes('Apex Digital Agency')) {
+    throw new Error('SiteMonitor renderHtml failed');
+  }
+
+  // 18.2 Test AstCanvasRenderer
+  const renderer = new AstCanvasRenderer();
+  const canvasHtml = renderer.renderCanvas([
+    {
+      id: 'node_test_1',
+      elType: 'container',
+      settings: { flex_direction: 'row' },
+      elements: [
+        { id: 'hdg_1', elType: 'widget', widgetType: 'heading', settings: { title: 'Test Title' }, elements: [] },
+        { id: 'btn_1', elType: 'widget', widgetType: 'button', settings: { text: 'Test Action' }, elements: [] },
+      ],
+    },
+  ], 'mobile');
+  if (!canvasHtml.includes('375px') || !canvasHtml.includes('Test Title') || !canvasHtml.includes('Test Action')) {
+    throw new Error('AstCanvasRenderer renderCanvas failed');
+  }
+
+  // 18.3 Test PromptPlayground
+  const playground = new PromptPlayground();
+  const simResult = playground.simulateSynthesis('High converting SaaS landing page');
+  if (!simResult.ast || simResult.ast.length === 0 || playground.getHistory().length !== 1) {
+    throw new Error('PromptPlayground simulation failed');
+  }
+
+  // 18.4 Test PaletteManager
+  const palette = new PaletteManager();
+  const paletteColors = palette.getColors();
+  if (paletteColors.length < 5 || !paletteColors.every((c: { wcagPass: boolean }) => c.wcagPass)) {
+    throw new Error('PaletteManager WCAG compliance validation failed');
+  }
+
+  // 18.5 Test DashboardApp Full Page
+  const app = new DashboardApp();
+  const fullHtml = app.renderFullPage();
+  if (!fullHtml.includes('Craftor AI Studio') || !fullHtml.includes('68 MCP Tools Active')) {
+    throw new Error('DashboardApp renderFullPage failed');
+  }
+
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 
@@ -1683,4 +1735,5 @@ runContractTests().then(() => {
   console.error('[Contract Test Failure]', err);
   process.exit(1);
 });
+
 
