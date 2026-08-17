@@ -6,7 +6,9 @@ packages:
   - 'tests/*'
 
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true
+  turbo: true
 
 onlyBuiltDependencies:
   - esbuild
+  - turbo
