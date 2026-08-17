@@ -42,11 +42,11 @@ export async function runMcpHandshakeE2e(): Promise<{ name: string; passed: bool
     throw new Error(`MCP ping failed: ${JSON.stringify(pingRes.error)}`);
   }
 
-  // 3. Complete 74+ Tool Catalog Discovery
+  // 3. Complete 78+ Tool Catalog Discovery
   const toolsList = await handleToolsList();
   assertions++;
-  if (!Array.isArray(toolsList.tools) || toolsList.tools.length < 74) {
-    throw new Error(`Expected at least 74 registered tools in tools/list, got: ${toolsList.tools.length}`);
+  if (!Array.isArray(toolsList.tools) || toolsList.tools.length < 78) {
+    throw new Error(`Expected at least 78 registered tools in tools/list, got: ${toolsList.tools.length}`);
   }
 
   // Validate every tool has valid inputSchema

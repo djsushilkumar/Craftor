@@ -41,7 +41,9 @@ const BUILD_TARGETS = [
   'services/billing',
   'services/update-service',
   'services/notification-service',
+  'services/self-healing',
   'packages/mcp-server',
+
 
 
   // 5. Applications

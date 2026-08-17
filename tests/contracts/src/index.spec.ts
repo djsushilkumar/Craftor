@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length < 74) {
-    throw new Error(`Expected at least 74 registered MCP tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 78) {
+    throw new Error(`Expected at least 78 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -1829,6 +1829,83 @@ async function runContractTests(): Promise<void> {
     arguments: { node: { id: 'w1', elType: 'widget', settings: {}, elements: [] }, effects: { entranceAnimation: 'fadeInUp' } },
   });
   if (mcpMotion.isError) throw new Error('apply_motion_effects alias failed');
+
+  console.log('[Contract Test 20] Validating Phase 8 Self-Healing & Performance Auto-Tuner...');
+  const { AutoRepairEngine, PhpErrorTriage, PerformanceAutoTuner } = await import(
+    '../../../services/self-healing/dist/index.js'
+  );
+
+
+  // 20.1 Test AutoRepairEngine
+  const repairEngine = new AutoRepairEngine();
+  const corruptAst = [
+    { elType: 'invalid_type', settings: { text: 'Bad Node' } }, // missing ID, bad elType
+    { id: 'dup_id', elType: 'widget', widgetType: 'heading', settings: {} },
+    { id: 'dup_id', elType: 'widget', widgetType: 'heading', settings: {} }, // duplicate ID
+  ];
+  const repairRes = repairEngine.repairAst(corruptAst);
+  if (!repairRes.repaired || repairRes.cleanAst.length !== 3 || repairRes.cleanAst[0]?.elType !== 'container') {
+    throw new Error('AutoRepairEngine repairAst failed');
+  }
+
+  // 20.2 Test PhpErrorTriage
+  const errorTriage = new PhpErrorTriage();
+  const memTriage = errorTriage.triageError({
+    errorCode: 1,
+    errorMessage: 'Fatal error: Allowed memory size of 134217728 bytes exhausted',
+    errorFile: 'wp-includes/plugin.php',
+    errorLine: 450,
+  });
+  if (memTriage.mitigationAction !== 'increase_memory_limit' || memTriage.severity !== 'fatal') {
+    throw new Error('PhpErrorTriage memory exhaustion triage failed');
+  }
+
+  const corruptTriage = errorTriage.triageError({
+    errorCode: 1,
+    errorMessage: 'Uncaught Error: json_decode error in _elementor_data corrupted string',
+    errorFile: 'elementor/includes/db.php',
+    errorLine: 120,
+  });
+  if (corruptTriage.mitigationAction !== 'restore_snapshot') {
+    throw new Error('PhpErrorTriage postmeta corruption triage failed');
+  }
+
+  // 20.3 Test PerformanceAutoTuner
+  const perfTuner = new PerformanceAutoTuner();
+  const tuneRes = perfTuner.autoTune({ siteUrl: 'https://craftor.dev', cssPrintMethod: 'external' });
+  if (!tuneRes.optimized || tuneRes.estimatedScoreIncrease <= 0 || !tuneRes.cdnPurged) {
+    throw new Error('PerformanceAutoTuner autoTune failed');
+  }
+
+  const cdnRes = perfTuner.purgeCdn({ provider: 'cloudflare', purgeAll: true });
+  if (!cdnRes.success || cdnRes.purgedItemsCount !== 9999) {
+    throw new Error('PerformanceAutoTuner purgeCdn failed');
+  }
+
+  // 20.4 Test Phase 8 MCP Tool Calls & Aliases
+  const mcpRepair = await testHandleToolsCall({
+    name: 'repair_ast',
+    arguments: { rawAst: [{ settings: { foo: 'bar' } }] },
+  });
+  if (mcpRepair.isError) throw new Error('repair_ast alias failed');
+
+  const mcpTriage = await testHandleToolsCall({
+    name: 'triage_error',
+    arguments: { errorContext: { errorCode: 500, errorMessage: 'Allowed memory size exhausted', errorFile: 'wp-settings.php', errorLine: 10 } },
+  });
+  if (mcpTriage.isError) throw new Error('triage_error alias failed');
+
+  const mcpPerf = await testHandleToolsCall({
+    name: 'auto_tune_performance',
+    arguments: { options: { siteUrl: 'https://mystore.com', cssPrintMethod: 'external' } },
+  });
+  if (mcpPerf.isError) throw new Error('auto_tune_performance alias failed');
+
+  const mcpCdn = await testHandleToolsCall({
+    name: 'purge_cdn_cache',
+    arguments: { request: { provider: 'litespeed', purgeAll: true } },
+  });
+  if (mcpCdn.isError) throw new Error('purge_cdn_cache alias failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }

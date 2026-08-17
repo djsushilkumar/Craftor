@@ -62,6 +62,14 @@ import {
 } from '../../../wordpress-bridge/dist/index.js';
 import { WhiteLabelManager, QuotaEnforcer } from '../../../../services/licensing/dist/index.js';
 import { TelemetryCollector } from '../../../../services/analytics/dist/index.js';
+import {
+  AutoRepairEngine,
+  PhpErrorTriage,
+  PerformanceAutoTuner,
+  PhpErrorContext,
+  PerformanceTuneOptions,
+  CdnPurgeRequest,
+} from '../../../../services/self-healing/dist/index.js';
 import { CRAFTOR_TOKENS } from '../../../design-tokens/dist/index.js';
 import { logger } from '../../../shared-utils/dist/index.js';
 import { createInvalidParamsError, createToolNotFoundError, McpError } from '../errors.js';
@@ -1289,6 +1297,66 @@ export function registerDefaultTools(): void {
         },
       },
     },
+
+    // =========================================================================
+    // 10. PHASE 8 SELF-HEALING DAEMON & PERFORMANCE AUTO-TUNER
+    // =========================================================================
+    {
+      id: 'craftor_self_healing_repair_ast',
+      name: 'Self-Healing AST Auto-Repair',
+      category: 'elementor_styling',
+      description: 'Scans and automatically repairs corrupt Elementor AST trees, missing UUIDs, and broken structures.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['rawAst'],
+        properties: {
+          rawAst: { type: 'array' },
+        },
+      },
+    },
+    {
+      id: 'craftor_self_healing_triage_error',
+      name: 'PHP Fatal Error & Exception Triage',
+      category: 'site_operations',
+      description: 'Triages PHP fatal errors, memory exhaustion, and exception backtraces into actionable mitigation actions.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['errorContext'],
+        properties: {
+          errorContext: { type: 'object' },
+        },
+      },
+    },
+    {
+      id: 'craftor_performance_auto_tune',
+      name: 'Performance Auto-Tuner',
+      category: 'site_operations',
+      description: 'Optimizes Elementor CSS print methods, font display swapping, and image lazy loading for 95+ PageSpeed scores.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['options'],
+        properties: {
+          options: { type: 'object' },
+        },
+      },
+    },
+    {
+      id: 'craftor_cdn_purge_cache',
+      name: 'Purge CDN & Edge Cache',
+      category: 'site_operations',
+      description: 'Dispatches cache purge requests to Cloudflare, WP Rocket, or LiteSpeed cache layers.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['request'],
+        properties: {
+          request: { type: 'object' },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1436,6 +1504,12 @@ function resolveToolName(name: string): string {
     translate_page_ast: 'craftor_multilingual_translate_page',
     generate_popup_template: 'craftor_elementor_generate_popup',
     apply_motion_effects: 'craftor_elementor_apply_motion_effects',
+
+    // Phase 8 Self-Healing & Auto-Tuning Tools
+    repair_ast: 'craftor_self_healing_repair_ast',
+    triage_error: 'craftor_self_healing_triage_error',
+    auto_tune_performance: 'craftor_performance_auto_tune',
+    purge_cdn_cache: 'craftor_cdn_purge_cache',
 
     // System & Auditing
     system_status: 'craftor_system_status',
@@ -3139,6 +3213,45 @@ export async function handleToolsCall(
         const updatedNode = pop.applyMotionEffects(node, effects);
         return {
           content: [{ type: 'text', text: JSON.stringify({ success: true, node: updatedNode }, null, 2) }],
+        };
+      }
+
+      // =======================================================================
+      // PHASE 8 SELF-HEALING & PERFORMANCE HANDLERS
+      // =======================================================================
+      case 'craftor_self_healing_repair_ast': {
+        const engine = new AutoRepairEngine();
+        const rawAst = (args.rawAst as unknown[]) ?? [];
+        const res = engine.repairAst(rawAst);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_self_healing_triage_error': {
+        const triage = new PhpErrorTriage();
+        const errorContext = (args.errorContext as PhpErrorContext) ?? { errorCode: 500, errorMessage: 'Unknown', errorFile: 'index.php', errorLine: 1 };
+        const res = triage.triageError(errorContext);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_performance_auto_tune': {
+        const tuner = new PerformanceAutoTuner();
+        const opts = (args.options as PerformanceTuneOptions) ?? { siteUrl: 'https://example.com' };
+        const res = tuner.autoTune(opts);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_cdn_purge_cache': {
+        const tuner = new PerformanceAutoTuner();
+        const req = (args.request as CdnPurgeRequest) ?? { provider: 'cloudflare', purgeAll: true };
+        const res = tuner.purgeCdn(req);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
         };
       }
 
