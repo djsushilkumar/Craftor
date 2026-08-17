@@ -6,7 +6,8 @@
     "@craftor/shared-types": "workspace:*",
     "@craftor/schemas": "workspace:*",
     "@craftor/mcp-server": "workspace:*",
-    "@craftor/wordpress-bridge": "workspace:*"
+    "@craftor/wordpress-bridge": "workspace:*",
+    "@craftor/service-authentication": "workspace:*"
   },
   "scripts": {
     "test": "node dist/index.spec.js",

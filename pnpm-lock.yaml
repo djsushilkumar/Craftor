@@ -418,6 +418,9 @@ importers:
       '@craftor/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
+      '@craftor/service-authentication':
+        specifier: workspace:*
+        version: link:../../services/authentication
       '@craftor/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types

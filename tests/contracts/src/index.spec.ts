@@ -548,6 +548,190 @@ async function runContractTests(): Promise<void> {
     throw new Error(`Expected multiple fetch calls, but only recorded: ${fetchCallCount}`);
   }
 
+  console.log('[Contract Test 8B] Validating WordPress Authentication & Security Layer...');
+  const {
+    verifyApplicationPassword,
+    verifyBearerToken,
+    createJwt,
+    verifyJwt,
+    createWordPressNonce,
+    verifyWordPressNonce,
+    AUTH_ERROR_CODES,
+    WordPressSecurityError,
+    TokenManager,
+    currentUserCan,
+    assertCapability,
+    grantCapability,
+    SessionManager,
+  } = await import('../../../services/authentication/dist/index.js');
+  const { generateSecureKey } = await import('../../../packages/shared-utils/dist/index.js');
+
+  // 8B.1 Application Password Verification
+  const appPassValid = verifyApplicationPassword(
+    'admin_user',
+    'abcd 1234 efgh 5678',
+    'admin_user',
+    'abcd1234efgh5678',
+  );
+  if (!appPassValid) {
+    throw new Error('Application Password verification failed');
+  }
+
+  try {
+    verifyApplicationPassword('admin_user', 'wrong_pass', 'admin_user', 'abcd1234efgh5678');
+    throw new Error('Should have rejected wrong password');
+  } catch (err) {
+    if (!(err instanceof WordPressSecurityError) || err.code !== AUTH_ERROR_CODES.UNAUTHORIZED) {
+      throw new Error(`Expected UNAUTHORIZED (-32001) for wrong password, got: ${err}`);
+    }
+  }
+
+  // 8B.2 Bearer Token Verification
+  const bearerValid = verifyBearerToken('Bearer crf_live_secret_token_123', 'crf_live_secret_token_123');
+  if (!bearerValid) {
+    throw new Error('Bearer token verification failed');
+  }
+
+  try {
+    verifyBearerToken('Bearer invalid_token', 'crf_live_secret_token_123');
+    throw new Error('Should have rejected invalid bearer token');
+  } catch (err) {
+    if (!(err instanceof WordPressSecurityError) || err.code !== AUTH_ERROR_CODES.INVALID_TOKEN) {
+      throw new Error(`Expected INVALID_TOKEN (-32003), got: ${err}`);
+    }
+  }
+
+  // 8B.3 JWT Authentication & Expiry
+  const jwtSecret = 'craftor-jwt-hmac-secret-key-32chars!';
+  const validJwt = createJwt({ sub: 'user_42', role: 'administrator' }, jwtSecret, 3600);
+  const decodedJwt = verifyJwt(validJwt, jwtSecret);
+  if (decodedJwt.sub !== 'user_42' || decodedJwt.role !== 'administrator') {
+    throw new Error('JWT payload verification failed');
+  }
+
+  // JWT with expired timestamp
+  const expiredJwt = createJwt({ sub: 'user_42', role: 'administrator' }, jwtSecret, -100);
+  try {
+    verifyJwt(expiredJwt, jwtSecret);
+    throw new Error('Should have rejected expired JWT');
+  } catch (err) {
+    if (!(err instanceof WordPressSecurityError) || err.code !== AUTH_ERROR_CODES.EXPIRED_SESSION) {
+      throw new Error(`Expected EXPIRED_SESSION (-32004) for expired JWT, got: ${err}`);
+    }
+  }
+
+  // JWT with invalid signature
+  try {
+    verifyJwt(validJwt, 'wrong-secret-key-for-testing!');
+    throw new Error('Should have rejected JWT with wrong secret');
+  } catch (err) {
+    if (!(err instanceof WordPressSecurityError) || err.code !== AUTH_ERROR_CODES.INVALID_TOKEN) {
+      throw new Error(`Expected INVALID_TOKEN (-32003) for bad signature, got: ${err}`);
+    }
+  }
+
+  // 8B.4 WordPress Nonce Creation and Constant-Time Validation
+  const nonceSecret = 'wp_auth_salt_xyz987';
+  const nowMs = Date.now();
+  const nonce = createWordPressNonce('craftor_save_layout', 'user_10', nonceSecret, nowMs);
+  const nonceResult = verifyWordPressNonce(nonce, 'craftor_save_layout', 'user_10', nonceSecret, nowMs);
+  if (nonceResult !== 1) {
+    throw new Error('WordPress Nonce validation in current window failed');
+  }
+
+  try {
+    verifyWordPressNonce('invalid_nonce', 'craftor_save_layout', 'user_10', nonceSecret, nowMs);
+    throw new Error('Should have rejected invalid nonce');
+  } catch (err) {
+    if (!(err instanceof WordPressSecurityError) || err.code !== AUTH_ERROR_CODES.NONCE_VALIDATION_FAILED) {
+      throw new Error(`Expected NONCE_VALIDATION_FAILED (-32005), got: ${err}`);
+    }
+  }
+
+  // 8B.5 TokenManager Lifecycle, Vault Encryption & Rotation
+  const tokenManager = new TokenManager({ defaultTtlMs: 3600000 });
+  const { rawToken, managedToken } = tokenManager.generateToken('agent_architect', 'administrator');
+  const validatedToken = tokenManager.validateToken(rawToken);
+  if (validatedToken.id !== managedToken.id || validatedToken.userId !== 'agent_architect') {
+    throw new Error('TokenManager validateToken failed');
+  }
+
+  // Token AES-256-GCM Vault Encryption & Decryption
+  const vaultKey = generateSecureKey();
+  const encrypted = tokenManager.encryptSecret(rawToken, vaultKey);
+  const decrypted = tokenManager.decryptSecret(encrypted, vaultKey);
+  if (decrypted !== rawToken) {
+    throw new Error('Token AES-256-GCM vault encryption/decryption roundtrip failed');
+  }
+
+  // Token Rotation
+  const rotated = tokenManager.rotateToken(rawToken);
+  if (rotated.rawToken === rawToken) {
+    throw new Error('Rotated token must generate a new unique secret');
+  }
+  try {
+    tokenManager.validateToken(rawToken);
+    throw new Error('Old rotated token must be revoked');
+  } catch (err) {
+    if (!(err instanceof WordPressSecurityError) || err.code !== AUTH_ERROR_CODES.INVALID_TOKEN) {
+      throw new Error(`Expected revoked token error (-32003), got: ${err}`);
+    }
+  }
+
+  // 8B.6 Capability Validation & RBAC
+  const adminUser = { id: 1, username: 'admin', role: 'administrator' as const };
+  const authorUser = { id: 2, username: 'author_john', role: 'author' as const };
+  const subscriberUser = { id: 3, username: 'sub_jane', role: 'subscriber' as const };
+
+  if (!currentUserCan(adminUser, 'manage_options') || !currentUserCan(adminUser, 'activate_plugins')) {
+    throw new Error('Admin capability check failed');
+  }
+  if (
+    !currentUserCan(authorUser, 'edit_posts') ||
+    currentUserCan(authorUser, 'edit_pages') ||
+    currentUserCan(authorUser, 'activate_plugins')
+  ) {
+    throw new Error('Author capability boundary check failed');
+  }
+  if (currentUserCan(subscriberUser, 'edit_posts')) {
+    throw new Error('Subscriber should not have edit_posts capability');
+  }
+
+  // Capability assertion throwing -32002
+  assertCapability(adminUser, 'manage_options');
+  try {
+    assertCapability(authorUser, 'manage_options');
+    throw new Error('Should have rejected manage_options for author');
+  } catch (err) {
+    if (!(err instanceof WordPressSecurityError) || err.code !== AUTH_ERROR_CODES.FORBIDDEN_CAPABILITY) {
+      throw new Error(`Expected FORBIDDEN_CAPABILITY (-32002), got: ${err}`);
+    }
+  }
+
+  // Custom capability grant
+  const upgradedAuthor = grantCapability(authorUser, 'edit_elementor_templates');
+  if (!currentUserCan(upgradedAuthor, 'edit_elementor_templates')) {
+    throw new Error('Grant capability check failed');
+  }
+
+  // 8B.7 SessionManager Lifecycle
+  const sessionManager = new SessionManager({ defaultTtlMs: 3600000 });
+  const session = sessionManager.createSession(adminUser);
+  const activeSession = sessionManager.validateSession(session.sessionId);
+  if (activeSession.sessionId !== session.sessionId || activeSession.user.username !== 'admin') {
+    throw new Error('SessionManager validateSession failed');
+  }
+
+  sessionManager.expireSession(session.sessionId);
+  try {
+    sessionManager.validateSession(session.sessionId);
+    throw new Error('Should have rejected expired session');
+  } catch (err) {
+    if (!(err instanceof WordPressSecurityError) || err.code !== AUTH_ERROR_CODES.EXPIRED_SESSION) {
+      throw new Error(`Expected EXPIRED_SESSION (-32004), got: ${err}`);
+    }
+  }
+
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 
