@@ -9,3 +9,7 @@ export class LicensingService {
     return { valid: true, tier: 'core' };
   }
 }
+
+export * from './white-label.js';
+export * from './quota-enforcer.js';
+

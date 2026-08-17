@@ -12,5 +12,7 @@ export * from './live-sync.js';
 export * from './coupons.js';
 export * from './multisite.js';
 export * from './local-llm.js';
+export * from './security-shield.js';
+
 
 
