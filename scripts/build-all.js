@@ -26,6 +26,7 @@ const BUILD_TARGETS = [
   'packages/agent-registry',
   'packages/elementor-ast',
   'packages/addon-sdk',
+  'packages/edge-runtime',
   'packages/client-adapters/cursor',
 
   'packages/client-adapters/claude-desktop',

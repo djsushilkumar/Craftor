@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: craftor-gateway-deployment
+  namespace: craftor-prod
+  labels:
+    app: craftor-gateway
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: craftor-gateway
+  template:
+    metadata:
+      labels:
+        app: craftor-gateway
+    spec:
+      containers:
+        - name: craftor-gateway
+          image: ghcr.io/djsushilkumar/craftor-gateway:1.0.0
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: craftor-gateway-service
+  namespace: craftor-prod
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 3000
+  selector:
+    app: craftor-gateway

@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length < 84) {
-    throw new Error(`Expected at least 84 registered MCP tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 86) {
+    throw new Error(`Expected at least 86 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -2068,6 +2068,58 @@ async function runContractTests(): Promise<void> {
     },
   });
   if (mcpCrdt.isError) throw new Error('sync_crdt_document alias failed');
+
+  console.log('[Contract Test 24] Validating Phase 12 Global Edge Mesh & Serverless Runtime...');
+  const {
+    EdgeMcpGateway,
+    EdgeCacheEngine,
+  } = await import('../../../packages/edge-runtime/dist/index.js');
+
+  // 24.1 Test EdgeCacheEngine
+  const edgeCache = new EdgeCacheEngine();
+  edgeCache.set('site:ast:10', { title: 'Cached AST' }, 60);
+  const cachedVal = edgeCache.get('site:ast:10') as { title: string } | null;
+  if (!cachedVal || cachedVal.title !== 'Cached AST') {
+    throw new Error('EdgeCacheEngine set/get failed');
+  }
+
+  // 24.2 Test EdgeMcpGateway
+  const gateway = new EdgeMcpGateway('iad-us-east', 'edge_node_test_1');
+  const routeRes = gateway.routeRequest(
+    {
+      requestId: 'test_req_edge',
+      clientIp: '127.0.0.1',
+      region: 'iad-us-east',
+      originUrl: 'https://craftor.ai',
+    },
+    'craftor_system_status',
+    {},
+  );
+  if (!routeRes.success || routeRes.region !== 'iad-us-east') {
+    throw new Error('EdgeMcpGateway routeRequest failed');
+  }
+
+  const nodeStatus = gateway.getNodeStatus();
+  if (nodeStatus.status !== 'healthy' || nodeStatus.region !== 'iad-us-east') {
+    throw new Error('EdgeMcpGateway getNodeStatus failed');
+  }
+
+  // 24.3 Test Phase 12 MCP Tool Calls & Aliases
+  const mcpEdgeRoute = await testHandleToolsCall({
+    name: 'route_edge_request',
+    arguments: {
+      originUrl: 'https://mystore.com',
+      method: 'craftor_get_posts',
+      region: 'iad-us-east',
+    },
+  });
+  if (mcpEdgeRoute.isError) throw new Error('route_edge_request alias failed');
+
+  const mcpEdgeStatus = await testHandleToolsCall({
+    name: 'get_edge_status',
+    arguments: {},
+  });
+  if (mcpEdgeStatus.isError) throw new Error('get_edge_status alias failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }

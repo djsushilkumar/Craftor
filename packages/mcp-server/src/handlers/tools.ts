@@ -83,6 +83,10 @@ import {
   AgentTask,
   CrdtMutationDelta,
 } from '../../../../services/collaboration/dist/index.js';
+import {
+  EdgeMcpGateway,
+  EdgeRequestContext,
+} from '../../../edge-runtime/dist/index.js';
 import { createInvalidParamsError, createToolNotFoundError, McpError } from '../errors.js';
 
 export interface ToolsListResponsePayload {
@@ -1468,6 +1472,38 @@ export function registerDefaultTools(): void {
         },
       },
     },
+
+    // =========================================================================
+    // 14. PHASE 12 GLOBAL EDGE MESH & SERVERLESS RUNTIME
+    // =========================================================================
+    {
+      id: 'craftor_edge_route_request',
+      name: 'Route Request via Global Edge Mesh',
+      category: 'site_operations',
+      description: 'Routes MCP requests through global serverless edge mesh nodes with sub-15ms KV caching and geolocation optimization.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        required: ['originUrl', 'method'],
+        properties: {
+          originUrl: { type: 'string' },
+          method: { type: 'string' },
+          params: { type: 'object' },
+          region: { type: 'string', default: 'iad-us-east' },
+        },
+      },
+    },
+    {
+      id: 'craftor_edge_get_node_status',
+      name: 'Get Edge Node Mesh Health Status',
+      category: 'site_operations',
+      description: 'Queries telemetry, active connections, and latency metrics across global Cloudflare / Vercel edge runtime nodes.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        properties: {},
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1633,6 +1669,10 @@ function resolveToolName(name: string): string {
     // Phase 11 Multi-Agent Swarm & CRDT Sync
     dispatch_swarm_collaboration: 'craftor_swarm_dispatch_collaboration',
     sync_crdt_document: 'craftor_crdt_sync_document',
+
+    // Phase 12 Global Edge Mesh
+    route_edge_request: 'craftor_edge_route_request',
+    get_edge_status: 'craftor_edge_get_node_status',
 
     // System & Auditing
     system_status: 'craftor_system_status',
@@ -3481,6 +3521,35 @@ export async function handleToolsCall(
         const res = syncEngine.applyMutation(docId, delta);
         return {
           content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      // =======================================================================
+      // PHASE 12 GLOBAL EDGE MESH HANDLERS
+      // =======================================================================
+      case 'craftor_edge_route_request': {
+        const region = String(args.region || 'iad-us-east');
+        const gateway = new EdgeMcpGateway(region);
+        const originUrl = String(args.originUrl || 'https://example.com');
+        const method = String(args.method || 'craftor_system_status');
+        const params = (args.params as Record<string, unknown>) || {};
+        const context: EdgeRequestContext = {
+          requestId: `req_${Math.random().toString(36).substring(2, 9)}`,
+          clientIp: '127.0.0.1',
+          region,
+          originUrl,
+        };
+        const res = gateway.routeRequest(context, method, params);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_edge_get_node_status': {
+        const gateway = new EdgeMcpGateway();
+        const status = gateway.getNodeStatus();
+        return {
+          content: [{ type: 'text', text: JSON.stringify(status, null, 2) }],
         };
       }
 

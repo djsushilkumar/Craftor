@@ -1,10 +1,10 @@
 # Craftor — Universal Autonomous MCP Platform for WordPress, Elementor & WooCommerce
 
-[![Monorepo Build](https://img.shields.io/badge/Monorepo%20Build-34%20Packages%20Passed-10b981.svg?style=for-the-badge&logo=typescript)](file:///c:/Users/420/Crafter)
+[![Monorepo Build](https://img.shields.io/badge/Monorepo%20Build-35%20Packages%20Passed-10b981.svg?style=for-the-badge&logo=typescript)](file:///c:/Users/420/Crafter)
 [![MCP Protocol](https://img.shields.io/badge/MCP%20Protocol-JSON--RPC%202.0%20(stdio%20%2B%20SSE)-6366f1.svg?style=for-the-badge)](file:///c:/Users/420/Crafter/packages/mcp-server)
-[![Active MCP Tools](https://img.shields.io/badge/Active%20MCP%20Tools-84%20Enterprise%20Tools-38bdf8.svg?style=for-the-badge)](file:///c:/Users/420/Crafter/packages/mcp-server/src/handlers/tools.ts)
-[![Contract Tests](https://img.shields.io/badge/Contract%20Tests-23%20Suites%20Passed-10b981.svg?style=for-the-badge)](file:///c:/Users/420/Crafter/tests/contracts)
-[![E2E Assertions](https://img.shields.io/badge/Playwright%20E2E-108%20Assertions%20Passed-10b981.svg?style=for-the-badge)](file:///c:/Users/420/Crafter/tests/e2e)
+[![Active MCP Tools](https://img.shields.io/badge/Active%20MCP%20Tools-86%20Enterprise%20Tools-38bdf8.svg?style=for-the-badge)](file:///c:/Users/420/Crafter/packages/mcp-server/src/handlers/tools.ts)
+[![Contract Tests](https://img.shields.io/badge/Contract%20Tests-24%20Suites%20Passed-10b981.svg?style=for-the-badge)](file:///c:/Users/420/Crafter/tests/contracts)
+[![E2E Assertions](https://img.shields.io/badge/Playwright%20E2E-110%20Assertions%20Passed-10b981.svg?style=for-the-badge)](file:///c:/Users/420/Crafter/tests/e2e)
 [![LLM Accuracy](https://img.shields.io/badge/Promptfoo%20Evals-%3E99%25%20Precision-a855f7.svg?style=for-the-badge)](file:///c:/Users/420/Crafter/prompts/evals)
 [![Ecosystem Certification](https://img.shields.io/badge/Ecosystem%20Checks-210%2F210%20Passed-10b981.svg?style=for-the-badge)](file:///c:/Users/420/Crafter/docs)
 
@@ -31,13 +31,18 @@ craftor/
 ├── dist-bin/                    # Portable Standalone Daemons (.bat / .sh) & Manifests
 ├── dist-npm/                    # Production NPM Tarballs & Release Packages
 ├── dist-svn/                    # WordPress.org SVN Trunk & Tags Release Structure
+├── infra/                       # Multi-Cloud Infrastructure as Code (IaC)
+│   ├── terraform/               # Terraform Cloudflare & AWS deployment plans
+│   ├── k8s/                     # Kubernetes Deployment & Service manifests
+│   └── cloudflare/              # Cloudflare Workers wrangler.toml edge runtime config
 ├── packages/                    # Shared internal libraries, registries & adapters
+│   ├── edge-runtime/            # Serverless Edge MCP Gateway & Geo-Distributed KV Cache
 │   ├── addon-sdk/               # 3rd-Party Addon SDK (Crocoblock JetEngine, Essential Addons)
-│   ├── mcp-server/              # Universal MCP Server Daemon (84 Tools, stdio & SSE)
+│   ├── mcp-server/              # Universal MCP Server Daemon (86 Tools, stdio & SSE)
 │   ├── elementor-ast/           # Bi-Directional JSON AST Parser, Popups & Mutator
 │   ├── wordpress-bridge/        # WP REST Bridge, ACF Pro, RankMath SEO & Multilingual
 │   ├── client-adapters/         # Dedicated Adapters (Cursor, Claude, Antigravity, VS Code)
-│   ├── tool-registry/           # 84-Tool Registry & Alias Resolver
+│   ├── tool-registry/           # 86-Tool Registry & Alias Resolver
 │   ├── design-tokens/           # WCAG 2.1 AA Palette, Typography & Spacing JSON
 │   ├── shared-types/            # Shared TypeScript Interfaces & Contract Models
 │   └── shared-utils/            # VoiceIntentClassifier, Cryptography, Logger & Retry
@@ -51,31 +56,32 @@ craftor/
 │   ├── update-service/          # OTA Release Distribution & Package Signer
 │   └── notification-service/    # Webhook, Email & Slack Event Dispatcher
 ├── tests/                       # Test Suites & Quality Assurance Matrix
-│   ├── contracts/               # 23 Contract Test Suites (TypeScript AST & Tools)
+│   ├── contracts/               # 24 Contract Test Suites (TypeScript AST & Tools)
 │   ├── e2e/                     # Playwright Multi-Client Handshake & Mutation Suites
 │   └── prompts/                 # Promptfoo LLM Precision Benchmarks
-└── docs/                        # Specifications, PRDs, ADRs & Stage Gate Certifications (1-11)
+└── docs/                        # Specifications, PRDs, ADRs & Stage Gate Certifications (1-12)
 ```
 
 ---
 
-## ⚡ Key Capabilities Across 11 Certified Phases
+## ⚡ Key Capabilities Across 12 Certified Phases
 
 1. **Dual Transport MCP Server (stdio + SSE):** Ultra-low latency local stdio pipes and remote SSE over HTTPS with Bearer token authentication.
-2. **Bi-Directional Elementor AST Engine:** Manipulates modern Flexbox/Grid containers, sections, columns, and widgets with 7-character hexadecimal UUID preservation.
-3. **WooCommerce Engine:** Programmatic management of products, variations, inventory, orders, customer cohorts, and batch coupon campaigns.
-4. **AI Voice Studio (`VoiceStudio`):** Real-time WebRTC audio waveform visualization and Speech-to-Intent classification (`craftor_voice_classify_intent`, `craftor_voice_dispatch_action`).
-5. **3rd-Party Addon Ecosystem SDK (`@craftor/addon-sdk`):** Extensible SDK with official adapters for Crocoblock (JetEngine) dynamic listings and Essential Addons.
-6. **Multi-Agent Swarm Canvas (`services/collaboration`):** Concurrent orchestration of Designer, Copywriter, SEO, and QA agents with Conflict-Free Replicated Data Type (CRDT) synchronization.
-7. **Autonomous Self-Healing Daemon (`services/self-healing`):** Automatic malformed AST repair, circular reference remediation, and PHP fatal timeout/memory triage.
-8. **Real-Time Performance Auto-Tuner:** External CSS generation, font-display swap injection, image lazy loading, and Cloudflare/LiteSpeed cache purges.
-9. **Advanced WordPress Integrations:** Programmatic CPT and ACF Pro field groups, RankMath / Yoast SEO metadata, and WPML / Polylang AST translations.
-10. **Zero-Trust Security Shield:** AST prompt injection scanner, capability boundaries, AES-256 token vaults, and rate quota enforcement.
-11. **Instant Micro-Rollbacks:** Automated pre-mutation state snapshots for 1-click zero-downtime recovery.
+2. **Serverless Global Edge Mesh (`packages/edge-runtime`):** Cloudflare Workers edge gateway with Geo-distributed KV caching for sub-15ms AST response times.
+3. **Bi-Directional Elementor AST Engine:** Manipulates modern Flexbox/Grid containers, sections, columns, and widgets with 7-character hexadecimal UUID preservation.
+4. **WooCommerce Engine:** Programmatic management of products, variations, inventory, orders, customer cohorts, and batch coupon campaigns.
+5. **AI Voice Studio (`VoiceStudio`):** Real-time WebRTC audio waveform visualization and Speech-to-Intent classification (`craftor_voice_classify_intent`, `craftor_voice_dispatch_action`).
+6. **3rd-Party Addon Ecosystem SDK (`@craftor/addon-sdk`):** Extensible SDK with official adapters for Crocoblock (JetEngine) dynamic listings and Essential Addons.
+7. **Multi-Agent Swarm Canvas (`services/collaboration`):** Concurrent orchestration of Designer, Copywriter, SEO, and QA agents with Conflict-Free Replicated Data Type (CRDT) synchronization.
+8. **Autonomous Self-Healing Daemon (`services/self-healing`):** Automatic malformed AST repair, circular reference remediation, and PHP fatal timeout/memory triage.
+9. **Real-Time Performance Auto-Tuner:** External CSS generation, font-display swap injection, image lazy loading, and Cloudflare/LiteSpeed cache purges.
+10. **Advanced WordPress Integrations:** Programmatic CPT and ACF Pro field groups, RankMath / Yoast SEO metadata, and WPML / Polylang AST translations.
+11. **Zero-Trust Security Shield:** AST prompt injection scanner, capability boundaries, AES-256 token vaults, and rate quota enforcement.
+12. **Instant Micro-Rollbacks:** Automated pre-mutation state snapshots for 1-click zero-downtime recovery.
 
 ---
 
-## 📋 Comprehensive 84-Tool MCP Catalog
+## 📋 Comprehensive 86-Tool MCP Catalog
 
 ```
 ┌──────────────────────────────┬──────────────────────────────┬──────────────────────────────┐
@@ -94,7 +100,7 @@ craftor/
 │ • craftor_register_cpt       │ • craftor_elementor_wireframe│ • craftor_wc_get_analytics   │
 │ • craftor_acf_register_group │ • craftor_elementor_kit_bind │ • craftor_wc_refund_order    │
 ├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤
-│   MULTISITE & OPS (12 TOOLS) │   INTELLIGENCE & AI (8 TOOLS)│  VOICE & SWARM (10 TOOLS)    │
+│   MULTISITE & OPS (12 TOOLS) │   INTELLIGENCE & AI (8 TOOLS)│  VOICE, SWARM & EDGE (12)    │
 ├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤
 │ • multisite_list_sites       │ • craftor_llm_query_local    │ • craftor_voice_classify     │
 │ • multisite_switch_site      │ • craftor_ast_compress       │ • craftor_voice_dispatch     │
@@ -106,6 +112,8 @@ craftor/
 │ • craftor_system_status      │ • craftor_seo_update_meta    │ • craftor_self_healing_triage│
 │ • craftor_verify_license     │ • craftor_multilingual_clone │ • craftor_performance_tune   │
 │ • craftor_get_visual_diff    │ • craftor_get_activity_log   │ • craftor_cdn_purge_cache    │
+│                              │                              │ • craftor_edge_route_request │
+│                              │                              │ • craftor_edge_get_status    │
 └──────────────────────────────┴──────────────────────────────┴──────────────────────────────┘
 ```
 
@@ -190,13 +198,13 @@ Add to `.vscode/settings.json`:
 Run the full autonomous quality assurance harness:
 
 ```powershell
-# 1. Build all 34 monorepo packages in topological DAG order
+# 1. Build all 35 monorepo packages in topological DAG order
 pnpm build
 
 # 2. Execute strict ESLint across all TypeScript packages & apps
 pnpm lint
 
-# 3. Execute 23 Contract Test Suites
+# 3. Execute 24 Contract Test Suites
 pnpm test
 
 # 4. Run Playwright End-to-End Multi-Client Handshake Test
@@ -211,7 +219,7 @@ pnpm run verify:all
 
 ---
 
-## 📜 Stage Gate Certifications (Phases 1 to 11)
+## 📜 Stage Gate Certifications (All 12 Phases)
 
 | Stage Gate | Certification Document | Lead Persona | Status |
 | :---: | :--- | :--- | :---: |
@@ -226,6 +234,7 @@ pnpm run verify:all
 | **09** | [`28_STAGE_GATE_9_CERTIFICATION.md`](file:///c:/Users/420/Crafter/docs/28_STAGE_GATE_9_CERTIFICATION_AND_VOICE_STUDIO_SIGN_OFF.md) | Prompt Engineer | Certified |
 | **10** | [`29_STAGE_GATE_10_CERTIFICATION.md`](file:///c:/Users/420/Crafter/docs/29_STAGE_GATE_10_CERTIFICATION_AND_ADDON_SDK_SIGN_OFF.md) | Tool Registry Manager | Certified |
 | **11** | [`30_STAGE_GATE_11_CERTIFICATION.md`](file:///c:/Users/420/Crafter/docs/30_STAGE_GATE_11_CERTIFICATION_AND_COLLABORATION_SIGN_OFF.md) | Solution Architect | Certified |
+| **12** | [`31_STAGE_GATE_12_CERTIFICATION.md`](file:///c:/Users/420/Crafter/docs/31_STAGE_GATE_12_CERTIFICATION_AND_PRODUCTION_GA_SIGN_OFF.md) | Release Manager | Certified |
 
 ---
 

@@ -1,0 +1,11 @@
+name = "craftor-edge-gateway"
+main = "../../packages/edge-runtime/dist/index.js"
+compatibility_date = "2024-09-23"
+
+[vars]
+ENVIRONMENT = "production"
+CRAFTOR_EDGE_REGION = "global-mesh"
+
+[[kv_namespaces]]
+binding = "CRAFTOR_EDGE_CACHE"
+id = "craftor_kv_prod_001"
