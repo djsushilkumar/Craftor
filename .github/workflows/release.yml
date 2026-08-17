@@ -47,19 +47,15 @@ jobs:
         id: check_changesets
         shell: bash
         run: |
-          CHANGESET_FILES=$(find .changeset -maxdepth 1 -name "*.md" ! -name "README.md" 2>/dev/null || true)
-          if [ -n "$CHANGESET_FILES" ]; then
+          CHANGESET_COUNT=$(find .changeset -maxdepth 1 -name "*.md" ! -name "README.md" 2>/dev/null | wc -l)
+          echo "changeset_count=$CHANGESET_COUNT" >> "$GITHUB_OUTPUT"
+          if [ "$CHANGESET_COUNT" -gt "0" ]; then
             echo "has_changesets=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Found $CHANGESET_COUNT pending changeset(s)."
           else
             echo "has_changesets=false" >> "$GITHUB_OUTPUT"
+            echo "✅ No pending changesets. Skipping release."
           fi
-
-      - name: Skip When No Pending Changesets
-        if: steps.check_changesets.outputs.has_changesets != 'true'
-        shell: bash
-        run: |
-          echo "✅ No pending changesets detected in .changeset directory."
-          echo "✅ Skipping release publish & PR creation. Pipeline successful."
 
       - name: Create Release Pull Request or Publish
         if: steps.check_changesets.outputs.has_changesets == 'true'

@@ -1032,7 +1032,9 @@ async function runContractTests(): Promise<void> {
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 
-runContractTests().catch((err) => {
+runContractTests().then(() => {
+  process.exit(0);
+}).catch((err) => {
   console.error('[Contract Test Failure]', err);
   process.exit(1);
 });
