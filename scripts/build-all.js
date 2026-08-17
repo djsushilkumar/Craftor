@@ -25,7 +25,9 @@ const BUILD_TARGETS = [
   // 3. Sub-Adapters & Core Engines
   'packages/agent-registry',
   'packages/elementor-ast',
+  'packages/addon-sdk',
   'packages/client-adapters/cursor',
+
   'packages/client-adapters/claude-desktop',
   'packages/client-adapters/antigravity',
   'packages/client-adapters/vscode',

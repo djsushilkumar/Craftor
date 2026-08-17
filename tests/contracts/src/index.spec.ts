@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length < 80) {
-    throw new Error(`Expected at least 80 registered MCP tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 82) {
+    throw new Error(`Expected at least 82 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -1958,6 +1958,49 @@ async function runContractTests(): Promise<void> {
     arguments: { transcript: 'Add a hero banner with CTA' },
   });
   if (mcpDispatch.isError) throw new Error('dispatch_voice_action alias failed');
+
+  console.log('[Contract Test 22] Validating Phase 10 3rd-Party Addon SDK & Crocoblock / EA Adapters...');
+  const {
+    AddonWidgetRegistry,
+    CROCOBLOCK_JETENGINE_MANIFEST,
+    ESSENTIAL_ADDONS_MANIFEST,
+  } = await import('../../../packages/addon-sdk/dist/index.js');
+
+  // 22.1 Test AddonWidgetRegistry & Crocoblock
+  const registry = AddonWidgetRegistry.getInstance();
+  const jetReg = registry.registerAddon(CROCOBLOCK_JETENGINE_MANIFEST);
+  if (!jetReg.success || jetReg.widgetCount !== 1) {
+    throw new Error('AddonWidgetRegistry registerAddon (Crocoblock) failed');
+  }
+
+  const eaReg = registry.registerAddon(ESSENTIAL_ADDONS_MANIFEST);
+  if (!eaReg.success || eaReg.widgetCount !== 1) {
+    throw new Error('AddonWidgetRegistry registerAddon (Essential Addons) failed');
+  }
+
+  // 22.2 Test Custom Widget Instantiation
+  const jetNode = registry.instantiateWidget('jet-listing-grid', { posts_num: 12, columns: '4' });
+  if (jetNode.widgetType !== 'jet-listing-grid' || jetNode.settings?.posts_num !== 12) {
+    throw new Error('AddonWidgetRegistry instantiateWidget failed');
+  }
+
+  const catalog = registry.getCatalog();
+  if (catalog.totalWidgets < 2 || catalog.addons.length < 2) {
+    throw new Error('AddonWidgetRegistry getCatalog failed');
+  }
+
+  // 22.3 Test Phase 10 MCP Tool Calls & Aliases
+  const mcpAddonReg = await testHandleToolsCall({
+    name: 'register_addon_widget',
+    arguments: { addonSlug: 'uael', widgetName: 'uael-modal-popup', title: 'UAEL Modal Popup', category: 'uael' },
+  });
+  if (mcpAddonReg.isError) throw new Error('register_addon_widget alias failed');
+
+  const mcpCatalog = await testHandleToolsCall({
+    name: 'get_addon_catalog',
+    arguments: {},
+  });
+  if (mcpCatalog.isError) throw new Error('get_addon_catalog alias failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }

@@ -96,6 +96,16 @@ importers:
         specifier: ^5.5.2
         version: 5.9.3
 
+  packages/addon-sdk:
+    dependencies:
+      '@craftor/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+    devDependencies:
+      typescript:
+        specifier: ^5.5.2
+        version: 5.9.3
+
   packages/agent-registry:
     dependencies:
       '@craftor/shared-types':

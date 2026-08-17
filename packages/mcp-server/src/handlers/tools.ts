@@ -72,6 +72,11 @@ import {
 } from '../../../../services/self-healing/dist/index.js';
 import { CRAFTOR_TOKENS } from '../../../design-tokens/dist/index.js';
 import { logger, VoiceIntentClassifier, VoiceSessionManager } from '../../../shared-utils/dist/index.js';
+import {
+  AddonWidgetRegistry,
+  CustomWidgetDefinition,
+  WidgetControl,
+} from '../../../addon-sdk/dist/index.js';
 import { createInvalidParamsError, createToolNotFoundError, McpError } from '../errors.js';
 
 export interface ToolsListResponsePayload {
@@ -1390,6 +1395,39 @@ export function registerDefaultTools(): void {
         },
       },
     },
+
+    // =========================================================================
+    // 12. PHASE 10 3RD-PARTY ADDON ECOSYSTEM SDK
+    // =========================================================================
+    {
+      id: 'craftor_addon_register_widget',
+      name: 'Register 3rd-Party Custom Widget',
+      category: 'elementor_styling',
+      description: 'Registers third-party Elementor addon widgets (Crocoblock, Essential Addons, Ultimate Addons) into Craftor dynamic AST engine.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['addonSlug', 'widgetName', 'title', 'category'],
+        properties: {
+          addonSlug: { type: 'string' },
+          widgetName: { type: 'string' },
+          title: { type: 'string' },
+          category: { type: 'string' },
+          controls: { type: 'array' },
+        },
+      },
+    },
+    {
+      id: 'craftor_addon_get_catalog',
+      name: 'Get 3rd-Party Addon Catalog',
+      category: 'elementor_styling',
+      description: 'Retrieves the complete catalog of active 3rd-party Elementor addon extensions and custom widgets.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        properties: {},
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1547,6 +1585,10 @@ function resolveToolName(name: string): string {
     // Phase 9 AI Voice Tools
     classify_voice_intent: 'craftor_voice_classify_intent',
     dispatch_voice_action: 'craftor_voice_dispatch_action',
+
+    // Phase 10 3rd-Party Addon SDK
+    register_addon_widget: 'craftor_addon_register_widget',
+    get_addon_catalog: 'craftor_addon_get_catalog',
 
     // System & Auditing
     system_status: 'craftor_system_status',
@@ -3331,6 +3373,39 @@ export async function handleToolsCall(
               ),
             },
           ],
+        };
+      }
+
+      // =======================================================================
+      // PHASE 10 3RD-PARTY ADDON SDK HANDLERS
+      // =======================================================================
+      case 'craftor_addon_register_widget': {
+        const registry = AddonWidgetRegistry.getInstance();
+        const widgetDef: CustomWidgetDefinition = {
+          addonSlug: String(args.addonSlug || 'custom-addon'),
+          widgetName: String(args.widgetName || 'custom-widget'),
+          title: String(args.title || 'Custom Widget'),
+          category: String(args.category || 'general'),
+          controls: (args.controls as WidgetControl[]) || [],
+          astBuilder: (settings: Record<string, unknown>) => ({
+            id: `custom_${Math.random().toString(36).substring(2, 9)}`,
+            elType: 'widget',
+            widgetType: String(args.widgetName || 'custom-widget'),
+            settings,
+            elements: [],
+          }),
+        };
+        const res = registry.registerWidget(widgetDef);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_addon_get_catalog': {
+        const registry = AddonWidgetRegistry.getInstance();
+        const catalog = registry.getCatalog();
+        return {
+          content: [{ type: 'text', text: JSON.stringify(catalog, null, 2) }],
         };
       }
 
