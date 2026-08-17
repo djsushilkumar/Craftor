@@ -31,6 +31,7 @@ import {
   updateNodeSettings,
   findNodeById,
 } from '../../../packages/elementor-ast/dist/index.js';
+import { ElementorNode } from '../../../packages/shared-types/dist/index.js';
 
 async function runContractTests(): Promise<void> {
   console.log('[Contract Test 1] Validating JSON-RPC 2.0 Schema contract...');
@@ -1155,6 +1156,107 @@ async function runContractTests(): Promise<void> {
   });
   if (aliasWcRes.isError) {
     throw new Error('Short alias "create_product" resolution failed');
+  }
+
+  console.log('[Contract Test 10] Validating Phase 2 AST Diffing, Theme Builder, Dynamic Tags, LiveSync & Coupons...');
+  const { diffAst, createHeaderTemplate, createFooterTemplate, createSinglePostTemplate, DYNAMIC_TAG_PRESETS, injectDynamicTag } = await import(
+    '../../../packages/elementor-ast/dist/index.js'
+  );
+  const { ElementorLiveSyncBridge, WooCommerceCouponsBridge } = await import(
+    '../../../packages/wordpress-bridge/dist/index.js'
+  );
+
+  // 10.1 Test AST Diff Engine
+  const beforeAst: ElementorNode[] = [
+    {
+      id: 'diff_root_1',
+      elType: 'container',
+      settings: { padding: '20px', background_color: '#ffffff' },
+      elements: [{ id: 'diff_child_1', elType: 'widget', widgetType: 'heading', settings: { title: 'Before Text' }, elements: [] }],
+    },
+  ];
+  const afterAst: ElementorNode[] = [
+    {
+      id: 'diff_root_1',
+      elType: 'container',
+      settings: { padding: '40px', background_color: '#ffffff' },
+      elements: [
+        { id: 'diff_child_1', elType: 'widget', widgetType: 'heading', settings: { title: 'Updated Text' }, elements: [] },
+        { id: 'diff_child_2', elType: 'widget', widgetType: 'button', settings: { text: 'New Button' }, elements: [] },
+      ],
+    },
+  ];
+
+  const diffResult = diffAst(beforeAst, afterAst);
+  if (!diffResult.hasChanges || diffResult.modifiedCount < 1 || diffResult.addedCount < 1) {
+    throw new Error(`AST diff calculation invalid: ${JSON.stringify(diffResult)}`);
+  }
+
+  // 10.2 Test Theme Builder Templates
+  const headerTpl = createHeaderTemplate({ brandName: 'Craftor Pro' });
+  if (headerTpl.type !== 'header' || headerTpl.elements.length === 0) {
+    throw new Error('createHeaderTemplate failed');
+  }
+
+  const footerTpl = createFooterTemplate({ copyrightText: '© 2026 Craftor Inc.' });
+  if (footerTpl.type !== 'footer' || footerTpl.elements.length === 0) {
+    throw new Error('createFooterTemplate failed');
+  }
+
+  const singlePostTpl = createSinglePostTemplate({ showFeaturedImage: true });
+  if (singlePostTpl.type !== 'single' || singlePostTpl.elements.length === 0) {
+    throw new Error('createSinglePostTemplate failed');
+  }
+
+  // 10.3 Test Dynamic Tags
+  const dynamicTagString = DYNAMIC_TAG_PRESETS.postTitle();
+  if (!dynamicTagString.includes('[elementor-tag id="post-title"')) {
+    throw new Error(`Dynamic tag string invalid: ${dynamicTagString}`);
+  }
+
+  const sampleHeadingNode: ElementorNode = {
+    id: 'hdg_1',
+    elType: 'widget',
+    widgetType: 'heading',
+    settings: { title: 'Static Title' },
+    elements: [],
+  };
+  const dynamicNode = injectDynamicTag(sampleHeadingNode, 'title', dynamicTagString);
+  const dynamicMap = dynamicNode.settings.__dynamic__ as Record<string, string> | undefined;
+  if (!dynamicMap || dynamicMap['title'] !== dynamicTagString) {
+    throw new Error('injectDynamicTag failed to bind dynamic property');
+  }
+
+  // 10.4 Test LiveSync Bridge
+  const liveSync = new ElementorLiveSyncBridge();
+  let receivedLiveSyncEvent = false;
+  const unsubscribe = liveSync.subscribe((event) => {
+    if (event.action === 'insert_node' && event.pageId === 42) {
+      receivedLiveSyncEvent = true;
+    }
+  });
+
+  await liveSync.broadcastNodeInsertion(42, 'root', sampleHeadingNode);
+  unsubscribe();
+  if (!receivedLiveSyncEvent) {
+    throw new Error('ElementorLiveSyncBridge event broadcast failed');
+  }
+
+  // 10.5 Test WooCommerce Coupons Bridge
+  const couponBridge = new WooCommerceCouponsBridge();
+  const createdCoupon = await couponBridge.createCoupon({
+    code: 'AUTONOMOUS50',
+    amount: '50',
+    discount_type: 'percent',
+    description: 'Autonomous 50% discount',
+  });
+  if (!createdCoupon.id || createdCoupon.code !== 'AUTONOMOUS50') {
+    throw new Error('WooCommerce coupon creation failed');
+  }
+
+  const couponList = await couponBridge.listCoupons();
+  if (!Array.isArray(couponList) || couponList.length === 0) {
+    throw new Error('WooCommerce coupon listing failed');
   }
 
   console.log('[Contract Test] All contract assertions PASSED ✅');

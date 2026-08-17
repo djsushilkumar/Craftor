@@ -8,3 +8,5 @@ export * from './kit-manager.js';
 export * from './woocommerce.js';
 export * from './snapshot-manager.js';
 export * from './rollback-manager.js';
+export * from './live-sync.js';
+export * from './coupons.js';
