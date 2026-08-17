@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length < 82) {
-    throw new Error(`Expected at least 82 registered MCP tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 84) {
+    throw new Error(`Expected at least 84 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -2001,6 +2001,73 @@ async function runContractTests(): Promise<void> {
     arguments: {},
   });
   if (mcpCatalog.isError) throw new Error('get_addon_catalog alias failed');
+
+  console.log('[Contract Test 23] Validating Phase 11 Multi-Agent Collaborative Swarm & CRDT Sync...');
+  const {
+    SwarmOrchestrator,
+    CrdtSyncEngine,
+  } = await import('../../../services/collaboration/dist/index.js');
+
+  // 23.1 Test SwarmOrchestrator
+  const orchestrator = new SwarmOrchestrator();
+  const swarmRes = orchestrator.executeSwarm([
+    { role: 'designer', instruction: 'Create dark hero container' },
+    { role: 'copywriter', instruction: 'Write high-conversion headline' },
+    { role: 'seo_expert', instruction: 'Optimize semantic tags' },
+    { role: 'qa_engineer', instruction: 'Validate accessibility' },
+  ]);
+  if (swarmRes.completedTasks !== 4 || swarmRes.mergedAst.length === 0 || swarmRes.agentContributions.length !== 4) {
+    throw new Error('SwarmOrchestrator executeSwarm failed');
+  }
+
+  // 23.2 Test CrdtSyncEngine
+  const crdtEngine = new CrdtSyncEngine();
+  const initDoc = crdtEngine.getOrCreateDocument('test_doc_1', [
+    { id: 'node_alpha', elType: 'widget', widgetType: 'heading', settings: { title: 'Old Title' }, elements: [] },
+  ]);
+  if (!initDoc || initDoc.documentId !== 'test_doc_1') {
+    throw new Error('CrdtSyncEngine getOrCreateDocument failed');
+  }
+
+  const syncResult = crdtEngine.applyMutation('test_doc_1', {
+    mutationId: 'mut_1',
+    clientId: 'cursor_agent_1',
+    clock: { cursor_agent_1: 1 },
+    timestamp: Date.now(),
+    nodeId: 'node_alpha',
+    path: 'title',
+    value: 'CRDT Concurrent Title',
+  });
+  const mutatedNode = syncResult.state.nodes[0];
+  if (!syncResult.success || !mutatedNode || mutatedNode.settings?.title !== 'CRDT Concurrent Title') {
+    throw new Error('CrdtSyncEngine applyMutation failed');
+  }
+
+  // 23.3 Test Phase 11 MCP Tool Calls & Aliases
+  const mcpSwarm = await testHandleToolsCall({
+    name: 'dispatch_swarm_collaboration',
+    arguments: {
+      tasks: [{ role: 'designer', instruction: 'Build CTA container' }],
+    },
+  });
+  if (mcpSwarm.isError) throw new Error('dispatch_swarm_collaboration alias failed');
+
+  const mcpCrdt = await testHandleToolsCall({
+    name: 'sync_crdt_document',
+    arguments: {
+      documentId: 'doc_swarm_live',
+      delta: {
+        mutationId: 'm100',
+        clientId: 'claude_agent',
+        clock: { claude_agent: 1 },
+        timestamp: Date.now(),
+        nodeId: 'n_live',
+        path: 'color',
+        value: '#38bdf8',
+      },
+    },
+  });
+  if (mcpCrdt.isError) throw new Error('sync_crdt_document alias failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }

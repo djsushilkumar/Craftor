@@ -77,6 +77,12 @@ import {
   CustomWidgetDefinition,
   WidgetControl,
 } from '../../../addon-sdk/dist/index.js';
+import {
+  SwarmOrchestrator,
+  CrdtSyncEngine,
+  AgentTask,
+  CrdtMutationDelta,
+} from '../../../../services/collaboration/dist/index.js';
 import { createInvalidParamsError, createToolNotFoundError, McpError } from '../errors.js';
 
 export interface ToolsListResponsePayload {
@@ -1428,6 +1434,40 @@ export function registerDefaultTools(): void {
         properties: {},
       },
     },
+
+    // =========================================================================
+    // 13. PHASE 11 MULTI-AGENT COLLABORATIVE SWARM & CRDT SYNC
+    // =========================================================================
+    {
+      id: 'craftor_swarm_dispatch_collaboration',
+      name: 'Dispatch Multi-Agent Swarm Collaboration',
+      category: 'elementor_styling',
+      description: 'Coordinates specialized sub-agents (Designer, Copywriter, SEO Expert, QA Engineer) in parallel to synthesize complete Elementor pages.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['tasks'],
+        properties: {
+          tasks: { type: 'array' },
+          baseAst: { type: 'array' },
+        },
+      },
+    },
+    {
+      id: 'craftor_crdt_sync_document',
+      name: 'Sync Real-Time CRDT Mutation Delta',
+      category: 'elementor_styling',
+      description: 'Applies vector clock CRDT deltas with conflict-free Last-Write-Wins reconciliation across concurrent editor sessions.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['documentId', 'delta'],
+        properties: {
+          documentId: { type: 'string' },
+          delta: { type: 'object' },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1589,6 +1629,10 @@ function resolveToolName(name: string): string {
     // Phase 10 3rd-Party Addon SDK
     register_addon_widget: 'craftor_addon_register_widget',
     get_addon_catalog: 'craftor_addon_get_catalog',
+
+    // Phase 11 Multi-Agent Swarm & CRDT Sync
+    dispatch_swarm_collaboration: 'craftor_swarm_dispatch_collaboration',
+    sync_crdt_document: 'craftor_crdt_sync_document',
 
     // System & Auditing
     system_status: 'craftor_system_status',
@@ -3406,6 +3450,37 @@ export async function handleToolsCall(
         const catalog = registry.getCatalog();
         return {
           content: [{ type: 'text', text: JSON.stringify(catalog, null, 2) }],
+        };
+      }
+
+      // =======================================================================
+      // PHASE 11 MULTI-AGENT SWARM & CRDT HANDLERS
+      // =======================================================================
+      case 'craftor_swarm_dispatch_collaboration': {
+        const orchestrator = new SwarmOrchestrator();
+        const tasks = (args.tasks as AgentTask[]) || [];
+        const baseAst = (args.baseAst as unknown as ElementorNode[]) || [];
+        const res = orchestrator.executeSwarm(tasks, baseAst);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_crdt_sync_document': {
+        const syncEngine = new CrdtSyncEngine();
+        const docId = String(args.documentId || 'doc_main');
+        const delta = (args.delta as CrdtMutationDelta) ?? {
+          mutationId: 'm1',
+          clientId: 'c1',
+          clock: { c1: 1 },
+          timestamp: Date.now(),
+          nodeId: 'n1',
+          path: 'title',
+          value: 'Synced Title',
+        };
+        const res = syncEngine.applyMutation(docId, delta);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
         };
       }
 

@@ -44,6 +44,7 @@ const BUILD_TARGETS = [
   'services/update-service',
   'services/notification-service',
   'services/self-healing',
+  'services/collaboration',
   'packages/mcp-server',
 
 

@@ -393,6 +393,16 @@ importers:
         specifier: ^5.5.2
         version: 5.9.3
 
+  services/collaboration:
+    dependencies:
+      '@craftor/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
+    devDependencies:
+      typescript:
+        specifier: ^5.5.2
+        version: 5.9.3
+
   services/licensing:
     dependencies:
       '@craftor/shared-types':
