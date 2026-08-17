@@ -1,0 +1,23 @@
+{
+  "name": "@craftor/wordpress-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Craftor WordPress REST API & Elementor Bridge Client",
+  "author": "Craftor AI Core Organization",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@craftor/shared-types": "workspace:*",
+    "@craftor/shared-utils": "workspace:*",
+    "@craftor/schemas": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.2"
+  }
+}

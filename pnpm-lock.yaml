@@ -318,6 +318,22 @@ importers:
         specifier: ^5.5.2
         version: 5.9.3
 
+  packages/wordpress-bridge:
+    dependencies:
+      '@craftor/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@craftor/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@craftor/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
+    devDependencies:
+      typescript:
+        specifier: ^5.5.2
+        version: 5.9.3
+
   packages/workflow-registry:
     dependencies:
       '@craftor/shared-types':
@@ -405,6 +421,9 @@ importers:
       '@craftor/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      '@craftor/wordpress-bridge':
+        specifier: workspace:*
+        version: link:../../packages/wordpress-bridge
     devDependencies:
       typescript:
         specifier: ^5.5.2

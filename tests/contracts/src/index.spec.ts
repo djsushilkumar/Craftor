@@ -283,6 +283,271 @@ async function runContractTests(): Promise<void> {
     throw new Error('MCP shutdown method contract failed');
   }
 
+  console.log('[Contract Test 8A] Validating WordPress Bridge Foundation...');
+  const {
+    WordPressClient,
+    WordPressRestClient,
+    createAuthHeader,
+    maskAuthCredentials,
+    WordPressAuthError,
+    WordPressRestError,
+  } = await import('../../../packages/wordpress-bridge/dist/index.js');
+
+  // 8A.1 Authentication Strategies
+  const appPassHeader = createAuthHeader({
+    type: 'application_password',
+    username: 'admin',
+    applicationPassword: 'abcd 1234 efgh 5678',
+  });
+  if (appPassHeader !== `Basic ${Buffer.from('admin:abcd1234efgh5678').toString('base64')}`) {
+    throw new Error('Application Password auth header generation failed');
+  }
+
+  const bearerHeader = createAuthHeader({
+    type: 'bearer',
+    token: 'crf_bearer_token_xyz',
+  });
+  if (bearerHeader !== 'Bearer crf_bearer_token_xyz') {
+    throw new Error('Bearer auth header generation failed');
+  }
+
+  const jwtHeader = createAuthHeader({
+    type: 'jwt',
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.t-IDNxdgqWjgZEP_3vWDIsBp6FsOytbqbnmgEA3Qrys',
+  });
+  if (!jwtHeader.startsWith('Bearer eyJ')) {
+    throw new Error('JWT auth header generation failed');
+  }
+
+  try {
+    createAuthHeader({ type: 'application_password', username: '', applicationPassword: '' });
+    throw new Error('Should have thrown on empty application password');
+  } catch (err) {
+    if (!(err instanceof WordPressAuthError)) {
+      throw new Error('Expected WordPressAuthError on invalid auth credentials');
+    }
+  }
+
+  const masked = maskAuthCredentials({
+    type: 'application_password',
+    username: 'craftor_admin',
+    applicationPassword: 'supersecretpassword123',
+  });
+  if (!masked.includes('craftor_admin') || masked.includes('supersecretpassword123')) {
+    throw new Error('Auth masking failed to protect password');
+  }
+
+  // 8A.2 REST Client URL Builder
+  const restClient = new WordPressRestClient({
+    baseUrl: 'https://example.craftor.local///',
+    timeoutMs: 5000,
+  });
+  const builtUrl = restClient.buildUrl('/wp-json/wp/v2/pages', {
+    page: 1,
+    per_page: 10,
+    search: 'landing',
+  });
+  if (!builtUrl.includes('https://example.craftor.local/wp-json/wp/v2/pages?page=1&per_page=10&search=landing')) {
+    throw new Error(`REST Client URL building failed: ${builtUrl}`);
+  }
+
+  // 8A.3 Mock Fetch for Client Methods & Response Parsing
+  let fetchCallCount = 0;
+  const mockFetch: typeof fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    fetchCallCount++;
+    const urlStr = String(input);
+    const method = init?.method ?? 'GET';
+
+    if (urlStr.endsWith('/wp-json')) {
+      return new Response(
+        JSON.stringify({
+          name: 'Craftor Production Test Site',
+          description: 'Autonomous WordPress & Elementor Testing Sandbox',
+          url: 'https://example.craftor.local',
+          home: 'https://example.craftor.local',
+          namespaces: ['wp/v2', 'elementor/v1', 'wc/v3'],
+          timezone_string: 'America/New_York',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (urlStr.includes('/wp-json/wp/v2/pages') && method === 'POST') {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      return new Response(
+        JSON.stringify({
+          id: 42,
+          date: new Date().toISOString(),
+          slug: body.slug ?? 'test-page',
+          status: body.status ?? 'draft',
+          type: 'page',
+          link: `https://example.craftor.local/${body.slug ?? 'test-page'}`,
+          title: { rendered: body.title },
+          content: { rendered: body.content ?? '' },
+          meta: body.meta ?? {},
+        }),
+        { status: 201, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (urlStr.includes('/wp-json/wp/v2/pages/42') && method === 'GET') {
+      return new Response(
+        JSON.stringify({
+          id: 42,
+          date: new Date().toISOString(),
+          slug: 'test-page',
+          status: 'publish',
+          type: 'page',
+          link: 'https://example.craftor.local/test-page',
+          title: { rendered: 'Craftor AI Hero Landing' },
+          content: { rendered: '<div class="elementor-section"></div>' },
+          meta: { _elementor_edit_mode: 'builder' },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (urlStr.includes('/wp-json/wp/v2/posts')) {
+      return new Response(
+        JSON.stringify([
+          {
+            id: 1,
+            date: new Date().toISOString(),
+            slug: 'hello-world',
+            status: 'publish',
+            type: 'post',
+            link: 'https://example.craftor.local/hello-world',
+            title: { rendered: 'Hello Craftor World' },
+            content: { rendered: '<p>Welcome to Craftor.</p>' },
+          },
+        ]),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (urlStr.includes('/wp-json/wp/v2/plugins')) {
+      return new Response(
+        JSON.stringify([
+          {
+            plugin: 'elementor/elementor.php',
+            status: 'active',
+            name: 'Elementor Pro',
+            version: '3.24.0',
+          },
+        ]),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (urlStr.includes('/wp-json/wp/v2/themes')) {
+      return new Response(
+        JSON.stringify([
+          {
+            theme: 'hello-elementor',
+            name: 'Hello Elementor',
+            status: 'active',
+            version: '3.1.0',
+          },
+        ]),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    return new Response(JSON.stringify({ code: 'not_found', message: 'Resource not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  const wpClient = new WordPressClient({
+    siteUrl: 'https://example.craftor.local',
+    auth: {
+      type: 'application_password',
+      username: 'craftor_agent',
+      applicationPassword: 'app_pass_secret_123',
+    },
+    customFetch: mockFetch,
+    timeoutMs: 3000,
+  });
+
+  if (wpClient.isConnected()) {
+    throw new Error('Client should not be connected before connect() call');
+  }
+
+  // 8A.4 connect() & getSite()
+  const site = await wpClient.connect();
+  if (
+    !wpClient.isConnected() ||
+    site.name !== 'Craftor Production Test Site' ||
+    !site.elementorActive ||
+    !site.woocommerceActive
+  ) {
+    throw new Error('WordPressClient connect() site discovery verification failed');
+  }
+
+  // 8A.5 getPosts() & getPost()
+  const posts = await wpClient.getPosts({ per_page: 5 });
+  if (
+    !Array.isArray(posts) ||
+    posts.length !== 1 ||
+    !posts[0] ||
+    posts[0].title.rendered !== 'Hello Craftor World'
+  ) {
+    throw new Error('WordPressClient getPosts() verification failed');
+  }
+
+  // 8A.6 createPage() with Elementor AST metadata
+  const newPage = await wpClient.createPage({
+    title: 'Craftor AI Hero Landing',
+    slug: 'ai-landing',
+    status: 'publish',
+    elementor_data: [{ id: 'abc1234', elType: 'container', settings: {} }],
+  });
+  if (
+    newPage.id !== 42 ||
+    !newPage.meta?._elementor_data ||
+    newPage.meta._elementor_edit_mode !== 'builder'
+  ) {
+    throw new Error('WordPressClient createPage() with Elementor meta verification failed');
+  }
+
+  // 8A.7 getPage()
+  const fetchedPage = await wpClient.getPage(42);
+  if (fetchedPage.id !== 42 || fetchedPage.title.rendered !== 'Craftor AI Hero Landing') {
+    throw new Error('WordPressClient getPage(42) verification failed');
+  }
+
+  // 8A.8 getPlugins() & getThemes()
+  const plugins = await wpClient.getPlugins();
+  if (plugins.length !== 1 || !plugins[0] || plugins[0].name !== 'Elementor Pro') {
+    throw new Error('WordPressClient getPlugins() verification failed');
+  }
+
+  const themes = await wpClient.getThemes();
+  if (themes.length !== 1 || !themes[0] || themes[0].name !== 'Hello Elementor') {
+    throw new Error('WordPressClient getThemes() verification failed');
+  }
+
+  // 8A.9 Error Handling on 404
+  try {
+    await wpClient.getPage(999);
+    throw new Error('Expected 404 WordPressRestError for non-existent page');
+  } catch (err) {
+    if (!(err instanceof WordPressRestError) || err.status !== 404) {
+      throw new Error('Expected WordPressRestError with status 404');
+    }
+  }
+
+  // 8A.10 disconnect()
+  await wpClient.disconnect();
+  if (wpClient.isConnected()) {
+    throw new Error('Client should not be connected after disconnect()');
+  }
+
+  if (fetchCallCount < 5) {
+    throw new Error(`Expected multiple fetch calls, but only recorded: ${fetchCallCount}`);
+  }
+
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 

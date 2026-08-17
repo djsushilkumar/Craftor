@@ -28,6 +28,7 @@ const REQUIRED_PACKAGES = [
   'packages/client-adapters/codex',
   'packages/shared-ui',
   'packages/mcp-server',
+  'packages/wordpress-bridge',
 ];
 
 const REQUIRED_APPS = [

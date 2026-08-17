@@ -5,7 +5,8 @@
   "dependencies": {
     "@craftor/shared-types": "workspace:*",
     "@craftor/schemas": "workspace:*",
-    "@craftor/mcp-server": "workspace:*"
+    "@craftor/mcp-server": "workspace:*",
+    "@craftor/wordpress-bridge": "workspace:*"
   },
   "scripts": {
     "test": "node dist/index.spec.js",
