@@ -43,7 +43,19 @@ jobs:
       - name: Build Monorepo Packages
         run: pnpm build
 
+      - name: Check for Pending Changesets
+        id: check_changesets
+        shell: bash
+        run: |
+          CHANGESET_FILES=$(find .changeset -maxdepth 1 -name "*.md" ! -name "README.md" 2>/dev/null || true)
+          if [ -n "$CHANGESET_FILES" ]; then
+            echo "has_changesets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changesets=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create Release Pull Request or Publish
+        if: steps.check_changesets.outputs.has_changesets == 'true'
         uses: changesets/action@v1
         continue-on-error: true
         with:

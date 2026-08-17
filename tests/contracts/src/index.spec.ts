@@ -745,8 +745,15 @@ async function runContractTests(): Promise<void> {
     handlePromptsGet,
   } = await import('../../../packages/mcp-server/dist/index.js');
 
+  interface MockPageRecord {
+    id: number;
+    title: { rendered: string };
+    status: string;
+    meta: Record<string, string>;
+  }
+
   // In-memory WordPress mock storage for page 42
-  const mockStorage: Record<number, any> = {
+  const mockStorage: Record<number, MockPageRecord> = {
     42: {
       id: 42,
       title: { rendered: 'Elementor Hero Landing' },
@@ -785,7 +792,9 @@ async function runContractTests(): Promise<void> {
       if (urlStr.includes('/wp/v2/pages/42')) {
         if (method === 'POST') {
           const body = JSON.parse(init?.body as string);
-          mockStorage[42].meta = { ...mockStorage[42].meta, ...(body.meta ?? {}) };
+          if (mockStorage[42]) {
+            mockStorage[42].meta = { ...mockStorage[42].meta, ...(body.meta ?? {}) };
+          }
           return new Response(JSON.stringify(mockStorage[42]), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
@@ -815,7 +824,9 @@ async function runContractTests(): Promise<void> {
       if (urlStr.includes('/wp/v2/pages/101')) {
         if (method === 'POST') {
           const body = JSON.parse(init?.body as string);
-          mockStorage[101].meta = { ...mockStorage[101].meta, ...(body.meta ?? {}) };
+          if (mockStorage[101]) {
+            mockStorage[101].meta = { ...mockStorage[101].meta, ...(body.meta ?? {}) };
+          }
           return new Response(JSON.stringify(mockStorage[101]), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
