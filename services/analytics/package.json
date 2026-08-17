@@ -1,6 +1,6 @@
 {
   "name": "@craftor/service-analytics",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "dependencies": {
     "@craftor/shared-types": "workspace:*"
