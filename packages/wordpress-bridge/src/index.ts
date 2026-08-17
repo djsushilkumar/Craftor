@@ -5,3 +5,6 @@ export * from './elementor.js';
 export * from './document-manager.js';
 export * from './template-manager.js';
 export * from './kit-manager.js';
+export * from './woocommerce.js';
+export * from './snapshot-manager.js';
+export * from './rollback-manager.js';

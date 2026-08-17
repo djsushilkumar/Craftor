@@ -76,6 +76,30 @@ export class ResourceRegistry {
         description: 'Full JSON catalog of all registered tools, descriptions, categories, and input schemas.',
         mimeType: 'application/json',
       },
+      {
+        uri: 'craftor://woocommerce/products',
+        name: 'WooCommerce Products Catalog Resource',
+        description: 'Active WooCommerce store catalog schema, product types, and inventory levels.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'craftor://woocommerce/orders',
+        name: 'WooCommerce Orders Resource',
+        description: 'Recent orders, customer purchases, order statuses, and line items schema.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'craftor://snapshots',
+        name: 'Craftor Transaction Snapshots Registry',
+        description: 'Active pre-mutation state snapshots, SHA-256 integrity hashes, and recovery records.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'craftor://rollback/history',
+        name: 'Craftor Rollback History & Audit Log',
+        description: 'Historical audit trail of state recovery events, AST corruption guards, and rollbacks.',
+        mimeType: 'application/json',
+      },
     ];
 
     for (const res of defaults) {
@@ -213,6 +237,76 @@ export async function handleResourcesRead(
 
     case 'craftor://tools/manifest': {
       textContent = JSON.stringify(ToolRegistry.list(), null, 2);
+      break;
+    }
+
+    case 'craftor://woocommerce/products': {
+      textContent = JSON.stringify(
+        {
+          schema: 'craftor://woocommerce/products/v3',
+          description: 'WooCommerce Product Catalog Schema',
+          productTypes: ['simple', 'variable', 'grouped', 'external'],
+          stockStatuses: ['instock', 'outofstock', 'onbackorder'],
+          endpoint: '/wp-json/wc/v3/products',
+        },
+        null,
+        2,
+      );
+      break;
+    }
+
+    case 'craftor://woocommerce/orders': {
+      textContent = JSON.stringify(
+        {
+          schema: 'craftor://woocommerce/orders/v3',
+          description: 'WooCommerce Order Management Schema',
+          statuses: ['pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed'],
+          endpoint: '/wp-json/wc/v3/orders',
+        },
+        null,
+        2,
+      );
+      break;
+    }
+
+    case 'craftor://snapshots': {
+      textContent = JSON.stringify(
+        {
+          schema: 'craftor://snapshots/v1',
+          description: 'Atomic Pre-Mutation Transaction Snapshots Registry',
+          hashingAlgorithm: 'SHA-256',
+          targetTypes: [
+            'woocommerce_product',
+            'elementor_data',
+            'post',
+            'postmeta',
+            'option',
+            'site_setting',
+          ],
+          endpoint: '/wp-json/craftor/v1/snapshots',
+        },
+        null,
+        2,
+      );
+      break;
+    }
+
+    case 'craftor://rollback/history': {
+      textContent = JSON.stringify(
+        {
+          schema: 'craftor://rollback/history/v1',
+          description: 'State Recovery & Rollback Audit Trail',
+          recoveryTriggers: [
+            'ast_corruption_detected',
+            'mutation_failed',
+            'timeout_exceeded',
+            'explicit_restore_request',
+          ],
+          endpoint: '/wp-json/craftor/v1/rollback',
+        },
+        null,
+        2,
+      );
       break;
     }
 

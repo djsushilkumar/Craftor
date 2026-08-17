@@ -9,7 +9,10 @@ export const JSON_RPC_ERROR_CODES = {
   EXECUTION_TIMEOUT: -32000,
   RESOURCE_NOT_FOUND: -32001,
   PROMPT_NOT_FOUND: -32002,
-  TOOL_NOT_FOUND: -32003,
+  AST_CORRUPTION_GUARD: -32003,
+  ROLLBACK_FAILED: -32004,
+  TARGET_NOT_FOUND: -32005,
+  TOOL_NOT_FOUND: -32601,
   UNAUTHORIZED: -32004,
 } as const;
 
@@ -100,6 +103,28 @@ export function createToolNotFoundError(name: string): McpError {
   return new McpError(
     JSON_RPC_ERROR_CODES.TOOL_NOT_FOUND,
     `Tool with name "${name}" is not registered in Craftor MCP Tool Registry.`,
+  );
+}
+
+export function createAstCorruptionGuardError(details?: string): McpError {
+  return new McpError(
+    JSON_RPC_ERROR_CODES.AST_CORRUPTION_GUARD,
+    details ? `AST corruption guard triggered: ${details}` : 'Elementor AST corruption detected. Rolled back mutation.',
+  );
+}
+
+export function createRollbackFailedError(details?: string, data?: unknown): McpError {
+  return new McpError(
+    JSON_RPC_ERROR_CODES.ROLLBACK_FAILED,
+    details ? `Rollback failed: ${details}` : 'Failed to restore target snapshot.',
+    data,
+  );
+}
+
+export function createTargetNotFoundError(targetType: string, targetId: string | number): McpError {
+  return new McpError(
+    JSON_RPC_ERROR_CODES.TARGET_NOT_FOUND,
+    `Target ${targetType} with ID "${targetId}" not found.`,
   );
 }
 

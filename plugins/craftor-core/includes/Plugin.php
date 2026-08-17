@@ -1,6 +1,8 @@
 <?php
 namespace Craftor\Core;
 
+use Craftor\Core\Controllers\WooCommerceController;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -25,6 +27,11 @@ class Plugin {
             'callback' => [ $this, 'handle_handshake' ],
             'permission_callback' => '__return_true',
         ] );
+
+        if ( class_exists( 'Craftor\\Core\\Controllers\\WooCommerceController' ) ) {
+            $controller = new WooCommerceController();
+            $controller->register_routes();
+        }
     }
 
     public function handle_handshake( \WP_REST_Request $request ): \WP_REST_Response {
@@ -33,7 +40,7 @@ class Plugin {
             'plugin'        => 'craftor-core',
             'version'       => CRAFTOR_CORE_VERSION,
             'tier'          => 'core',
-            'tools_count'   => 40,
+            'tools_count'   => 47,
             'server_status' => 'listening',
         ], 200 );
     }
