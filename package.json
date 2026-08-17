@@ -23,7 +23,7 @@
     "validate:devops": "node scripts/validate-devops.js",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "changeset publish"
+    "release": "node scripts/publish-packages.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
