@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length < 52) {
-    throw new Error(`Expected at least 52 registered MCP tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 56) {
+    throw new Error(`Expected at least 56 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -1371,6 +1371,52 @@ async function runContractTests(): Promise<void> {
   if (!svgOutput.includes('<svg') || !svgOutput.includes('Before (Original Snapshot)')) {
     throw new Error('VisualDiffViewer SVG rendering failed');
   }
+
+  console.log('[Contract Test 13] Validating WordPress Multisite (WPMU) Network & Batch Dispatch...');
+  const { MultiSiteManager } = await import('../../../packages/wordpress-bridge/dist/index.js');
+  const msManager = new MultiSiteManager();
+
+  // 13.1 Test Subsite Discovery & Context Switching
+  const networkSites = await msManager.listNetworkSites();
+  if (!Array.isArray(networkSites) || networkSites.length < 3) {
+    throw new Error('MultiSiteManager.listNetworkSites failed');
+  }
+
+  const switchContext = msManager.switchActiveSite(2);
+  if (switchContext.currentBlogId !== 2 || msManager.getCurrentBlogId() !== 2) {
+    throw new Error('MultiSiteManager.switchActiveSite failed');
+  }
+
+  // 13.2 Test Batch Tool Execution Across Subsites
+  const batchRes = await msManager.batchDispatchTool([1, 2, 3], 'craftor_wp_create_post', { title: 'Network Announcement' });
+  if (batchRes.length !== 3 || !batchRes.every((r) => r.success)) {
+    throw new Error('MultiSiteManager.batchDispatchTool failed');
+  }
+
+  // 13.3 Test Global Template Propagation
+  const headerTemplateData = {
+    title: 'Master Global Header',
+    type: 'header' as const,
+    version: '0.4',
+    elements: [],
+  };
+  const syncRes = await msManager.syncGlobalTemplate([1, 2, 3], headerTemplateData);
+  if (syncRes.syncedSites !== 3) {
+    throw new Error('MultiSiteManager.syncGlobalTemplate failed');
+  }
+
+  // 13.4 Test Multisite MCP Handlers & Aliases
+  const mcpListSites = await testHandleToolsCall({
+    name: 'multisite_list_network_sites',
+    arguments: {},
+  });
+  if (mcpListSites.isError) throw new Error('multisite_list_network_sites MCP call failed');
+
+  const mcpSwitchSite = await testHandleToolsCall({
+    name: 'switch_active_site',
+    arguments: { blogId: 3 },
+  });
+  if (mcpSwitchSite.isError) throw new Error('switch_active_site alias resolution failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }

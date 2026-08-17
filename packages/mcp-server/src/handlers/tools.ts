@@ -37,6 +37,7 @@ import {
   RollbackManager,
   ElementorLiveSyncBridge,
   WooCommerceCouponsBridge,
+  MultiSiteManager,
 } from '../../../wordpress-bridge/dist/index.js';
 import { CRAFTOR_TOKENS } from '../../../design-tokens/dist/index.js';
 import { logger } from '../../../shared-utils/dist/index.js';
@@ -906,6 +907,66 @@ export function registerDefaultTools(): void {
         },
       },
     },
+
+    // =========================================================================
+    // 6. MULTISITE NETWORK & BATCH ORCHESTRATION (4 TOOLS)
+    // =========================================================================
+    {
+      id: 'multisite_list_network_sites',
+      name: 'List Multisite Network Sites',
+      category: 'multisite_enterprise',
+      description: 'Lists all WordPress Multisite (WPMU) subsites, domain mappings, and active plugin flags.',
+      permissions: ['read', 'admin'],
+      inputSchema: {
+        type: 'object',
+        properties: {},
+      },
+    },
+    {
+      id: 'multisite_switch_active_site',
+      name: 'Switch Active Subsite Context',
+      category: 'multisite_enterprise',
+      description: 'Switches the execution target subsite in a WordPress Multisite network by blog ID.',
+      permissions: ['read', 'write', 'admin'],
+      inputSchema: {
+        type: 'object',
+        required: ['blogId'],
+        properties: {
+          blogId: { type: 'number', description: 'Target subsite blog ID' },
+        },
+      },
+    },
+    {
+      id: 'multisite_batch_dispatch_tool',
+      name: 'Batch Dispatch Tool Across Subsites',
+      category: 'multisite_enterprise',
+      description: 'Executes a specific MCP tool across multiple network subsites simultaneously.',
+      permissions: ['read', 'write', 'admin'],
+      inputSchema: {
+        type: 'object',
+        required: ['blogIds', 'toolName'],
+        properties: {
+          blogIds: { type: 'array', description: 'Array of blog IDs to execute tool on' },
+          toolName: { type: 'string', description: 'Target MCP tool name' },
+          arguments: { type: 'object', description: 'Arguments to pass to target tool' },
+        },
+      },
+    },
+    {
+      id: 'multisite_sync_global_template',
+      name: 'Sync Global Template Across Network',
+      category: 'multisite_enterprise',
+      description: 'Propagates and synchronizes a master Elementor template across 100+ network subsites.',
+      permissions: ['read', 'write', 'admin'],
+      inputSchema: {
+        type: 'object',
+        required: ['targetBlogIds', 'template'],
+        properties: {
+          targetBlogIds: { type: 'array', description: 'Target subsite blog IDs' },
+          template: { type: 'object', description: 'Elementor template payload' },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1023,6 +1084,12 @@ function resolveToolName(name: string): string {
     batch_create_coupons: 'craftor_wc_batch_create_coupons',
     wc_batch_create_coupons: 'craftor_wc_batch_create_coupons',
     woo_batch_create_coupons: 'craftor_wc_batch_create_coupons',
+
+    // Multisite Network
+    list_network_sites: 'multisite_list_network_sites',
+    switch_active_site: 'multisite_switch_active_site',
+    batch_dispatch_tool: 'multisite_batch_dispatch_tool',
+    sync_global_template: 'multisite_sync_global_template',
 
     // System & Auditing
     system_status: 'craftor_system_status',
@@ -2458,6 +2525,44 @@ export async function handleToolsCall(
         ].slice(0, limit);
         return {
           content: [{ type: 'text', text: JSON.stringify({ success: true, count: logs.length, logs }, null, 2) }],
+        };
+      }
+
+      case 'multisite_list_network_sites': {
+        const msManager = new MultiSiteManager();
+        const sites = await msManager.listNetworkSites();
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, count: sites.length, sites }, null, 2) }],
+        };
+      }
+
+      case 'multisite_switch_active_site': {
+        const blogId = Number(args.blogId ?? 1);
+        const msManager = new MultiSiteManager();
+        const switchRes = msManager.switchActiveSite(blogId);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, ...switchRes }, null, 2) }],
+        };
+      }
+
+      case 'multisite_batch_dispatch_tool': {
+        const blogIds = (args.blogIds as number[]) ?? [1, 2];
+        const targetToolName = String(args.toolName ?? 'craftor_wp_create_post');
+        const toolArgs = (args.arguments as Record<string, unknown>) ?? {};
+        const msManager = new MultiSiteManager();
+        const batchResults = await msManager.batchDispatchTool(blogIds, targetToolName, toolArgs);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, count: batchResults.length, results: batchResults }, null, 2) }],
+        };
+      }
+
+      case 'multisite_sync_global_template': {
+        const targetBlogIds = (args.targetBlogIds as number[]) ?? [1, 2, 3];
+        const template = (args.template as ElementorTemplateData) ?? createHeaderTemplate({ brandName: 'Global Network' });
+        const msManager = new MultiSiteManager();
+        const syncRes = await msManager.syncGlobalTemplate(targetBlogIds, template);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, ...syncRes }, null, 2) }],
         };
       }
 

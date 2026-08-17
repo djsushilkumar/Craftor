@@ -1,0 +1,59 @@
+# Craftor LLM Tool-Calling Accuracy & Prompt Benchmark Suite
+# Evaluates Claude 3.5 Sonnet, GPT-4o, and Gemini 1.5 Pro across Craftor MCP tools
+
+description: "Craftor Autonomous Tool Selection & AST Generation Benchmarks"
+
+prompts:
+  - "You are the Craftor Autonomous WordPress & Elementor AI. Select the optimal tool and parameter payload for the following task: {{task}}"
+
+providers:
+  - id: "anthropic:messages:claude-3-5-sonnet-20241022"
+    config:
+      temperature: 0.1
+  - id: "openai:gpt-4o"
+    config:
+      temperature: 0.1
+  - id: "google:gemini-1.5-pro"
+    config:
+      temperature: 0.1
+
+tests:
+  - vars:
+      task: "Generate a responsive 3-column Hero section in Elementor with a primary CTA button."
+    assert:
+      - type: contains
+        value: "craftor_elementor_generate_container"
+      - type: contains
+        value: "hero"
+
+  - vars:
+      task: "Create a 25% discount coupon code 'SPRING25' in WooCommerce."
+    assert:
+      - type: contains
+        value: "craftor_wc_create_coupon"
+      - type: contains
+        value: "SPRING25"
+
+  - vars:
+      task: "Compare the original landing page AST with the newly generated version to detect modified properties."
+    assert:
+      - type: contains
+        value: "craftor_elementor_diff_ast"
+
+  - vars:
+      task: "Create a global Elementor Pro site header with sticky navigation and 'Get Quote' button."
+    assert:
+      - type: contains
+        value: "craftor_elementor_create_header"
+
+  - vars:
+      task: "Deploy the master promotional header template across subsites 1, 2, and 4 in the multisite network."
+    assert:
+      - type: contains
+        value: "multisite_sync_global_template"
+
+  - vars:
+      task: "Roll back page 42 to the snapshot crf_snp_88291048."
+    assert:
+      - type: contains
+        value: "craftor_restore_snapshot"
