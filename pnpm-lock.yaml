@@ -234,9 +234,15 @@ importers:
       '@craftor/client-adapters':
         specifier: workspace:*
         version: link:../client-adapters
+      '@craftor/design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
       '@craftor/elementor-ast':
         specifier: workspace:*
         version: link:../elementor-ast
+      '@craftor/schemas':
+        specifier: workspace:*
+        version: link:../schemas
       '@craftor/shared-types':
         specifier: workspace:*
         version: link:../shared-types
@@ -390,6 +396,9 @@ importers:
 
   tests/contracts:
     dependencies:
+      '@craftor/mcp-server':
+        specifier: workspace:*
+        version: link:../../packages/mcp-server
       '@craftor/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas

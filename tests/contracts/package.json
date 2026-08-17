@@ -4,7 +4,8 @@
   "private": true,
   "dependencies": {
     "@craftor/shared-types": "workspace:*",
-    "@craftor/schemas": "workspace:*"
+    "@craftor/schemas": "workspace:*",
+    "@craftor/mcp-server": "workspace:*"
   },
   "scripts": {
     "test": "node dist/index.spec.js",

@@ -15,7 +15,9 @@
     "@craftor/agent-registry": "workspace:*",
     "@craftor/workflow-registry": "workspace:*",
     "@craftor/elementor-ast": "workspace:*",
-    "@craftor/client-adapters": "workspace:*"
+    "@craftor/client-adapters": "workspace:*",
+    "@craftor/design-tokens": "workspace:*",
+    "@craftor/schemas": "workspace:*"
   },
   "scripts": {
     "build": "tsc",

@@ -158,6 +158,131 @@ async function runContractTests(): Promise<void> {
     throw new Error('AST serialization roundtrip failed');
   }
 
+  console.log('[Contract Test 7] Validating Real Craftor MCP Daemon & All 9 MCP Methods...');
+  const { McpRouter } = await import('../../../packages/mcp-server/dist/index.js');
+  const router = new McpRouter({
+    siteUrl: 'https://example.craftor.local',
+    secretToken: 'crf_sec_test_secret_token_12345678',
+  });
+
+  // 1. initialize
+  const initRes = await router.dispatch({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'initialize',
+    params: {
+      protocolVersion: '2024-11-05',
+      capabilities: {},
+      clientInfo: { name: 'Cursor', version: '0.40.0' },
+    },
+  });
+  const initResult = initRes.result as {
+    protocolVersion: string;
+    capabilities: Record<string, unknown>;
+  };
+  if (
+    initRes.jsonrpc !== '2.0' ||
+    initRes.id !== 1 ||
+    initResult.protocolVersion !== '2024-11-05'
+  ) {
+    throw new Error('MCP initialize method contract failed');
+  }
+
+  // 2. ping
+  const pingRes = await router.dispatch({ jsonrpc: '2.0', id: 2, method: 'ping' });
+  if (pingRes.jsonrpc !== '2.0' || pingRes.id !== 2 || typeof pingRes.result !== 'object') {
+    throw new Error('MCP ping method contract failed');
+  }
+
+  // 3. tools/list
+  const toolsListRes = await router.dispatch({ jsonrpc: '2.0', id: 3, method: 'tools/list' });
+  const toolsListResult = toolsListRes.result as { tools: Array<{ name: string }> };
+  if (!Array.isArray(toolsListResult.tools) || toolsListResult.tools.length < 6) {
+    throw new Error('MCP tools/list method contract failed');
+  }
+
+  // 4. tools/call (craftor_elementor_create_container)
+  const toolCallRes = await router.dispatch({
+    jsonrpc: '2.0',
+    id: 4,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_elementor_create_container',
+      arguments: { containerType: 'flex', direction: 'row' },
+    },
+  });
+  const toolCallResult = toolCallRes.result as { content?: Array<{ type: string; text: string }> };
+  if (
+    !toolCallResult?.content ||
+    !toolCallResult.content[0] ||
+    toolCallResult.content[0].type !== 'text'
+  ) {
+    throw new Error('MCP tools/call method contract failed');
+  }
+
+  // 5. resources/list
+  const resListRes = await router.dispatch({ jsonrpc: '2.0', id: 5, method: 'resources/list' });
+  const resListResult = resListRes.result as { resources?: Array<{ uri: string }> };
+  if (!Array.isArray(resListResult?.resources) || resListResult.resources.length < 4) {
+    throw new Error('MCP resources/list method contract failed');
+  }
+
+  // 6. resources/read
+  const resReadRes = await router.dispatch({
+    jsonrpc: '2.0',
+    id: 6,
+    method: 'resources/read',
+    params: { uri: 'craftor://tokens/design' },
+  });
+  const resReadResult = resReadRes.result as { contents?: Array<{ uri: string; text: string }> };
+  if (
+    !resReadResult?.contents ||
+    !resReadResult.contents[0] ||
+    resReadResult.contents[0].uri !== 'craftor://tokens/design'
+  ) {
+    throw new Error('MCP resources/read method contract failed');
+  }
+
+  // 7. prompts/list
+  const promptsListRes = await router.dispatch({ jsonrpc: '2.0', id: 7, method: 'prompts/list' });
+  const promptsListResult = promptsListRes.result as { prompts?: Array<{ name: string }> };
+  if (!Array.isArray(promptsListResult?.prompts) || promptsListResult.prompts.length < 4) {
+    throw new Error('MCP prompts/list method contract failed');
+  }
+
+  // 8. prompts/get
+  const promptsGetRes = await router.dispatch({
+    jsonrpc: '2.0',
+    id: 8,
+    method: 'prompts/get',
+    params: { name: 'generate_landing_page', arguments: { topic: 'AI Design Agency' } },
+  });
+  const promptsGetResult = promptsGetRes.result as { messages?: Array<{ role: string }> };
+  if (
+    !promptsGetResult?.messages ||
+    !promptsGetResult.messages[0] ||
+    promptsGetResult.messages[0].role !== 'user'
+  ) {
+    throw new Error('MCP prompts/get method contract failed');
+  }
+
+  // 9. Method not found error test
+  const notFoundRes = await router.dispatch({
+    jsonrpc: '2.0',
+    id: 9,
+    method: 'non_existent_method',
+  });
+  if (!notFoundRes.error || notFoundRes.error.code !== -32601) {
+    throw new Error('MCP method not found (-32601) error contract failed');
+  }
+
+  // 10. shutdown
+  const shutdownRes = await router.dispatch({ jsonrpc: '2.0', id: 10, method: 'shutdown' });
+  const shutdownResult = shutdownRes.result as { success: boolean };
+  if (!shutdownResult.success) {
+    throw new Error('MCP shutdown method contract failed');
+  }
+
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 
