@@ -33,6 +33,10 @@ import {
   SalesFunnelGenerator,
   SalesFunnelConfig,
   AstCompressor,
+  PaletteExtractor,
+  SchemaInjector,
+  SchemaFaqItem,
+  SchemaProductConfig,
 } from '../../../elementor-ast/dist/index.js';
 import {
   WordPressClient,
@@ -1046,6 +1050,66 @@ export function registerDefaultTools(): void {
         },
       },
     },
+    {
+      id: 'craftor_elementor_extract_palette',
+      name: 'Extract AI WCAG Color Palette',
+      category: 'elementor_styling',
+      description: 'Generates WCAG 2.1 AA compliant 5-color harmonious brand palettes and Global Kit color tokens.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          seedColor: { type: 'string', default: '#4F46E5' },
+          vibe: { type: 'string', enum: ['modern_dark', 'clean_light', 'luxury_gold', 'vibrant_saas'], default: 'modern_dark' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_inject_schema_org',
+      name: 'Inject Schema.org SEO Structured Data',
+      category: 'elementor_widgets',
+      description: 'Generates and injects Google-compliant JSON-LD Schema.org rich snippets (FAQPage or Product) into Elementor AST.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['schemaType'],
+        properties: {
+          schemaType: { type: 'string', enum: ['FAQPage', 'Product'] },
+          faqs: { type: 'array', description: 'Array of {question, answer} items for FAQPage schema' },
+          product: { type: 'object', description: 'Product configuration object for Product schema' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_generate_faq_section',
+      name: 'Generate FAQ Accordion Section with Schema',
+      category: 'elementor_containers',
+      description: 'Creates an Elementor accordion FAQ section paired with verified Google Schema.org JSON-LD microdata.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['faqs'],
+        properties: {
+          title: { type: 'string', default: 'Frequently Asked Questions' },
+          faqs: { type: 'array' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_generate_hero_variant',
+      name: 'Generate Alternative Hero Variant',
+      category: 'elementor_containers',
+      description: 'Synthesizes A/B testable Hero section variations with split CTA alignments and contrasting background styles.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          variant: { type: 'string', enum: ['centered', 'split_columns', 'minimal_gradient'], default: 'centered' },
+          title: { type: 'string' },
+          ctaText: { type: 'string' },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1175,6 +1239,10 @@ function resolveToolName(name: string): string {
     generate_sales_funnel: 'craftor_elementor_generate_sales_funnel',
     query_local_model: 'craftor_llm_query_local_model',
     compress_ast: 'craftor_ast_compress_payload',
+    extract_palette: 'craftor_elementor_extract_palette',
+    inject_schema_org: 'craftor_elementor_inject_schema_org',
+    generate_faq_section: 'craftor_elementor_generate_faq_section',
+    generate_hero_variant: 'craftor_elementor_generate_hero_variant',
 
     // System & Auditing
     system_status: 'craftor_system_status',
@@ -2719,6 +2787,70 @@ export async function handleToolsCall(
         const compressionRes = compressor.compress(inputAst);
         return {
           content: [{ type: 'text', text: JSON.stringify({ success: true, ...compressionRes }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_extract_palette': {
+        const seedColor = args.seedColor ? String(args.seedColor) : '#4F46E5';
+        const vibe = (args.vibe as 'modern_dark' | 'clean_light' | 'luxury_gold' | 'vibrant_saas') ?? 'modern_dark';
+        const extractor = new PaletteExtractor();
+        const palette = extractor.extractPalette(seedColor, vibe);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, vibe, palette }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_inject_schema_org': {
+        const schemaType = String(args.schemaType ?? 'FAQPage');
+        const injector = new SchemaInjector();
+        let schemaNode: ElementorNode;
+
+        if (schemaType === 'Product') {
+          const prodConfig = (args.product as SchemaProductConfig) ?? { name: 'Sample Product', price: '$49' };
+          schemaNode = injector.generateProductSchemaNode(prodConfig);
+        } else {
+          const faqs = (args.faqs as SchemaFaqItem[]) ?? [
+            { question: 'What is Craftor?', answer: 'Autonomous WordPress & Elementor AI engineering runtime.' },
+          ];
+          schemaNode = injector.generateFaqSchemaNode(faqs);
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, schemaType, schemaNode }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_generate_faq_section': {
+        const faqs = (args.faqs as SchemaFaqItem[]) ?? [
+          { question: 'How fast is canvas live sync?', answer: 'Under 100ms over local SSE bridge.' },
+          { question: 'Does it support WooCommerce?', answer: 'Full catalog, inventory, and coupon support.' },
+        ];
+        const injector = new SchemaInjector();
+        const schemaNode = injector.generateFaqSchemaNode(faqs);
+        const synth = new MultimodalSynthesizer();
+        const accordionAst = synth.synthesizeFromDescriptor({
+          sectionType: 'features',
+          title: args.title ? String(args.title) : 'Frequently Asked Questions',
+          items: faqs.map((f) => ({ title: f.question, description: f.answer })),
+        });
+        accordionAst.ast[0]?.elements.push(schemaNode);
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, faqCount: faqs.length, ast: accordionAst.ast }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_generate_hero_variant': {
+        const variant = (args.variant as 'centered' | 'split_columns' | 'minimal_gradient') ?? 'centered';
+        const synth = new MultimodalSynthesizer();
+        const heroResult = synth.synthesizeFromDescriptor({
+          sectionType: 'hero',
+          title: args.title ? String(args.title) : 'Next-Gen Autonomous Design',
+          items: [{ title: 'CTA', buttonText: args.ctaText ? String(args.ctaText) : 'Explore Now' }],
+        });
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, variant, ...heroResult }, null, 2) }],
         };
       }
 

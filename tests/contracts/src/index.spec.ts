@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length < 60) {
-    throw new Error(`Expected at least 60 registered MCP tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 64) {
+    throw new Error(`Expected at least 64 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -1498,6 +1498,58 @@ async function runContractTests(): Promise<void> {
     arguments: { ast: synthHero.ast },
   });
   if (mcpCompress.isError) throw new Error('compress_ast alias resolution failed');
+
+  console.log('[Contract Test 15] Validating Palette Extraction, Schema.org SEO & FAQ Generators...');
+  const { PaletteExtractor, SchemaInjector } = await import('../../../packages/elementor-ast/dist/index.js');
+
+  // 15.1 Test Palette Extractor
+  const paletteExtractor = new PaletteExtractor();
+  const darkPalette = paletteExtractor.extractPalette('#6366F1', 'modern_dark');
+  if (!darkPalette.primary || !darkPalette.wcagContrastRatio.includes('Pass')) {
+    throw new Error('PaletteExtractor extraction failed');
+  }
+
+  // 15.2 Test Schema Injector
+  const schemaInjector = new SchemaInjector();
+  const faqSchemaNode = schemaInjector.generateFaqSchemaNode([
+    { question: 'Is Craftor free?', answer: 'Community tier is open source.' },
+  ]);
+  if (!faqSchemaNode.settings.html || !String(faqSchemaNode.settings.html).includes('FAQPage')) {
+    throw new Error('SchemaInjector FAQ generation failed');
+  }
+
+  const prodSchemaNode = schemaInjector.generateProductSchemaNode({
+    name: 'Craftor Enterprise',
+    price: '$499',
+  });
+  if (!prodSchemaNode.settings.html || !String(prodSchemaNode.settings.html).includes('Product')) {
+    throw new Error('SchemaInjector Product generation failed');
+  }
+
+  // 15.3 Test Phase 3.2 MCP Handlers & Aliases
+  const mcpPalette = await testHandleToolsCall({
+    name: 'craftor_elementor_extract_palette',
+    arguments: { seedColor: '#10B981', vibe: 'vibrant_saas' },
+  });
+  if (mcpPalette.isError) throw new Error('craftor_elementor_extract_palette MCP call failed');
+
+  const mcpSchema = await testHandleToolsCall({
+    name: 'inject_schema_org',
+    arguments: { schemaType: 'Product', product: { name: 'AI Widget', price: '$29' } },
+  });
+  if (mcpSchema.isError) throw new Error('inject_schema_org alias resolution failed');
+
+  const mcpFaqSec = await testHandleToolsCall({
+    name: 'generate_faq_section',
+    arguments: { title: 'Common Questions', faqs: [{ question: 'Q1', answer: 'A1' }] },
+  });
+  if (mcpFaqSec.isError) throw new Error('generate_faq_section alias resolution failed');
+
+  const mcpHeroVar = await testHandleToolsCall({
+    name: 'generate_hero_variant',
+    arguments: { variant: 'split_columns', title: 'A/B Test Hero' },
+  });
+  if (mcpHeroVar.isError) throw new Error('generate_hero_variant alias resolution failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
