@@ -37,6 +37,9 @@ import {
   SchemaInjector,
   SchemaFaqItem,
   SchemaProductConfig,
+  PopupGenerator,
+  PopupGeneratorConfig,
+  MotionEffectsConfig,
 } from '../../../elementor-ast/dist/index.js';
 import {
   WordPressClient,
@@ -49,6 +52,13 @@ import {
   MultiSiteManager,
   LocalLlmBridge,
   SecurityShield,
+  AcfBridge,
+  CustomPostTypeConfig,
+  AcfFieldGroupConfig,
+  SeoBridge,
+  SeoMetadataPayload,
+  MultilingualBridge,
+  PageTranslationRequest,
 } from '../../../wordpress-bridge/dist/index.js';
 import { WhiteLabelManager, QuotaEnforcer } from '../../../../services/licensing/dist/index.js';
 import { TelemetryCollector } from '../../../../services/analytics/dist/index.js';
@@ -1173,6 +1183,112 @@ export function registerDefaultTools(): void {
         },
       },
     },
+
+    // =========================================================================
+    // 9. PHASE 7 ADVANCED 200+ TOOL MATRIX (ACF, SEO, MULTILINGUAL, POPUPS)
+    // =========================================================================
+    {
+      id: 'craftor_acf_register_field_group',
+      name: 'Register ACF Pro Field Group',
+      category: 'wordpress_content',
+      description: 'Programmatically registers Advanced Custom Fields (ACF Pro) field groups and location rules.',
+      permissions: ['write', 'admin'],
+      inputSchema: {
+        type: 'object',
+        required: ['key', 'title', 'fields'],
+        properties: {
+          key: { type: 'string' },
+          title: { type: 'string' },
+          fields: { type: 'array' },
+          location: { type: 'array' },
+        },
+      },
+    },
+    {
+      id: 'craftor_cpt_register_post_type',
+      name: 'Register Custom Post Type',
+      category: 'wordpress_content',
+      description: 'Registers a custom post type with REST API endpoints and Elementor support flags.',
+      permissions: ['write', 'admin'],
+      inputSchema: {
+        type: 'object',
+        required: ['slug', 'singularName', 'pluralName'],
+        properties: {
+          slug: { type: 'string' },
+          singularName: { type: 'string' },
+          pluralName: { type: 'string' },
+          hierarchical: { type: 'boolean' },
+        },
+      },
+    },
+    {
+      id: 'craftor_seo_update_metadata',
+      name: 'Update SEO & Social Graph Metadata',
+      category: 'site_operations',
+      description: 'Automates RankMath, Yoast, and SEOPress meta titles, descriptions, focus keywords, and robots tags.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['postId', 'metaTitle', 'metaDescription'],
+        properties: {
+          postId: { type: 'integer' },
+          metaTitle: { type: 'string' },
+          metaDescription: { type: 'string' },
+          focusKeywords: { type: 'array', items: { type: 'string' } },
+          pluginTarget: { type: 'string', enum: ['rank_math', 'yoast', 'seopress', 'native'], default: 'rank_math' },
+        },
+      },
+    },
+    {
+      id: 'craftor_multilingual_translate_page',
+      name: 'Translate & Localize Elementor Page AST',
+      category: 'elementor_theme',
+      description: 'Deep clones and translates Elementor AST pages across WPML and Polylang target locales.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['sourcePostId', 'targetLang', 'ast'],
+        properties: {
+          sourcePostId: { type: 'integer' },
+          sourceLang: { type: 'string', default: 'en' },
+          targetLang: { type: 'string' },
+          ast: { type: 'array' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_generate_popup',
+      name: 'Generate Elementor Popup Template',
+      category: 'elementor_theme',
+      description: 'Synthesizes modal lightboxes, exit-intent overlays, and lead capture popup AST templates.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['title', 'headline', 'ctaText'],
+        properties: {
+          title: { type: 'string' },
+          triggerType: { type: 'string', enum: ['exit_intent', 'page_load', 'scroll_depth', 'button_click'], default: 'exit_intent' },
+          layout: { type: 'string', enum: ['centered_modal', 'bottom_bar', 'slide_in_right'], default: 'centered_modal' },
+          headline: { type: 'string' },
+          ctaText: { type: 'string' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_apply_motion_effects',
+      name: 'Apply Elementor Motion & Scroll Effects',
+      category: 'elementor_styling',
+      description: 'Injects entrance animations, scroll effects, mouse tracking, and 3D tilt controls into Elementor AST nodes.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['node', 'effects'],
+        properties: {
+          node: { type: 'object' },
+          effects: { type: 'object' },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1312,6 +1428,14 @@ function resolveToolName(name: string): string {
     set_whitelabel: 'craftor_enterprise_set_whitelabel',
     security_scan_ast: 'craftor_security_scan_ast',
     check_quota: 'craftor_license_check_quota',
+
+    // Phase 7 Advanced Tools
+    register_acf_field_group: 'craftor_acf_register_field_group',
+    register_cpt: 'craftor_cpt_register_post_type',
+    update_seo_metadata: 'craftor_seo_update_metadata',
+    translate_page_ast: 'craftor_multilingual_translate_page',
+    generate_popup_template: 'craftor_elementor_generate_popup',
+    apply_motion_effects: 'craftor_elementor_apply_motion_effects',
 
     // System & Auditing
     system_status: 'craftor_system_status',
@@ -2962,6 +3086,59 @@ export async function handleToolsCall(
         const limits = enforcer.getTierLimits();
         return {
           content: [{ type: 'text', text: JSON.stringify({ success: true, tier, quota: quotaRes, limits }, null, 2) }],
+        };
+      }
+
+      // =======================================================================
+      // PHASE 7 ADVANCED TOOLS HANDLERS
+      // =======================================================================
+      case 'craftor_acf_register_field_group': {
+        const acf = new AcfBridge();
+        const res = acf.registerFieldGroup(args as unknown as AcfFieldGroupConfig);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_cpt_register_post_type': {
+        const acf = new AcfBridge();
+        const res = acf.registerCpt(args as unknown as CustomPostTypeConfig);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_seo_update_metadata': {
+        const seo = new SeoBridge();
+        const res = seo.updateMetadata(args as unknown as SeoMetadataPayload);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_multilingual_translate_page': {
+        const multi = new MultilingualBridge();
+        const res = multi.translatePageAst(args as unknown as PageTranslationRequest);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_generate_popup': {
+        const pop = new PopupGenerator();
+        const res = pop.generatePopup(args as unknown as PopupGeneratorConfig);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_apply_motion_effects': {
+        const pop = new PopupGenerator();
+        const node = (args.node as ElementorNode) ?? { id: 'node_1', elType: 'widget', settings: {}, elements: [] };
+        const effects = (args.effects as unknown as MotionEffectsConfig) ?? {};
+        const updatedNode = pop.applyMotionEffects(node, effects);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, node: updatedNode }, null, 2) }],
         };
       }
 

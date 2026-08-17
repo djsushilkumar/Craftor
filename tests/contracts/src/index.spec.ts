@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length < 68) {
-    throw new Error(`Expected at least 68 registered MCP tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 74) {
+    throw new Error(`Expected at least 74 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -1725,6 +1725,110 @@ async function runContractTests(): Promise<void> {
   if (!fullHtml.includes('Craftor AI Studio') || !fullHtml.includes('68 MCP Tools Active')) {
     throw new Error('DashboardApp renderFullPage failed');
   }
+
+  console.log('[Contract Test 19] Validating Phase 7 ACF Pro, SEO, Multilingual & Popups...');
+  const { AcfBridge, SeoBridge, MultilingualBridge } = await import('../../../packages/wordpress-bridge/dist/index.js');
+  const { PopupGenerator } = await import('../../../packages/elementor-ast/dist/index.js');
+
+  // 19.1 Test AcfBridge
+  const acf = new AcfBridge();
+  const cptRes = acf.registerCpt({ slug: 'portfolio_item', singularName: 'Portfolio Item', pluralName: 'Portfolio Items' });
+  if (!cptRes.success || cptRes.restBase !== '/wp/v2/portfolio_item') {
+    throw new Error('AcfBridge registerCpt failed');
+  }
+
+  const fieldGroupRes = acf.registerFieldGroup({
+    key: 'group_case_study',
+    title: 'Case Study Metadata',
+    fields: [{ key: 'field_client', label: 'Client Name', name: 'client_name', type: 'text' }],
+    location: [{ param: 'post_type', operator: '==', value: 'portfolio_item' }],
+  });
+  if (!fieldGroupRes.success || fieldGroupRes.fieldCount !== 1) {
+    throw new Error('AcfBridge registerFieldGroup failed');
+  }
+
+  // 19.2 Test SeoBridge
+  const seo = new SeoBridge();
+  const seoRes = seo.updateMetadata({
+    postId: 101,
+    metaTitle: 'Next-Gen Autonomous Elementor Design Architecture',
+    metaDescription: 'Discover how Craftor automates WordPress and Elementor design generation with 74+ MCP tools.',
+    focusKeywords: ['Elementor AI', 'WordPress MCP'],
+    pluginTarget: 'rank_math',
+  });
+  if (!seoRes.success || seoRes.seoScore < 80) {
+    throw new Error('SeoBridge updateMetadata failed');
+  }
+
+  // 19.3 Test MultilingualBridge
+  const multi = new MultilingualBridge();
+  const multiRes = multi.translatePageAst({
+    sourcePostId: 42,
+    sourceLang: 'en',
+    targetLang: 'es',
+    ast: [{ id: 'node_es_1', elType: 'widget', widgetType: 'heading', settings: { title: 'Hello World' }, elements: [] }],
+  });
+  if (!multiRes.success || multiRes.targetLang !== 'es' || !String(multiRes.ast[0]?.settings?.title).includes('[ES]')) {
+    throw new Error('MultilingualBridge translatePageAst failed');
+  }
+
+  // 19.4 Test PopupGenerator
+  const popupGen = new PopupGenerator();
+  const popupRes = popupGen.generatePopup({
+    title: 'Black Friday Sale',
+    triggerType: 'exit_intent',
+    layout: 'centered_modal',
+    headline: 'Claim 50% Off Lifetime Pro',
+    ctaText: 'Unlock Discount',
+  });
+  if (!popupRes.success || popupRes.templateType !== 'popup' || popupRes.ast.length === 0) {
+    throw new Error('PopupGenerator generatePopup failed');
+  }
+
+  const motionNode = popupGen.applyMotionEffects(
+    { id: 'btn_motion_1', elType: 'widget', widgetType: 'button', settings: {}, elements: [] },
+    { entranceAnimation: 'zoomIn', tilt3D: true, mouseTrack: true },
+  );
+  if (motionNode.settings?._animation !== 'zoomIn' || motionNode.settings?.motion_fx_tilt !== 'yes') {
+    throw new Error('PopupGenerator applyMotionEffects failed');
+  }
+
+  // 19.5 Test Phase 7 MCP Tool Calls & Aliases
+  const mcpAcf = await testHandleToolsCall({
+    name: 'register_acf_field_group',
+    arguments: { key: 'grp_demo', title: 'Demo Fields', fields: [{ key: 'f1', label: 'Field 1', name: 'f1', type: 'text' }] },
+  });
+  if (mcpAcf.isError) throw new Error('register_acf_field_group alias failed');
+
+  const mcpCpt = await testHandleToolsCall({
+    name: 'register_cpt',
+    arguments: { slug: 'project', singularName: 'Project', pluralName: 'Projects' },
+  });
+  if (mcpCpt.isError) throw new Error('register_cpt alias failed');
+
+  const mcpSeo = await testHandleToolsCall({
+    name: 'update_seo_metadata',
+    arguments: { postId: 55, metaTitle: 'Craftor SEO Automation', metaDescription: 'Automated RankMath metadata' },
+  });
+  if (mcpSeo.isError) throw new Error('update_seo_metadata alias failed');
+
+  const mcpMulti = await testHandleToolsCall({
+    name: 'translate_page_ast',
+    arguments: { sourcePostId: 10, targetLang: 'fr', ast: [{ id: '1', elType: 'container', settings: {}, elements: [] }] },
+  });
+  if (mcpMulti.isError) throw new Error('translate_page_ast alias failed');
+
+  const mcpPop = await testHandleToolsCall({
+    name: 'generate_popup_template',
+    arguments: { title: 'Lead Gen', headline: 'Subscribe', ctaText: 'Join' },
+  });
+  if (mcpPop.isError) throw new Error('generate_popup_template alias failed');
+
+  const mcpMotion = await testHandleToolsCall({
+    name: 'apply_motion_effects',
+    arguments: { node: { id: 'w1', elType: 'widget', settings: {}, elements: [] }, effects: { entranceAnimation: 'fadeInUp' } },
+  });
+  if (mcpMotion.isError) throw new Error('apply_motion_effects alias failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }

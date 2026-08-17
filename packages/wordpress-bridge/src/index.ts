@@ -13,6 +13,10 @@ export * from './coupons.js';
 export * from './multisite.js';
 export * from './local-llm.js';
 export * from './security-shield.js';
+export * from './acf-bridge.js';
+export * from './seo-bridge.js';
+export * from './multilingual.js';
+
 
 
 
