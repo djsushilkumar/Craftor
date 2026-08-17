@@ -50,6 +50,7 @@ const BUILD_TARGETS = [
 
   // 6. Test Suites
   'tests/contracts',
+  'tests/e2e',
 ];
 
 console.log('================================================================');

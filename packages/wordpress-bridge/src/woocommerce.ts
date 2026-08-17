@@ -213,19 +213,68 @@ export class WooCommerceBridge {
   // =========================================================================
 
   /**
-   * Retrieves stock and inventory details for a specific product.
+   * Updates inventory for a WooCommerce product.
    */
-  public async getInventory(productId: number): Promise<WooCommerceInventory> {
-    logger.debug(`[WooCommerceBridge] Fetching inventory for product ${productId}`);
-    const product = await this.getProduct(productId);
+  public async updateInventory(
+    productId: number,
+    stockQuantity: number,
+    stockStatus?: 'instock' | 'outofstock' | 'onbackorder',
+  ): Promise<WooCommerceInventory> {
+    logger.info(`[WooCommerceBridge] Updating inventory for product ${productId}`, { stockQuantity, stockStatus });
+    const rest = this.client.getRestClient();
 
+    const payload: Record<string, unknown> = {
+      manage_stock: true,
+      stock_quantity: stockQuantity,
+    };
+    if (stockStatus) {
+      payload.stock_status = stockStatus;
+    } else {
+      payload.stock_status = stockQuantity > 0 ? 'instock' : 'outofstock';
+    }
+
+    const updated = await rest.put<WooCommerceProduct>(`/wp-json/wc/v3/products/${productId}`, payload);
     return {
-      productId: product.id,
-      sku: product.sku,
-      manageStock: product.manage_stock,
-      stockQuantity: product.stock_quantity,
-      stockStatus: product.stock_status,
+      productId: updated.id,
+      sku: updated.sku,
+      manageStock: updated.manage_stock,
+      stockQuantity: updated.stock_quantity,
+      stockStatus: updated.stock_status,
       backordersAllowed: false,
     };
   }
+
+  /**
+   * Creates a product category.
+   */
+  public async createCategory(data: {
+    name: string;
+    slug?: string;
+    description?: string;
+    parent?: number;
+    image?: { src: string };
+  }): Promise<WooCommerceCategory> {
+    logger.info('[WooCommerceBridge] Creating product category', { name: data.name });
+    const rest = this.client.getRestClient();
+    return rest.post<WooCommerceCategory>('/wp-json/wc/v3/products/categories', data);
+  }
+
+  /**
+   * Updates a product category.
+   */
+  public async updateCategory(
+    id: number,
+    data: {
+      name?: string;
+      slug?: string;
+      description?: string;
+      parent?: number;
+      image?: { src: string };
+    },
+  ): Promise<WooCommerceCategory> {
+    logger.info(`[WooCommerceBridge] Updating product category ${id}`, { ...data });
+    const rest = this.client.getRestClient();
+    return rest.put<WooCommerceCategory>(`/wp-json/wc/v3/products/categories/${id}`, data);
+  }
 }
+

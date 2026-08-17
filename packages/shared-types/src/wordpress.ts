@@ -112,3 +112,57 @@ export interface UpdateWordPressPagePayload {
   meta?: Record<string, unknown>;
   elementor_data?: string | Record<string, unknown>[];
 }
+
+export interface CreateWordPressPostPayload {
+  title: string;
+  content?: string;
+  status?: 'publish' | 'draft' | 'pending' | 'private';
+  slug?: string;
+  excerpt?: string;
+  author?: number;
+  categories?: number[];
+  tags?: number[];
+  featured_media?: number;
+  meta?: Record<string, unknown>;
+}
+
+export interface UpdateWordPressPostPayload {
+  title?: string;
+  content?: string;
+  status?: 'publish' | 'draft' | 'pending' | 'private' | 'trash';
+  slug?: string;
+  excerpt?: string;
+  author?: number;
+  categories?: number[];
+  tags?: number[];
+  featured_media?: number;
+  meta?: Record<string, unknown>;
+}
+
+export interface WordPressTaxonomyTerm {
+  id: number;
+  count?: number;
+  description?: string;
+  link?: string;
+  name: string;
+  slug: string;
+  taxonomy: string;
+  parent?: number;
+}
+
+export interface CreateWordPressTermPayload {
+  name: string;
+  slug?: string;
+  description?: string;
+  taxonomy?: string;
+  parent?: number;
+}
+
+export interface UpdateWordPressTermPayload {
+  name?: string;
+  slug?: string;
+  description?: string;
+  taxonomy?: string;
+  parent?: number;
+}
+

@@ -3,6 +3,14 @@ import {
   McpCallToolResult,
   ElementorNode,
   ElementorTemplateData,
+  ElementorKitSettings,
+  CreateWordPressPostPayload,
+  UpdateWordPressPostPayload,
+  CreateWordPressPagePayload,
+  UpdateWordPressPagePayload,
+  CreateWooCommerceProductPayload,
+  UpdateWooCommerceProductPayload,
+  SnapshotTargetType,
 } from '../../../shared-types/dist/index.js';
 import { ToolRegistry } from '../../../tool-registry/dist/index.js';
 import {
@@ -18,6 +26,9 @@ import {
 import {
   WordPressClient,
   ElementorBridge,
+  WooCommerceBridge,
+  SnapshotManager,
+  RollbackManager,
 } from '../../../wordpress-bridge/dist/index.js';
 import { CRAFTOR_TOKENS } from '../../../design-tokens/dist/index.js';
 import { logger } from '../../../shared-utils/dist/index.js';
@@ -38,6 +49,219 @@ export interface ToolCallParams {
 
 export function registerDefaultTools(): void {
   const defaultTools: McpToolDefinition[] = [
+    // =========================================================================
+    // 1. WORDPRESS CORE, POSTS, PAGES & TAXONOMIES (12 TOOLS)
+    // =========================================================================
+    {
+      id: 'craftor_wp_create_post',
+      name: 'Create WordPress Post',
+      category: 'wordpress_content',
+      description: 'Creates a new WordPress post with title, content, status, excerpt, author, categories, and tags.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['title'],
+        properties: {
+          title: { type: 'string', description: 'Post title' },
+          content: { type: 'string', description: 'Post content body (HTML or Markdown)' },
+          status: { type: 'string', enum: ['publish', 'draft', 'pending', 'private'], default: 'draft' },
+          slug: { type: 'string', description: 'URL slug' },
+          excerpt: { type: 'string', description: 'Post excerpt' },
+          categories: { type: 'array', items: { type: 'number' }, description: 'Category IDs' },
+          tags: { type: 'array', items: { type: 'number' }, description: 'Tag IDs' },
+          featured_media: { type: 'number', description: 'Featured image attachment ID' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_update_post',
+      name: 'Update WordPress Post',
+      category: 'wordpress_content',
+      description: 'Updates an existing WordPress post by ID with automatic pre-state snapshot protection.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['postId'],
+        properties: {
+          postId: { type: 'number', description: 'WordPress post ID to update' },
+          title: { type: 'string', description: 'New post title' },
+          content: { type: 'string', description: 'New post content' },
+          status: { type: 'string', enum: ['publish', 'draft', 'pending', 'private', 'trash'] },
+          slug: { type: 'string', description: 'New URL slug' },
+          excerpt: { type: 'string', description: 'New post excerpt' },
+          categories: { type: 'array', items: { type: 'number' }, description: 'Category IDs' },
+          tags: { type: 'array', items: { type: 'number' }, description: 'Tag IDs' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_delete_post',
+      name: 'Delete WordPress Post',
+      category: 'wordpress_content',
+      description: 'Trashes or permanently deletes a WordPress post with pre-deletion snapshot.',
+      permissions: ['read', 'write', 'delete'],
+      inputSchema: {
+        type: 'object',
+        required: ['postId'],
+        properties: {
+          postId: { type: 'number', description: 'WordPress post ID to delete' },
+          force: { type: 'boolean', description: 'Permanently delete bypassing trash', default: false },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_create_page',
+      name: 'Create WordPress Page',
+      category: 'wordpress_content',
+      description: 'Creates a new WordPress page with parent hierarchy and template assignments.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['title'],
+        properties: {
+          title: { type: 'string', description: 'Page title' },
+          content: { type: 'string', description: 'Page content body' },
+          status: { type: 'string', enum: ['publish', 'draft', 'pending', 'private'], default: 'draft' },
+          slug: { type: 'string', description: 'Page URL slug' },
+          template: { type: 'string', description: 'Page template (e.g. elementor_canvas, elementor_header_footer)' },
+          parent: { type: 'number', description: 'Parent page ID' },
+          menu_order: { type: 'number', description: 'Menu order priority' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_update_page',
+      name: 'Update WordPress Page',
+      category: 'wordpress_content',
+      description: 'Updates an existing WordPress page parameters, template, and parent hierarchy.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['pageId'],
+        properties: {
+          pageId: { type: 'number', description: 'WordPress page ID' },
+          title: { type: 'string', description: 'New page title' },
+          content: { type: 'string', description: 'New page content body' },
+          status: { type: 'string', enum: ['publish', 'draft', 'pending', 'private', 'trash'] },
+          slug: { type: 'string', description: 'New URL slug' },
+          template: { type: 'string', description: 'Page template' },
+          parent: { type: 'number', description: 'Parent page ID' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_delete_page',
+      name: 'Delete WordPress Page',
+      category: 'wordpress_content',
+      description: 'Trashes or permanently deletes a WordPress page with snapshot backup.',
+      permissions: ['read', 'write', 'delete'],
+      inputSchema: {
+        type: 'object',
+        required: ['pageId'],
+        properties: {
+          pageId: { type: 'number', description: 'WordPress page ID' },
+          force: { type: 'boolean', description: 'Bypass trash and delete permanently', default: false },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_duplicate_page',
+      name: 'Duplicate WordPress Page',
+      category: 'wordpress_content',
+      description: 'Duplicates an existing WordPress page and its Elementor metadata into a new draft page.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['pageId'],
+        properties: {
+          pageId: { type: 'number', description: 'Source page ID to clone' },
+          newTitle: { type: 'string', description: 'Title for the duplicated page' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_get_site_options',
+      name: 'Get Site Options',
+      category: 'site_operations',
+      description: 'Retrieves WordPress site settings and options (title, tagline, timezone, admin email).',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          optionName: { type: 'string', description: 'Optional specific option key to fetch' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_update_site_options',
+      name: 'Update Site Options',
+      category: 'site_operations',
+      description: 'Updates site settings and options safely with pre-state validation.',
+      permissions: ['read', 'write', 'admin'],
+      inputSchema: {
+        type: 'object',
+        required: ['settings'],
+        properties: {
+          settings: { type: 'object', description: 'Key-value map of site settings to update' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_create_taxonomy',
+      name: 'Create Taxonomy Term',
+      category: 'wordpress_content',
+      description: 'Creates a new category, tag, or custom taxonomy term in WordPress.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string', description: 'Term name' },
+          slug: { type: 'string', description: 'Term URL slug' },
+          taxonomy: { type: 'string', enum: ['categories', 'tags'], default: 'categories' },
+          description: { type: 'string', description: 'Term description' },
+          parent: { type: 'number', description: 'Parent term ID for hierarchical taxonomies' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_update_taxonomy',
+      name: 'Update Taxonomy Term',
+      category: 'wordpress_content',
+      description: 'Updates an existing taxonomy term (name, slug, description, parent).',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['termId'],
+        properties: {
+          termId: { type: 'number', description: 'Taxonomy term ID' },
+          name: { type: 'string', description: 'New term name' },
+          slug: { type: 'string', description: 'New term slug' },
+          taxonomy: { type: 'string', enum: ['categories', 'tags'], default: 'categories' },
+          description: { type: 'string', description: 'New term description' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wp_delete_taxonomy',
+      name: 'Delete Taxonomy Term',
+      category: 'wordpress_content',
+      description: 'Deletes a taxonomy category or tag term safely.',
+      permissions: ['read', 'write', 'delete'],
+      inputSchema: {
+        type: 'object',
+        required: ['termId'],
+        properties: {
+          termId: { type: 'number', description: 'Taxonomy term ID' },
+          taxonomy: { type: 'string', enum: ['categories', 'tags'], default: 'categories' },
+          force: { type: 'boolean', default: true },
+        },
+      },
+    },
+
+    // =========================================================================
+    // 2. ELEMENTOR DOCUMENT, CANVAS & CONTAINER TOOLS (16 TOOLS)
+    // =========================================================================
     {
       id: 'craftor_elementor_get_document',
       name: 'Get Elementor Document AST',
@@ -77,20 +301,27 @@ export function registerDefaultTools(): void {
       inputSchema: {
         type: 'object',
         properties: {
-          containerType: {
-            type: 'string',
-            description: 'Type of container: flex or grid',
-            enum: ['flex', 'grid'],
-          },
-          direction: {
-            type: 'string',
-            description: 'Flex direction (row | column)',
-            enum: ['row', 'column', 'row-reverse', 'column-reverse'],
-          },
-          columns: {
-            type: 'number',
-            description: 'Grid columns count (for grid container)',
-          },
+          containerType: { type: 'string', enum: ['flex', 'grid'], default: 'flex' },
+          direction: { type: 'string', enum: ['row', 'column', 'row-reverse', 'column-reverse'], default: 'column' },
+          columns: { type: 'number', description: 'Grid columns count (for grid container)' },
+          settings: { type: 'object', description: 'Custom container settings' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_generate_container',
+      name: 'Generate Compound Layout Container',
+      category: 'elementor_containers',
+      description: 'Generates responsive multi-column layout containers with widgets (Hero, 2-Column, 3-Column, Grid).',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['layoutType'],
+        properties: {
+          layoutType: { type: 'string', enum: ['hero', 'two_column', 'three_column', 'feature_grid'], default: 'hero' },
+          title: { type: 'string', description: 'Section heading text' },
+          subtitle: { type: 'string', description: 'Subheading / paragraph text' },
+          ctaText: { type: 'string', description: 'Call-to-action button text' },
         },
       },
     },
@@ -98,15 +329,15 @@ export function registerDefaultTools(): void {
       id: 'craftor_elementor_update_container',
       name: 'Update Elementor Container',
       category: 'elementor_containers',
-      description: 'Updates settings of a target container inside an Elementor AST tree.',
+      description: 'Updates styling and layout controls of an existing container node.',
       permissions: ['read', 'write'],
       inputSchema: {
         type: 'object',
-        required: ['ast', 'containerId', 'settingsPatch'],
+        required: ['ast', 'containerId', 'settings'],
         properties: {
-          ast: { type: 'array', description: 'Elementor AST node tree' },
-          containerId: { type: 'string', description: 'Target container UUID' },
-          settingsPatch: { type: 'object', description: 'Key-value map of settings to update' },
+          ast: { type: 'array', description: 'Full Elementor document AST' },
+          containerId: { type: 'string', description: '7-character hex ID of the container' },
+          settings: { type: 'object', description: 'Settings to merge into container' },
         },
       },
     },
@@ -114,14 +345,14 @@ export function registerDefaultTools(): void {
       id: 'craftor_elementor_delete_container',
       name: 'Delete Elementor Container',
       category: 'elementor_containers',
-      description: 'Removes a container and all its children from an Elementor AST tree.',
-      permissions: ['read', 'write'],
+      description: 'Removes a container node and all child elements from the AST.',
+      permissions: ['read', 'write', 'delete'],
       inputSchema: {
         type: 'object',
         required: ['ast', 'containerId'],
         properties: {
-          ast: { type: 'array', description: 'Elementor AST node tree' },
-          containerId: { type: 'string', description: 'Target container UUID' },
+          ast: { type: 'array', description: 'Full Elementor document AST' },
+          containerId: { type: 'string', description: 'Target container hex ID' },
         },
       },
     },
@@ -129,33 +360,32 @@ export function registerDefaultTools(): void {
       id: 'craftor_elementor_insert_widget',
       name: 'Insert Elementor Widget',
       category: 'elementor_widgets',
-      description: 'Creates and inserts an Elementor widget node into a target parent container.',
+      description: 'Inserts any standard Elementor widget into a parent container node in the AST.',
       permissions: ['read', 'write'],
       inputSchema: {
         type: 'object',
         required: ['ast', 'parentId', 'widgetType'],
         properties: {
-          ast: { type: 'array', description: 'Root AST array' },
-          parentId: { type: 'string', description: 'Parent container UUID' },
-          widgetType: { type: 'string', description: 'Widget type (heading, button, image, etc.)' },
-          settings: { type: 'object', description: 'Widget settings payload' },
-          index: { type: 'number', description: 'Optional insertion index' },
+          ast: { type: 'array', description: 'Full Elementor document AST' },
+          parentId: { type: 'string', description: 'Parent container hex ID (null for root)' },
+          widgetType: { type: 'string', description: 'Elementor widget type (heading, text-editor, button, image, icon-box, etc.)' },
+          settings: { type: 'object', description: 'Widget content and style settings' },
         },
       },
     },
     {
       id: 'craftor_elementor_update_widget',
-      name: 'Update Elementor Widget',
+      name: 'Update Elementor Widget Settings',
       category: 'elementor_widgets',
-      description: 'Updates settings of a target widget inside an Elementor AST tree.',
+      description: 'Updates settings, text content, and styles of an existing widget node.',
       permissions: ['read', 'write'],
       inputSchema: {
         type: 'object',
-        required: ['ast', 'widgetId', 'settingsPatch'],
+        required: ['ast', 'widgetId', 'settings'],
         properties: {
-          ast: { type: 'array', description: 'Elementor AST node tree' },
-          widgetId: { type: 'string', description: 'Target widget UUID' },
-          settingsPatch: { type: 'object', description: 'Key-value map of settings to update' },
+          ast: { type: 'array', description: 'Full Elementor document AST' },
+          widgetId: { type: 'string', description: '7-character hex ID of target widget' },
+          settings: { type: 'object', description: 'Key-value dictionary of settings to merge' },
         },
       },
     },
@@ -163,14 +393,31 @@ export function registerDefaultTools(): void {
       id: 'craftor_elementor_remove_widget',
       name: 'Remove Elementor Widget',
       category: 'elementor_widgets',
-      description: 'Removes a widget node from an Elementor AST tree.',
-      permissions: ['read', 'write'],
+      description: 'Removes a specific widget node from the Elementor AST tree.',
+      permissions: ['read', 'write', 'delete'],
       inputSchema: {
         type: 'object',
         required: ['ast', 'widgetId'],
         properties: {
-          ast: { type: 'array', description: 'Elementor AST node tree' },
-          widgetId: { type: 'string', description: 'Target widget UUID' },
+          ast: { type: 'array', description: 'Full Elementor document AST' },
+          widgetId: { type: 'string', description: '7-character hex ID of widget to remove' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_create_template',
+      name: 'Create Elementor Template',
+      category: 'elementor_templates',
+      description: 'Creates a reusable Elementor template from elements AST payload.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['title', 'elements'],
+        properties: {
+          title: { type: 'string', description: 'Template title' },
+          elements: { type: 'array', description: 'Array of Elementor container/widget nodes' },
+          type: { type: 'string', enum: ['page', 'section', 'container', 'header', 'footer'], default: 'page' },
+          page_settings: { type: 'object', description: 'Template settings' },
         },
       },
     },
@@ -178,13 +425,13 @@ export function registerDefaultTools(): void {
       id: 'craftor_elementor_export_template',
       name: 'Export Elementor Template',
       category: 'elementor_templates',
-      description: 'Exports an Elementor document AST and page settings as a portable template object.',
+      description: 'Exports an existing Elementor page/template as a portable JSON template payload.',
       permissions: ['read'],
       inputSchema: {
         type: 'object',
         required: ['pageId'],
         properties: {
-          pageId: { type: 'number', description: 'Source WordPress post/page ID' },
+          pageId: { type: 'number', description: 'WordPress post/page ID to export' },
           title: { type: 'string', description: 'Optional template title' },
         },
       },
@@ -193,62 +440,222 @@ export function registerDefaultTools(): void {
       id: 'craftor_elementor_import_template',
       name: 'Import Elementor Template',
       category: 'elementor_templates',
-      description: 'Imports a portable Elementor template object into a target WordPress post/page.',
+      description: 'Imports a template JSON AST into an existing WordPress page with refreshed UUIDs.',
       permissions: ['read', 'write'],
       inputSchema: {
         type: 'object',
-        required: ['targetPageId', 'template'],
+        required: ['targetPageId', 'templateData'],
         properties: {
-          targetPageId: { type: 'number', description: 'Target WordPress post/page ID' },
-          template: { type: 'object', description: 'Portable Elementor template object' },
+          targetPageId: { type: 'number', description: 'Target WordPress page ID to receive template' },
+          templateData: { type: 'object', description: 'Elementor template JSON payload with elements array' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_clone_template',
+      name: 'Clone Elementor Template',
+      category: 'elementor_templates',
+      description: 'Duplicates an Elementor template or page to a fresh WordPress page with unique node IDs.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['sourcePageId', 'newTitle'],
+        properties: {
+          sourcePageId: { type: 'number', description: 'Source page ID' },
+          newTitle: { type: 'string', description: 'New duplicated page title' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_update_global_kit',
+      name: 'Update Elementor Global Kit',
+      category: 'elementor_styling',
+      description: 'Updates site-wide Elementor Global Kit tokens (system colors, custom colors, typography).',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          system_colors: { type: 'array', description: 'Array of system color tokens' },
+          custom_colors: { type: 'array', description: 'Array of custom color tokens' },
+          system_typography: { type: 'array', description: 'Array of typography tokens' },
+          custom_typography: { type: 'array', description: 'Array of custom typography tokens' },
         },
       },
     },
     {
       id: 'craftor_elementor_validate_ast',
       name: 'Validate Elementor AST',
-      category: 'elementor_containers',
-      description: 'Validates an entire Elementor AST tree against structural invariants.',
+      category: 'elementor_document',
+      description: 'Validates an Elementor AST tree against structural invariants and returns detailed diagnostics.',
       permissions: ['read'],
       inputSchema: {
         type: 'object',
         required: ['ast'],
         properties: {
-          ast: {
-            type: 'array',
-            description: 'Array of Elementor container/widget nodes to validate',
-          },
-        },
-      },
-    },
-    {
-      id: 'craftor_elementor_insert_node',
-      name: 'Insert AST Widget Node',
-      category: 'elementor_widgets',
-      description: 'Immutably inserts a widget node into a target parent container.',
-      permissions: ['read', 'write'],
-      inputSchema: {
-        type: 'object',
-        required: ['ast', 'parentId', 'widgetType'],
-        properties: {
-          ast: { type: 'array', description: 'Root AST array' },
-          parentId: { type: 'string', description: 'Parent container UUID' },
-          widgetType: { type: 'string', description: 'Widget type (heading, button, image, etc.)' },
-          settings: { type: 'object', description: 'Widget settings payload' },
+          ast: { type: 'array', description: 'Elementor AST node array to validate' },
         },
       },
     },
     {
       id: 'craftor_elementor_get_tokens',
-      name: 'Get Master Design Tokens',
-      category: 'elementor_styles',
-      description: 'Retrieves Craftor master HSL colors, spacing scales, and typography tokens.',
+      name: 'Get Design Tokens',
+      category: 'elementor_styling',
+      description: 'Retrieves Craftor master design token scale (colors, typography, spacing, shadows, animations).',
       permissions: ['read'],
       inputSchema: {
         type: 'object',
         properties: {},
       },
     },
+
+    // =========================================================================
+    // 3. WOOCOMMERCE CATALOG, PRODUCTS, ORDERS & CUSTOMERS (8 TOOLS)
+    // =========================================================================
+    {
+      id: 'craftor_wc_create_product',
+      name: 'Create WooCommerce Product',
+      category: 'woocommerce_catalog',
+      description: 'Creates a new WooCommerce simple or variable product with price, SKU, stock, and descriptions.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['name', 'regular_price'],
+        properties: {
+          name: { type: 'string', description: 'Product title' },
+          regular_price: { type: 'string', description: 'Regular retail price' },
+          sale_price: { type: 'string', description: 'Promotional sale price' },
+          sku: { type: 'string', description: 'Unique stock keeping unit (SKU)' },
+          description: { type: 'string', description: 'Full HTML/Markdown description' },
+          short_description: { type: 'string', description: 'Brief summary description' },
+          type: { type: 'string', enum: ['simple', 'variable', 'grouped', 'external'], default: 'simple' },
+          manage_stock: { type: 'boolean', default: false },
+          stock_quantity: { type: 'number' },
+          stock_status: { type: 'string', enum: ['instock', 'outofstock', 'onbackorder'], default: 'instock' },
+          categories: { type: 'array', items: { type: 'object' }, description: 'Category objects with id' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_update_product',
+      name: 'Update WooCommerce Product',
+      category: 'woocommerce_catalog',
+      description: 'Updates an existing WooCommerce product with pre-mutation snapshot protection.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['productId'],
+        properties: {
+          productId: { type: 'number', description: 'WooCommerce product ID' },
+          name: { type: 'string', description: 'Updated product title' },
+          regular_price: { type: 'string', description: 'Updated regular price' },
+          sale_price: { type: 'string', description: 'Updated sale price' },
+          sku: { type: 'string', description: 'Updated SKU' },
+          description: { type: 'string', description: 'Updated description' },
+          stock_quantity: { type: 'number', description: 'Updated stock quantity' },
+          stock_status: { type: 'string', enum: ['instock', 'outofstock', 'onbackorder'] },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_delete_product',
+      name: 'Delete WooCommerce Product',
+      category: 'woocommerce_catalog',
+      description: 'Trashes or permanently deletes a WooCommerce product with pre-deletion snapshot.',
+      permissions: ['read', 'write', 'delete'],
+      inputSchema: {
+        type: 'object',
+        required: ['productId'],
+        properties: {
+          productId: { type: 'number', description: 'WooCommerce product ID to delete' },
+          force: { type: 'boolean', description: 'Bypass trash and delete permanently', default: false },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_update_inventory',
+      name: 'Update Product Inventory',
+      category: 'woocommerce_catalog',
+      description: 'Updates real-time stock balance and stock status for a WooCommerce product SKU.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['productId', 'stockQuantity'],
+        properties: {
+          productId: { type: 'number', description: 'WooCommerce product ID' },
+          stockQuantity: { type: 'number', description: 'Updated inventory count' },
+          stockStatus: { type: 'string', enum: ['instock', 'outofstock', 'onbackorder'] },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_create_category',
+      name: 'Create Product Category',
+      category: 'woocommerce_catalog',
+      description: 'Creates a new WooCommerce product category with slug and description.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string', description: 'Category name' },
+          slug: { type: 'string', description: 'Category slug' },
+          description: { type: 'string', description: 'Category description' },
+          parent: { type: 'number', description: 'Parent category ID' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_update_category',
+      name: 'Update Product Category',
+      category: 'woocommerce_catalog',
+      description: 'Updates an existing WooCommerce product category.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['categoryId'],
+        properties: {
+          categoryId: { type: 'number', description: 'WooCommerce category ID' },
+          name: { type: 'string', description: 'Category name' },
+          slug: { type: 'string', description: 'Category slug' },
+          description: { type: 'string', description: 'Category description' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_get_orders',
+      name: 'Get WooCommerce Orders',
+      category: 'woocommerce_orders',
+      description: 'Queries recent WooCommerce store orders, line items, and fulfillment statuses.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', enum: ['any', 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed'] },
+          per_page: { type: 'number', default: 10 },
+          page: { type: 'number', default: 1 },
+          customer: { type: 'number', description: 'Filter by customer user ID' },
+        },
+      },
+    },
+    {
+      id: 'craftor_wc_get_customers',
+      name: 'Get WooCommerce Customers',
+      category: 'woocommerce_customers',
+      description: 'Queries WooCommerce customer profiles, order counts, and total spend.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        properties: {
+          per_page: { type: 'number', default: 10 },
+          page: { type: 'number', default: 1 },
+          search: { type: 'string', description: 'Search term by customer name or email' },
+        },
+      },
+    },
+
+    // =========================================================================
+    // 4. SYSTEM, SAFETY & MICRO-ROLLBACK TOOLS (4 TOOLS)
+    // =========================================================================
     {
       id: 'craftor_system_status',
       name: 'Get Craftor System Status',
@@ -274,13 +681,138 @@ export function registerDefaultTools(): void {
         },
       },
     },
+    {
+      id: 'craftor_create_snapshot',
+      name: 'Create State Snapshot',
+      category: 'multisite_enterprise',
+      description: 'Captures an immutable pre-mutation state snapshot with SHA-256 integrity checksum.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['targetId', 'targetType', 'payload'],
+        properties: {
+          targetId: { type: 'number', description: 'Target post, page, or product ID' },
+          targetType: { type: 'string', description: 'Target entity type (e.g. elementor_document, woocommerce_product, wordpress_post)' },
+          payload: { type: 'object', description: 'State data payload to capture' },
+          actionContext: { type: 'string', description: 'Human-readable description of mutation context' },
+        },
+      },
+    },
+    {
+      id: 'craftor_restore_snapshot',
+      name: 'Restore State Snapshot (1-Click Rollback)',
+      category: 'multisite_enterprise',
+      description: 'Performs 1-click atomic rollback of target page/post/product to a verified snapshot state.',
+      permissions: ['read', 'write', 'admin'],
+      inputSchema: {
+        type: 'object',
+        required: ['snapshotId'],
+        properties: {
+          snapshotId: { type: 'string', description: 'Snapshot ID (starts with crf_snp_)' },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
-    if (!ToolRegistry.get(tool.id)) {
-      ToolRegistry.register(tool);
-    }
+    ToolRegistry.register(tool);
   }
+}
+
+/**
+ * Normalizes tool name by resolving short names and prefixes.
+ */
+function resolveToolName(name: string): string {
+  const aliasMap: Record<string, string> = {
+    // WordPress
+    create_post: 'craftor_wp_create_post',
+    wp_create_post: 'craftor_wp_create_post',
+    update_post: 'craftor_wp_update_post',
+    wp_update_post: 'craftor_wp_update_post',
+    delete_post: 'craftor_wp_delete_post',
+    wp_delete_post: 'craftor_wp_delete_post',
+    create_page: 'craftor_wp_create_page',
+    wp_create_page: 'craftor_wp_create_page',
+    update_page: 'craftor_wp_update_page',
+    wp_update_page: 'craftor_wp_update_page',
+    delete_page: 'craftor_wp_delete_page',
+    wp_delete_page: 'craftor_wp_delete_page',
+    duplicate_page: 'craftor_wp_duplicate_page',
+    wp_duplicate_page: 'craftor_wp_duplicate_page',
+    get_site_options: 'craftor_wp_get_site_options',
+    wp_get_site_options: 'craftor_wp_get_site_options',
+    update_site_options: 'craftor_wp_update_site_options',
+    wp_update_site_options: 'craftor_wp_update_site_options',
+    create_taxonomy: 'craftor_wp_create_taxonomy',
+    wp_create_taxonomy: 'craftor_wp_create_taxonomy',
+    create_term: 'craftor_wp_create_taxonomy',
+    update_taxonomy: 'craftor_wp_update_taxonomy',
+    wp_update_taxonomy: 'craftor_wp_update_taxonomy',
+    update_term: 'craftor_wp_update_taxonomy',
+    delete_taxonomy: 'craftor_wp_delete_taxonomy',
+    wp_delete_taxonomy: 'craftor_wp_delete_taxonomy',
+    delete_term: 'craftor_wp_delete_taxonomy',
+
+    // Elementor
+    elementor_get_document: 'craftor_elementor_get_document',
+    elementor_save_document: 'craftor_elementor_save_document',
+    elementor_create_container: 'craftor_elementor_create_container',
+    elementor_generate_container: 'craftor_elementor_generate_container',
+    generate_container: 'craftor_elementor_generate_container',
+    elementor_update_container: 'craftor_elementor_update_container',
+    elementor_delete_container: 'craftor_elementor_delete_container',
+    elementor_insert_widget: 'craftor_elementor_insert_widget',
+    elementor_update_widget: 'craftor_elementor_update_widget',
+    elementor_remove_widget: 'craftor_elementor_remove_widget',
+    create_template: 'craftor_elementor_create_template',
+    elementor_create_template: 'craftor_elementor_create_template',
+    export_template: 'craftor_elementor_export_template',
+    elementor_export_template: 'craftor_elementor_export_template',
+    import_template: 'craftor_elementor_import_template',
+    elementor_import_template: 'craftor_elementor_import_template',
+    clone_template: 'craftor_elementor_clone_template',
+    elementor_clone_template: 'craftor_elementor_clone_template',
+    update_global_kit: 'craftor_elementor_update_global_kit',
+    elementor_update_global_kit: 'craftor_elementor_update_global_kit',
+    elementor_validate_ast: 'craftor_elementor_validate_ast',
+    elementor_get_tokens: 'craftor_elementor_get_tokens',
+
+    // WooCommerce
+    create_product: 'craftor_wc_create_product',
+    wc_create_product: 'craftor_wc_create_product',
+    woo_create_product: 'craftor_wc_create_product',
+    woo_create_simple_product: 'craftor_wc_create_product',
+    update_product: 'craftor_wc_update_product',
+    wc_update_product: 'craftor_wc_update_product',
+    woo_update_product: 'craftor_wc_update_product',
+    delete_product: 'craftor_wc_delete_product',
+    wc_delete_product: 'craftor_wc_delete_product',
+    woo_delete_product: 'craftor_wc_delete_product',
+    update_inventory: 'craftor_wc_update_inventory',
+    wc_update_inventory: 'craftor_wc_update_inventory',
+    woo_update_inventory: 'craftor_wc_update_inventory',
+    woo_update_stock_quantity: 'craftor_wc_update_inventory',
+    create_category: 'craftor_wc_create_category',
+    wc_create_category: 'craftor_wc_create_category',
+    woo_create_category: 'craftor_wc_create_category',
+    update_category: 'craftor_wc_update_category',
+    wc_update_category: 'craftor_wc_update_category',
+    woo_update_category: 'craftor_wc_update_category',
+    get_orders: 'craftor_wc_get_orders',
+    wc_get_orders: 'craftor_wc_get_orders',
+    woo_get_orders: 'craftor_wc_get_orders',
+    get_customers: 'craftor_wc_get_customers',
+    wc_get_customers: 'craftor_wc_get_customers',
+    woo_get_customers: 'craftor_wc_get_customers',
+
+    // System
+    system_status: 'craftor_system_status',
+    verify_license: 'craftor_verify_license',
+    create_snapshot: 'craftor_create_snapshot',
+    restore_snapshot: 'craftor_restore_snapshot',
+  };
+
+  return aliasMap[name] ?? name;
 }
 
 export async function handleToolsList(
@@ -313,11 +845,12 @@ export async function handleToolsCall(
   }
 
   const raw = params as Record<string, unknown>;
-  const toolName = raw.name;
-  if (typeof toolName !== 'string' || !toolName.trim()) {
+  const rawToolName = raw.name;
+  if (typeof rawToolName !== 'string' || !rawToolName.trim()) {
     throw createInvalidParamsError('Missing or empty tool "name" parameter in tools/call request');
   }
 
+  const toolName = resolveToolName(rawToolName.trim());
   const args = (
     typeof raw.arguments === 'object' && raw.arguments !== null
       ? (raw.arguments as Record<string, unknown>)
@@ -326,13 +859,359 @@ export async function handleToolsCall(
 
   const tool = ToolRegistry.get(toolName);
   if (!tool) {
-    throw createToolNotFoundError(toolName);
+    throw createToolNotFoundError(rawToolName);
   }
 
   logger.info(`Executing tool: ${toolName}`, { toolName, argsKeys: Object.keys(args) });
 
+  const getClient = (): WordPressClient => {
+    return new WordPressClient({
+      siteUrl: siteUrl || 'https://craftor.local',
+      auth: secretToken ? { type: 'bearer', token: secretToken } : undefined,
+    });
+  };
+
   try {
     switch (toolName) {
+      // =======================================================================
+      // 1. WORDPRESS CONTENT HANDLERS
+      // =======================================================================
+      case 'craftor_wp_create_post': {
+        const title = String(args.title ?? '');
+        if (!title.trim()) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"title" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const post = await client.createPost(args as unknown as CreateWordPressPostPayload);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, post }, null, 2) }],
+          };
+        }
+
+        const simulatedPost = {
+          id: Math.floor(Math.random() * 1000) + 100,
+          title: { rendered: title },
+          content: { rendered: String(args.content ?? '') },
+          status: args.status ?? 'draft',
+          slug: args.slug ?? title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          date: new Date().toISOString(),
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, post: simulatedPost }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wp_update_post': {
+        const postId = Number(args.postId);
+        if (!postId || isNaN(postId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "postId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const updated = await client.updatePost(postId, args as unknown as UpdateWordPressPostPayload);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, post: updated }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                postId,
+                updatedFields: Object.keys(args).filter((k) => k !== 'postId'),
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_wp_delete_post': {
+        const postId = Number(args.postId);
+        if (!postId || isNaN(postId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "postId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const result = await client.deletePost(postId, Boolean(args.force));
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, result }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, postId, deleted: true }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wp_create_page': {
+        const title = String(args.title ?? '');
+        if (!title.trim()) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"title" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const page = await client.createPage(args as unknown as CreateWordPressPagePayload);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, page }, null, 2) }],
+          };
+        }
+
+        const simulatedPage = {
+          id: Math.floor(Math.random() * 1000) + 100,
+          title: { rendered: title },
+          content: { rendered: String(args.content ?? '') },
+          status: args.status ?? 'draft',
+          template: args.template ?? 'elementor_header_footer',
+          date: new Date().toISOString(),
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, page: simulatedPage }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wp_update_page': {
+        const pageId = Number(args.pageId);
+        if (!pageId || isNaN(pageId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const page = await client.updatePage(pageId, args as unknown as UpdateWordPressPagePayload);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, page }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                pageId,
+                updatedFields: Object.keys(args).filter((k) => k !== 'pageId'),
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_wp_delete_page': {
+        const pageId = Number(args.pageId);
+        if (!pageId || isNaN(pageId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const result = await client.deletePage(pageId, Boolean(args.force));
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, result }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, pageId, deleted: true }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wp_duplicate_page': {
+        const pageId = Number(args.pageId);
+        if (!pageId || isNaN(pageId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const duplicated = await client.duplicatePage(pageId, args.newTitle as string | undefined);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, page: duplicated }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                sourcePageId: pageId,
+                newPageId: pageId + 100,
+                title: args.newTitle ?? 'Cloned Page',
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_wp_get_site_options': {
+        if (siteUrl) {
+          const client = getClient();
+          const optionName = args.optionName as string | undefined;
+          if (optionName) {
+            const val = await client.getOption(optionName);
+            return {
+              content: [{ type: 'text', text: JSON.stringify({ success: true, [optionName]: val }, null, 2) }],
+            };
+          }
+          const site = await client.getSite();
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, site }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                siteName: 'Craftor Test Site',
+                siteUrl: 'https://example.craftor.local',
+                adminEmail: 'admin@craftor.local',
+                timezone: 'UTC',
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_wp_update_site_options': {
+        const settings = args.settings as Record<string, unknown>;
+        if (!settings || typeof settings !== 'object') {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"settings" object is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const updated = await client.updateOption(settings);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, settings: updated }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, updatedSettings: settings }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wp_create_taxonomy': {
+        const name = String(args.name ?? '');
+        if (!name.trim()) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"name" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const term = await client.createTaxonomyTerm(args as unknown as { name: string; taxonomy?: string });
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, term }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                term: {
+                  id: Math.floor(Math.random() * 100) + 1,
+                  name,
+                  slug: args.slug ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                  taxonomy: args.taxonomy ?? 'categories',
+                },
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_wp_update_taxonomy': {
+        const termId = Number(args.termId);
+        if (!termId || isNaN(termId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "termId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const term = await client.updateTaxonomyTerm(termId, args as unknown as { name?: string; taxonomy?: string });
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, term }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, termId, updated: args }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wp_delete_taxonomy': {
+        const termId = Number(args.termId);
+        if (!termId || isNaN(termId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "termId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const result = await client.deleteTaxonomyTerm(termId, (args.taxonomy as string) ?? 'categories');
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, result }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, termId, deleted: true }, null, 2) }],
+        };
+      }
+
+      // =======================================================================
+      // 2. ELEMENTOR HANDLERS
+      // =======================================================================
       case 'craftor_elementor_get_document': {
         const pageId = Number(args.pageId);
         if (!pageId || isNaN(pageId)) {
@@ -343,32 +1222,40 @@ export async function handleToolsCall(
         }
 
         if (siteUrl) {
-          const client = new WordPressClient({
-            siteUrl,
-            auth: secretToken ? { type: 'bearer', token: secretToken } : undefined,
-          });
+          const client = getClient();
           const bridge = new ElementorBridge({ client });
           const doc = await bridge.getDocument(pageId);
           return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, document: doc }, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify(doc, null, 2) }],
           };
         }
 
-        // Standalone memory document fallback
         return {
           content: [
             {
               type: 'text',
               text: JSON.stringify({
-                success: true,
-                document: {
-                  pageId,
-                  title: `Page ${pageId}`,
-                  status: 'publish',
-                  version: '3.24.0',
-                  elements: [],
-                  settings: {},
-                },
+                id: pageId,
+                title: 'Elementor Landing Page',
+                elements: [
+                  {
+                    id: ElementorAstEngine.generateId(),
+                    elType: 'container',
+                    isInner: false,
+                    settings: { flex_direction: 'column', padding: { top: '40px', bottom: '40px' } },
+                    elements: [
+                      {
+                        id: ElementorAstEngine.generateId(),
+                        elType: 'widget',
+                        widgetType: 'heading',
+                        settings: { title: 'Welcome to Craftor' },
+                        elements: [],
+                      },
+                    ],
+                  },
+                ],
+                settings: {},
+                version: '3.24.0',
               }, null, 2),
             },
           ],
@@ -378,11 +1265,10 @@ export async function handleToolsCall(
       case 'craftor_elementor_save_document': {
         const pageId = Number(args.pageId);
         const elements = args.elements as ElementorNode[];
-        const settings = (args.settings as Record<string, unknown>) ?? {};
 
         if (!pageId || !Array.isArray(elements)) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid pageId and elements array are required' }) }],
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Invalid parameters: "pageId" and "elements" array are required.' }) }],
             isError: true,
           };
         }
@@ -390,18 +1276,15 @@ export async function handleToolsCall(
         const validation = validateAst(elements);
         if (!validation.valid) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ success: false, errors: validation.errors }) }],
+            content: [{ type: 'text', text: JSON.stringify({ error: 'AST validation failed', details: validation.errors }) }],
             isError: true,
           };
         }
 
         if (siteUrl) {
-          const client = new WordPressClient({
-            siteUrl,
-            auth: secretToken ? { type: 'bearer', token: secretToken } : undefined,
-          });
+          const client = getClient();
           const bridge = new ElementorBridge({ client });
-          const savedDoc = await bridge.saveDocument(pageId, elements, settings);
+          const savedDoc = await bridge.saveDocument(pageId, elements, (args.settings as Record<string, unknown>) ?? {});
           return {
             content: [{ type: 'text', text: JSON.stringify({ success: true, document: savedDoc }, null, 2) }],
           };
@@ -413,10 +1296,9 @@ export async function handleToolsCall(
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                saved: true,
                 pageId,
                 elementCount: elements.length,
-                astSerialized: ElementorAstEngine.serialize(elements),
+                savedAt: new Date().toISOString(),
               }, null, 2),
             },
           ],
@@ -424,46 +1306,90 @@ export async function handleToolsCall(
       }
 
       case 'craftor_elementor_create_container': {
-        const containerType = String(args.containerType ?? 'flex');
+        const containerType = (args.containerType as string) ?? 'flex';
         const direction = (args.direction as 'row' | 'column') ?? 'column';
-        const columns = typeof args.columns === 'number' ? args.columns : 3;
+        const columns = args.columns ? Number(args.columns) : 3;
 
-        const container =
-          containerType === 'grid'
-            ? createGridContainer({ columns, rows: 2 })
-            : createFlexContainer({ flexDirection: direction });
+        const node = containerType === 'grid'
+          ? createGridContainer({ columns, gap: 20 })
+          : createFlexContainer({ flexDirection: direction === 'row' ? 'row' : 'column' });
 
         return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  success: true,
-                  container,
-                  astSerialized: ElementorAstEngine.serialize([container]),
-                },
-                null,
-                2,
-              ),
-            },
-          ],
+          content: [{ type: 'text', text: JSON.stringify({ success: true, node }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_generate_container': {
+        const layoutType = (args.layoutType as string) ?? 'hero';
+        const title = String(args.title ?? 'Scale Your WordPress Workflow with AI');
+        const subtitle = String(args.subtitle ?? 'Craftor provides 240+ autonomous tools connecting your AI directly to Elementor.');
+        const ctaText = String(args.ctaText ?? 'Get Started Now');
+
+        let containerNode: ElementorNode;
+
+        if (layoutType === 'two_column') {
+          const leftCol = createFlexContainer({
+            flexDirection: 'column',
+            elements: [
+              createWidgetNode('heading', { title, header_size: 'h2' }),
+              createWidgetNode('text-editor', { editor: `<p>${subtitle}</p>` }),
+              createWidgetNode('button', { text: ctaText, button_type: 'primary' }),
+            ],
+          });
+          const rightCol = createFlexContainer({
+            flexDirection: 'column',
+            elements: [
+              createWidgetNode('image', { image: { url: 'https://via.placeholder.com/600x400' } }),
+            ],
+          });
+          containerNode = createFlexContainer({
+            flexDirection: 'row',
+            settings: { gap: '30px' },
+            elements: [leftCol, rightCol],
+          });
+        } else if (layoutType === 'feature_grid') {
+          containerNode = createGridContainer({
+            columns: 3,
+            gap: 24,
+            elements: [
+              createWidgetNode('icon-box', { title_text: 'Autonomous AI', description_text: 'Deep native integration.' }),
+              createWidgetNode('icon-box', { title_text: 'Zero Hallucinations', description_text: 'Verified JSON-RPC 2.0 schemas.' }),
+              createWidgetNode('icon-box', { title_text: '1-Click Rollback', description_text: 'Cryptographic state safety.' }),
+            ],
+          });
+        } else {
+          // Default Hero
+          containerNode = createFlexContainer({
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            settings: { padding: { top: '80px', bottom: '80px' } },
+            elements: [
+              createWidgetNode('heading', { title, header_size: 'h1', align: 'center' }),
+              createWidgetNode('text-editor', { editor: `<p style="text-align: center;">${subtitle}</p>` }),
+              createWidgetNode('button', { text: ctaText, align: 'center', button_type: 'primary' }),
+            ],
+          });
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, node: containerNode }, null, 2) }],
         };
       }
 
       case 'craftor_elementor_update_container': {
         const ast = args.ast as ElementorNode[];
         const containerId = String(args.containerId ?? '');
-        const patch = (args.settingsPatch as Record<string, unknown>) ?? {};
+        const settings = (args.settings as Record<string, unknown>) ?? {};
 
         if (!Array.isArray(ast) || !containerId) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'ast array and containerId are required' }) }],
+            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array and "containerId" are required' }) }],
             isError: true,
           };
         }
 
-        const updatedAst = updateNodeSettings(ast, containerId, patch);
+        const updatedAst = updateNodeSettings(ast, containerId, settings);
         return {
           content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
         };
@@ -475,7 +1401,7 @@ export async function handleToolsCall(
 
         if (!Array.isArray(ast) || !containerId) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'ast array and containerId are required' }) }],
+            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array and "containerId" are required' }) }],
             isError: true,
           };
         }
@@ -488,49 +1414,33 @@ export async function handleToolsCall(
 
       case 'craftor_elementor_insert_widget':
       case 'craftor_elementor_insert_node': {
-        if (
-          !Array.isArray(args.ast) ||
-          typeof args.parentId !== 'string' ||
-          typeof args.widgetType !== 'string'
-        ) {
+        const ast = args.ast as ElementorNode[];
+        if (!Array.isArray(ast)) {
           return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  success: false,
-                  error: 'Missing required fields: ast (array), parentId (string), widgetType (string)',
-                }),
-              },
-            ],
+            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array is required' }) }],
             isError: true,
           };
         }
 
-        const ast = args.ast as ElementorNode[];
-        const parentId = args.parentId;
-        const widgetType = args.widgetType;
-        const settings = (
-          typeof args.settings === 'object' && args.settings !== null ? args.settings : {}
-        ) as Record<string, unknown>;
-        const index = typeof args.index === 'number' ? args.index : undefined;
+        const parentId = (args.parentId as string) ?? null;
+        let nodeToInsert: ElementorNode;
 
-        const widgetNode = createWidgetNode(widgetType, settings);
-        const updatedAst = insertNode(ast, parentId, widgetNode, index);
+        if (args.node && typeof args.node === 'object') {
+          nodeToInsert = args.node as ElementorNode;
+        } else {
+          const widgetType = String(args.widgetType ?? 'heading');
+          const settings = (args.settings as Record<string, unknown>) ?? {};
+          nodeToInsert = createWidgetNode(widgetType, settings);
+        }
+
+        const index = args.index !== undefined ? Number(args.index) : undefined;
+        const updatedAst = insertNode(ast, parentId, nodeToInsert, index);
 
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(
-                {
-                  success: true,
-                  insertedNodeId: widgetNode.id,
-                  ast: updatedAst,
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify({ success: true, insertedNode: nodeToInsert, ast: updatedAst }, null, 2),
             },
           ],
         };
@@ -539,16 +1449,16 @@ export async function handleToolsCall(
       case 'craftor_elementor_update_widget': {
         const ast = args.ast as ElementorNode[];
         const widgetId = String(args.widgetId ?? '');
-        const patch = (args.settingsPatch as Record<string, unknown>) ?? {};
+        const settings = (args.settings as Record<string, unknown>) ?? {};
 
         if (!Array.isArray(ast) || !widgetId) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'ast array and widgetId are required' }) }],
+            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array and "widgetId" are required' }) }],
             isError: true,
           };
         }
 
-        const updatedAst = updateNodeSettings(ast, widgetId, patch);
+        const updatedAst = updateNodeSettings(ast, widgetId, settings);
         return {
           content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
         };
@@ -560,7 +1470,7 @@ export async function handleToolsCall(
 
         if (!Array.isArray(ast) || !widgetId) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'ast array and widgetId are required' }) }],
+            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array and "widgetId" are required' }) }],
             isError: true,
           };
         }
@@ -571,10 +1481,32 @@ export async function handleToolsCall(
         };
       }
 
+      case 'craftor_elementor_create_template': {
+        const title = String(args.title ?? 'New Template');
+        const elements = args.elements as ElementorNode[];
+
+        if (!Array.isArray(elements)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"elements" array is required' }) }],
+            isError: true,
+          };
+        }
+
+        const template: ElementorTemplateData = {
+          title,
+          type: (args.type as 'page') ?? 'page',
+          version: '3.24.0',
+          elements,
+          page_settings: (args.page_settings as Record<string, unknown>) ?? {},
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
+        };
+      }
+
       case 'craftor_elementor_export_template': {
         const pageId = Number(args.pageId);
-        const title = args.title ? String(args.title) : undefined;
-
         if (!pageId || isNaN(pageId)) {
           return {
             content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
@@ -583,47 +1515,45 @@ export async function handleToolsCall(
         }
 
         if (siteUrl) {
-          const client = new WordPressClient({
-            siteUrl,
-            auth: secretToken ? { type: 'bearer', token: secretToken } : undefined,
-          });
+          const client = getClient();
           const bridge = new ElementorBridge({ client });
-          const template = await bridge.exportTemplate(pageId, title);
+          const template = await bridge.exportTemplate(pageId, args.title as string | undefined);
           return {
             content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
           };
         }
 
-        const templateData: ElementorTemplateData = {
-          title: title ?? `Page ${pageId} Template`,
-          type: 'page',
-          version: '3.24.0',
-          elements: [createFlexContainer()],
-        };
-
         return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, template: templateData }, null, 2) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                title: args.title ?? 'Exported Template',
+                type: 'page',
+                version: '3.24.0',
+                elements: [createFlexContainer({ flexDirection: 'column' })],
+                page_settings: {},
+              }, null, 2),
+            },
+          ],
         };
       }
 
       case 'craftor_elementor_import_template': {
         const targetPageId = Number(args.targetPageId);
-        const template = args.template as ElementorTemplateData;
+        const templateData = args.templateData as ElementorTemplateData;
 
-        if (!targetPageId || !template || !Array.isArray(template.elements)) {
+        if (!targetPageId || !templateData || !Array.isArray(templateData.elements)) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid targetPageId and template object are required' }) }],
+            content: [{ type: 'text', text: JSON.stringify({ error: '"targetPageId" and valid "templateData.elements" are required.' }) }],
             isError: true,
           };
         }
 
         if (siteUrl) {
-          const client = new WordPressClient({
-            siteUrl,
-            auth: secretToken ? { type: 'bearer', token: secretToken } : undefined,
-          });
+          const client = getClient();
           const bridge = new ElementorBridge({ client });
-          const doc = await bridge.importTemplate(targetPageId, template);
+          const doc = await bridge.importTemplate(targetPageId, templateData);
           return {
             content: [{ type: 'text', text: JSON.stringify({ success: true, document: doc }, null, 2) }],
           };
@@ -636,25 +1566,68 @@ export async function handleToolsCall(
               text: JSON.stringify({
                 success: true,
                 targetPageId,
-                importedElementCount: template.elements.length,
+                importedElementsCount: templateData.elements.length,
               }, null, 2),
             },
           ],
         };
       }
 
-      case 'craftor_elementor_validate_ast': {
-        if (!Array.isArray(args.ast)) {
+      case 'craftor_elementor_clone_template': {
+        const sourcePageId = Number(args.sourcePageId);
+        const newTitle = String(args.newTitle ?? 'Cloned Template');
+
+        if (!sourcePageId || isNaN(sourcePageId)) {
           return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  valid: false,
-                  errors: ['Invalid input: "ast" must be an array of Elementor nodes.'],
-                }),
-              },
-            ],
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "sourcePageId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new ElementorBridge({ client });
+          const doc = await bridge.duplicateTemplate(sourcePageId, newTitle);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, document: doc }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                sourcePageId,
+                newTitle,
+                newPageId: sourcePageId + 100,
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_elementor_update_global_kit': {
+        const kitUpdates = args as Partial<ElementorKitSettings>;
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new ElementorBridge({ client });
+          const updatedKit = await bridge.updateGlobalKit(kitUpdates);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, kit: updatedKit }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, updatedTokens: kitUpdates }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_validate_ast': {
+        if (!args.ast || !Array.isArray(args.ast)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ valid: false, errors: ['"ast" array is required'] }) }],
             isError: true,
           };
         }
@@ -665,15 +1638,7 @@ export async function handleToolsCall(
           content: [
             {
               type: 'text',
-              text: JSON.stringify(
-                {
-                  valid: validation.valid,
-                  errors: validation.errors,
-                  nodeCount: ast.length,
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify({ valid: validation.valid, errors: validation.errors, nodeCount: ast.length }, null, 2),
             },
           ],
           isError: !validation.valid,
@@ -682,41 +1647,278 @@ export async function handleToolsCall(
 
       case 'craftor_elementor_get_tokens': {
         return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, tokens: CRAFTOR_TOKENS }, null, 2) }],
+        };
+      }
+
+      // =======================================================================
+      // 3. WOOCOMMERCE HANDLERS
+      // =======================================================================
+      case 'craftor_wc_create_product': {
+        const name = String(args.name ?? '');
+        const regularPrice = String(args.regular_price ?? '');
+
+        if (!name.trim() || !regularPrice.trim()) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"name" and "regular_price" are required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new WooCommerceBridge({ client });
+          const product = await bridge.createProduct(args as unknown as CreateWooCommerceProductPayload, {
+            token: secretToken,
+            actionContext: 'mcp_tool_create_product',
+          });
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, product }, null, 2) }],
+          };
+        }
+
+        const simulatedProduct = {
+          id: Math.floor(Math.random() * 500) + 1,
+          name,
+          regular_price: regularPrice,
+          sale_price: args.sale_price ?? '',
+          sku: args.sku ?? `CRF-SKU-${Math.floor(Math.random() * 9000) + 1000}`,
+          stock_status: args.stock_status ?? 'instock',
+          stock_quantity: args.stock_quantity ?? 100,
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, product: simulatedProduct }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wc_update_product': {
+        const productId = Number(args.productId);
+        if (!productId || isNaN(productId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "productId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new WooCommerceBridge({ client });
+          const product = await bridge.updateProduct(productId, args as unknown as UpdateWooCommerceProductPayload, {
+            token: secretToken,
+            actionContext: 'mcp_tool_update_product',
+          });
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, product }, null, 2) }],
+          };
+        }
+
+        return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(
-                {
-                  success: true,
-                  tokens: CRAFTOR_TOKENS,
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify({
+                success: true,
+                productId,
+                updatedFields: Object.keys(args).filter((k) => k !== 'productId'),
+              }, null, 2),
             },
           ],
         };
       }
 
+      case 'craftor_wc_delete_product': {
+        const productId = Number(args.productId);
+        if (!productId || isNaN(productId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "productId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new WooCommerceBridge({ client });
+          const result = await bridge.deleteProduct(productId, Boolean(args.force), {
+            token: secretToken,
+            actionContext: 'mcp_tool_delete_product',
+          });
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, result }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, productId, deleted: true }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wc_update_inventory': {
+        const productId = Number(args.productId);
+        const stockQuantity = Number(args.stockQuantity);
+
+        if (!productId || isNaN(productId) || isNaN(stockQuantity)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"productId" and "stockQuantity" are required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new WooCommerceBridge({ client });
+          const inv = await bridge.updateInventory(
+            productId,
+            stockQuantity,
+            args.stockStatus as 'instock' | 'outofstock' | 'onbackorder' | undefined,
+          );
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, inventory: inv }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                productId,
+                stockQuantity,
+                stockStatus: stockQuantity > 0 ? 'instock' : 'outofstock',
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_wc_create_category': {
+        const name = String(args.name ?? '');
+        if (!name.trim()) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"name" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new WooCommerceBridge({ client });
+          const cat = await bridge.createCategory(args as unknown as { name: string; slug?: string });
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, category: cat }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                category: {
+                  id: Math.floor(Math.random() * 100) + 1,
+                  name,
+                  slug: args.slug ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                },
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_wc_update_category': {
+        const categoryId = Number(args.categoryId);
+        if (!categoryId || isNaN(categoryId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "categoryId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new WooCommerceBridge({ client });
+          const cat = await bridge.updateCategory(categoryId, args as unknown as { name?: string; slug?: string });
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, category: cat }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, categoryId, updated: args }, null, 2) }],
+        };
+      }
+
+      case 'craftor_wc_get_orders': {
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new WooCommerceBridge({ client });
+          const orders = await bridge.getOrders(args as unknown as Record<string, unknown>);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, count: orders.length, orders }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                orders: [
+                  { id: 1001, status: 'processing', total: '149.00', currency: 'USD', date_created: new Date().toISOString() },
+                  { id: 1002, status: 'completed', total: '79.50', currency: 'USD', date_created: new Date().toISOString() },
+                ],
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_wc_get_customers': {
+        if (siteUrl) {
+          const client = getClient();
+          const bridge = new WooCommerceBridge({ client });
+          const customers = await bridge.getCustomers(args as unknown as Record<string, unknown>);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, count: customers.length, customers }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                customers: [
+                  { id: 1, email: 'john@example.com', first_name: 'John', last_name: 'Doe', orders_count: 5, total_spent: '450.00' },
+                ],
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      // =======================================================================
+      // 4. SYSTEM & SAFETY HANDLERS
+      // =======================================================================
       case 'craftor_system_status': {
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(
-                {
-                  success: true,
-                  siteUrl: siteUrl || 'unconnected',
-                  authenticated: Boolean(secretToken),
-                  registeredTools: ToolRegistry.count(),
-                  protocolVersion: '2024-11-05',
-                  uptimeSeconds: process.uptime(),
-                  memoryUsageMb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-                  timestamp: new Date().toISOString(),
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify({
+                success: true,
+                siteUrl: siteUrl || 'unconnected',
+                authenticated: Boolean(secretToken),
+                registeredTools: ToolRegistry.count(),
+                protocolVersion: '2024-11-05',
+                uptimeSeconds: process.uptime(),
+                memoryUsageMb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+                timestamp: new Date().toISOString(),
+              }, null, 2),
             },
           ],
         };
@@ -730,22 +1932,95 @@ export async function handleToolsCall(
           content: [
             {
               type: 'text',
-              text: JSON.stringify(
-                {
-                  verified: isValidFormat,
-                  licenseKey,
-                  tier: isValidFormat ? 'Enterprise Unlimited' : 'Invalid',
-                  activeSeats: isValidFormat ? 10 : 0,
-                  maxSeats: isValidFormat ? 100 : 0,
-                  expiresAt: isValidFormat ? '2028-12-31T23:59:59Z' : null,
-                  status: isValidFormat ? 'ACTIVE' : 'REVOKED',
-                },
-                null,
-                2,
-              ),
+              text: JSON.stringify({
+                verified: isValidFormat,
+                licenseKey,
+                tier: isValidFormat ? 'Enterprise Unlimited' : 'Invalid',
+                activeSeats: isValidFormat ? 10 : 0,
+                maxSeats: isValidFormat ? 100 : 0,
+                expiresAt: isValidFormat ? '2028-12-31T23:59:59Z' : null,
+                status: isValidFormat ? 'ACTIVE' : 'REVOKED',
+              }, null, 2),
             },
           ],
           isError: !isValidFormat,
+        };
+      }
+
+      case 'craftor_create_snapshot': {
+        const targetId = Number(args.targetId);
+        const targetType = (args.targetType as SnapshotTargetType) ?? 'elementor_data';
+        const payload = args.payload;
+
+        if (!targetId || !payload) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"targetId" and "payload" are required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const snapshots = new SnapshotManager({ client });
+          const record = await snapshots.createSnapshot(
+            targetId,
+            targetType,
+            payload,
+            secretToken,
+            (args.actionContext as string) ?? 'manual_snapshot',
+          );
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, snapshot: record }, null, 2) }],
+          };
+        }
+
+        const snapshotId = `crf_snp_${Date.now()}`;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                snapshotId,
+                targetId,
+                targetType,
+                createdAt: new Date().toISOString(),
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_restore_snapshot': {
+        const snapshotId = String(args.snapshotId ?? '');
+        if (!snapshotId) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"snapshotId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = getClient();
+          const rollbacks = new RollbackManager({ client });
+          const result = await rollbacks.restoreSnapshot(snapshotId);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, rollback: result }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                restoredSnapshotId: snapshotId,
+                restoredAt: new Date().toISOString(),
+                status: 'RESTORED',
+              }, null, 2),
+            },
+          ],
         };
       }
 

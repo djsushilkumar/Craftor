@@ -1029,6 +1029,134 @@ async function runContractTests(): Promise<void> {
     throw new Error('MCP prompt get generate_elementor_homepage failed');
   }
 
+  console.log('[Contract Test 9] Validating Complete 40-Tool Phase 1 MCP Catalog & Routing...');
+  const toolsHandlerModule = await import(
+    '../../../packages/mcp-server/dist/handlers/tools.js'
+  );
+  toolsHandlerModule.registerDefaultTools();
+
+  const allToolsList = await toolsHandlerModule.handleToolsList();
+  if (allToolsList.tools.length !== 40) {
+    throw new Error(`Expected exactly 40 registered Phase 1 tools, got: ${allToolsList.tools.length}`);
+  }
+
+  // 9.1 Test WordPress Content Tools
+  const wpPostRes = await handleToolsCall({
+    name: 'craftor_wp_create_post',
+    arguments: { title: 'Test Autonomous Blog Post', content: 'Craftor Content' },
+  });
+  if (wpPostRes.isError) {
+    throw new Error('craftor_wp_create_post execution failed');
+  }
+
+  const wpPageRes = await handleToolsCall({
+    name: 'craftor_wp_create_page',
+    arguments: { title: 'Test Autonomous Page' },
+  });
+  if (wpPageRes.isError) {
+    throw new Error('craftor_wp_create_page execution failed');
+  }
+
+  const wpOptsRes = await handleToolsCall({
+    name: 'craftor_wp_get_site_options',
+    arguments: {},
+  });
+  if (wpOptsRes.isError) {
+    throw new Error('craftor_wp_get_site_options execution failed');
+  }
+
+  const wpTaxRes = await handleToolsCall({
+    name: 'craftor_wp_create_taxonomy',
+    arguments: { name: 'Artificial Intelligence', taxonomy: 'categories' },
+  });
+  if (wpTaxRes.isError) {
+    throw new Error('craftor_wp_create_taxonomy execution failed');
+  }
+
+  // 9.2 Test Elementor Compound Generator & Layout Tools
+  const elGenRes = await handleToolsCall({
+    name: 'craftor_elementor_generate_container',
+    arguments: { layoutType: 'hero', title: 'Scale Faster with Craftor' },
+  });
+  if (elGenRes.isError) {
+    throw new Error('craftor_elementor_generate_container execution failed');
+  }
+
+  const elTplRes = await handleToolsCall({
+    name: 'craftor_elementor_create_template',
+    arguments: { title: 'Modern SaaS Template', elements: sampleAst },
+  });
+  if (elTplRes.isError) {
+    throw new Error('craftor_elementor_create_template execution failed');
+  }
+
+  // 9.3 Test WooCommerce Catalog, Orders & Inventory Tools
+  const wcProdRes = await handleToolsCall({
+    name: 'craftor_wc_create_product',
+    arguments: { name: 'Craftor Pro License Annual', regular_price: '199.00', sku: 'CRF-PRO-01' },
+  });
+  if (wcProdRes.isError) {
+    throw new Error('craftor_wc_create_product execution failed');
+  }
+
+  const wcInvRes = await handleToolsCall({
+    name: 'craftor_wc_update_inventory',
+    arguments: { productId: 42, stockQuantity: 50 },
+  });
+  if (wcInvRes.isError) {
+    throw new Error('craftor_wc_update_inventory execution failed');
+  }
+
+  const wcOrdersRes = await handleToolsCall({
+    name: 'craftor_wc_get_orders',
+    arguments: { per_page: 5 },
+  });
+  if (wcOrdersRes.isError) {
+    throw new Error('craftor_wc_get_orders execution failed');
+  }
+
+  const wcCustRes = await handleToolsCall({
+    name: 'craftor_wc_get_customers',
+    arguments: { per_page: 5 },
+  });
+  if (wcCustRes.isError) {
+    throw new Error('craftor_wc_get_customers execution failed');
+  }
+
+  // 9.4 Test System & Snapshot Safety Tools
+  const snapRes = await handleToolsCall({
+    name: 'craftor_create_snapshot',
+    arguments: { targetId: 42, targetType: 'elementor_document', payload: sampleAst },
+  });
+  if (snapRes.isError) {
+    throw new Error('craftor_create_snapshot execution failed');
+  }
+
+  const rollRes = await handleToolsCall({
+    name: 'craftor_restore_snapshot',
+    arguments: { snapshotId: 'crf_snp_12345678' },
+  });
+  if (rollRes.isError) {
+    throw new Error('craftor_restore_snapshot execution failed');
+  }
+
+  // 9.5 Test Short Alias Resolution (e.g. create_post, create_product)
+  const aliasPostRes = await handleToolsCall({
+    name: 'create_post',
+    arguments: { title: 'Aliased Post Creation' },
+  });
+  if (aliasPostRes.isError) {
+    throw new Error('Short alias "create_post" resolution failed');
+  }
+
+  const aliasWcRes = await handleToolsCall({
+    name: 'create_product',
+    arguments: { name: 'Aliased Product', regular_price: '49.00' },
+  });
+  if (aliasWcRes.isError) {
+    throw new Error('Short alias "create_product" resolution failed');
+  }
+
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 

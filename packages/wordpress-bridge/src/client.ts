@@ -13,6 +13,11 @@ import {
   WordPressPageQuery,
   CreateWordPressPagePayload,
   UpdateWordPressPagePayload,
+  CreateWordPressPostPayload,
+  UpdateWordPressPostPayload,
+  WordPressTaxonomyTerm,
+  CreateWordPressTermPayload,
+  UpdateWordPressTermPayload,
 } from '../../shared-types/dist/index.js';
 import { logger } from '../../shared-utils/dist/index.js';
 import { WordPressAuthConfig, maskAuthCredentials } from './auth.js';
@@ -330,5 +335,187 @@ export class WordPressClient {
   public async updateOption(settings: Record<string, unknown>, options?: RequestOptions): Promise<Record<string, unknown>> {
     return this.rest.post<Record<string, unknown>>('/wp-json/wp/v2/settings', settings, options);
   }
+
+  /**
+   * Creates a new WordPress post.
+   */
+  public async createPost(
+    payload: CreateWordPressPostPayload,
+    options?: RequestOptions,
+  ): Promise<WordPressPost> {
+    if (!payload.title || !payload.title.trim()) {
+      throw new Error('Post creation requires a non-empty title.');
+    }
+
+    const requestBody: Record<string, unknown> = {
+      title: payload.title.trim(),
+      status: payload.status ?? 'draft',
+    };
+
+    if (payload.content !== undefined) requestBody.content = payload.content;
+    if (payload.slug !== undefined) requestBody.slug = payload.slug;
+    if (payload.excerpt !== undefined) requestBody.excerpt = payload.excerpt;
+    if (payload.author !== undefined) requestBody.author = payload.author;
+    if (payload.categories !== undefined) requestBody.categories = payload.categories;
+    if (payload.tags !== undefined) requestBody.tags = payload.tags;
+    if (payload.featured_media !== undefined) requestBody.featured_media = payload.featured_media;
+    if (payload.meta !== undefined) requestBody.meta = payload.meta;
+
+    return this.rest.post<WordPressPost>('/wp-json/wp/v2/posts', requestBody, options);
+  }
+
+  /**
+   * Updates an existing WordPress post by ID.
+   */
+  public async updatePost(
+    id: number,
+    payload: UpdateWordPressPostPayload,
+    options?: RequestOptions,
+  ): Promise<WordPressPost> {
+    if (typeof id !== 'number' || id <= 0) {
+      throw new Error(`Invalid post ID: ${id}. ID must be a positive integer.`);
+    }
+
+    const requestBody: Record<string, unknown> = {};
+    if (payload.title !== undefined) requestBody.title = payload.title;
+    if (payload.content !== undefined) requestBody.content = payload.content;
+    if (payload.status !== undefined) requestBody.status = payload.status;
+    if (payload.slug !== undefined) requestBody.slug = payload.slug;
+    if (payload.excerpt !== undefined) requestBody.excerpt = payload.excerpt;
+    if (payload.author !== undefined) requestBody.author = payload.author;
+    if (payload.categories !== undefined) requestBody.categories = payload.categories;
+    if (payload.tags !== undefined) requestBody.tags = payload.tags;
+    if (payload.featured_media !== undefined) requestBody.featured_media = payload.featured_media;
+    if (payload.meta !== undefined) requestBody.meta = payload.meta;
+
+    return this.rest.post<WordPressPost>(`/wp-json/wp/v2/posts/${id}`, requestBody, options);
+  }
+
+  /**
+   * Deletes a WordPress post by ID.
+   */
+  public async deletePost(
+    id: number,
+    force: boolean = false,
+    options?: RequestOptions,
+  ): Promise<{ deleted: boolean; previous: WordPressPost }> {
+    if (typeof id !== 'number' || id <= 0) {
+      throw new Error(`Invalid post ID: ${id}. ID must be a positive integer.`);
+    }
+
+    return this.rest.delete<{ deleted: boolean; previous: WordPressPost }>(
+      `/wp-json/wp/v2/posts/${id}`,
+      {
+        ...options,
+        params: { force, ...(options?.params ?? {}) },
+      },
+    );
+  }
+
+  /**
+   * Duplicates an existing WordPress page into a new draft page.
+   */
+  public async duplicatePage(
+    pageId: number,
+    newTitle?: string,
+    options?: RequestOptions,
+  ): Promise<WordPressPage> {
+    const original = await this.getPage(pageId, options);
+    const title = newTitle ?? `${original.title?.rendered ?? 'Page'} (Copy)`;
+
+    return this.createPage(
+      {
+        title,
+        content: original.content?.raw ?? original.content?.rendered ?? '',
+        status: 'draft',
+        template: original.template,
+        parent: original.parent,
+        meta: original.meta,
+        elementor_data: original.meta?._elementor_data as string | undefined,
+      },
+      options,
+    );
+  }
+
+  /**
+   * Retrieves taxonomy terms (categories or tags).
+   */
+  public async getTaxonomyTerms(
+    taxonomy: string = 'categories',
+    options?: RequestOptions,
+  ): Promise<WordPressTaxonomyTerm[]> {
+    const endpoint = taxonomy === 'tags' ? '/wp-json/wp/v2/tags' : `/wp-json/wp/v2/${taxonomy}`;
+    try {
+      return await this.rest.get<WordPressTaxonomyTerm[]>(endpoint, options);
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Creates a taxonomy term (category or tag).
+   */
+  public async createTaxonomyTerm(
+    payload: CreateWordPressTermPayload,
+    options?: RequestOptions,
+  ): Promise<WordPressTaxonomyTerm> {
+    const taxonomy = payload.taxonomy ?? 'categories';
+    const endpoint = taxonomy === 'tags' ? '/wp-json/wp/v2/tags' : `/wp-json/wp/v2/${taxonomy}`;
+
+    return this.rest.post<WordPressTaxonomyTerm>(
+      endpoint,
+      {
+        name: payload.name,
+        slug: payload.slug,
+        description: payload.description,
+        parent: payload.parent,
+      },
+      options,
+    );
+  }
+
+  /**
+   * Updates a taxonomy term by ID.
+   */
+  public async updateTaxonomyTerm(
+    id: number,
+    payload: UpdateWordPressTermPayload,
+    options?: RequestOptions,
+  ): Promise<WordPressTaxonomyTerm> {
+    const taxonomy = payload.taxonomy ?? 'categories';
+    const endpoint = taxonomy === 'tags' ? `/wp-json/wp/v2/tags/${id}` : `/wp-json/wp/v2/${taxonomy}/${id}`;
+
+    return this.rest.post<WordPressTaxonomyTerm>(
+      endpoint,
+      {
+        name: payload.name,
+        slug: payload.slug,
+        description: payload.description,
+        parent: payload.parent,
+      },
+      options,
+    );
+  }
+
+  /**
+   * Deletes a taxonomy term by ID.
+   */
+  public async deleteTaxonomyTerm(
+    id: number,
+    taxonomy: string = 'categories',
+    force: boolean = true,
+    options?: RequestOptions,
+  ): Promise<{ deleted: boolean; previous: WordPressTaxonomyTerm }> {
+    const endpoint = taxonomy === 'tags' ? `/wp-json/wp/v2/tags/${id}` : `/wp-json/wp/v2/${taxonomy}/${id}`;
+
+    return this.rest.delete<{ deleted: boolean; previous: WordPressTaxonomyTerm }>(
+      endpoint,
+      {
+        ...options,
+        params: { force, ...(options?.params ?? {}) },
+      },
+    );
+  }
 }
+
 
