@@ -311,4 +311,24 @@ export class WordPressClient {
       return [];
     }
   }
+
+  /**
+   * Retrieves a WordPress site setting/option value.
+   */
+  public async getOption<T = unknown>(optionName: string, options?: RequestOptions): Promise<T | null> {
+    try {
+      const settings = await this.rest.get<Record<string, unknown>>('/wp-json/wp/v2/settings', options);
+      return (settings[optionName] as T) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Updates WordPress site settings/options.
+   */
+  public async updateOption(settings: Record<string, unknown>, options?: RequestOptions): Promise<Record<string, unknown>> {
+    return this.rest.post<Record<string, unknown>>('/wp-json/wp/v2/settings', settings, options);
+  }
 }
+

@@ -153,7 +153,12 @@ export class WordPressRestClient {
               );
             }
           } else {
-            rawData = await response.text();
+            const textData = await response.text();
+            try {
+              rawData = JSON.parse(textData);
+            } catch {
+              rawData = textData;
+            }
           }
 
           if (!response.ok) {

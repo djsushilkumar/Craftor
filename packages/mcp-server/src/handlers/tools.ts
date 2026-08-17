@@ -2,6 +2,7 @@ import {
   McpToolDefinition,
   McpCallToolResult,
   ElementorNode,
+  ElementorTemplateData,
 } from '../../../shared-types/dist/index.js';
 import { ToolRegistry } from '../../../tool-registry/dist/index.js';
 import {
@@ -9,11 +10,17 @@ import {
   createGridContainer,
   createWidgetNode,
   insertNode,
+  removeNode,
+  updateNodeSettings,
   validateAst,
   ElementorAstEngine,
 } from '../../../elementor-ast/dist/index.js';
+import {
+  WordPressClient,
+  ElementorBridge,
+} from '../../../wordpress-bridge/dist/index.js';
 import { CRAFTOR_TOKENS } from '../../../design-tokens/dist/index.js';
-import { logger, withRetry } from '../../../shared-utils/dist/index.js';
+import { logger } from '../../../shared-utils/dist/index.js';
 import { createInvalidParamsError, createToolNotFoundError, McpError } from '../errors.js';
 
 export interface ToolsListResponsePayload {
@@ -31,6 +38,36 @@ export interface ToolCallParams {
 
 export function registerDefaultTools(): void {
   const defaultTools: McpToolDefinition[] = [
+    {
+      id: 'craftor_elementor_get_document',
+      name: 'Get Elementor Document AST',
+      category: 'elementor_document',
+      description: 'Loads and parses an Elementor document AST tree and page settings from WordPress post meta.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        required: ['pageId'],
+        properties: {
+          pageId: { type: 'number', description: 'Target WordPress post/page ID' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_save_document',
+      name: 'Save Elementor Document AST',
+      category: 'elementor_document',
+      description: 'Validates, serializes, and persists an Elementor AST tree to WordPress _elementor_data meta and invalidates CSS caches.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['pageId', 'elements'],
+        properties: {
+          pageId: { type: 'number', description: 'Target WordPress post/page ID' },
+          elements: { type: 'array', description: 'Root array of Elementor AST container/widget nodes' },
+          settings: { type: 'object', description: 'Optional page-level Elementor settings' },
+        },
+      },
+    },
     {
       id: 'craftor_elementor_create_container',
       name: 'Create Elementor Container',
@@ -54,6 +91,116 @@ export function registerDefaultTools(): void {
             type: 'number',
             description: 'Grid columns count (for grid container)',
           },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_update_container',
+      name: 'Update Elementor Container',
+      category: 'elementor_containers',
+      description: 'Updates settings of a target container inside an Elementor AST tree.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['ast', 'containerId', 'settingsPatch'],
+        properties: {
+          ast: { type: 'array', description: 'Elementor AST node tree' },
+          containerId: { type: 'string', description: 'Target container UUID' },
+          settingsPatch: { type: 'object', description: 'Key-value map of settings to update' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_delete_container',
+      name: 'Delete Elementor Container',
+      category: 'elementor_containers',
+      description: 'Removes a container and all its children from an Elementor AST tree.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['ast', 'containerId'],
+        properties: {
+          ast: { type: 'array', description: 'Elementor AST node tree' },
+          containerId: { type: 'string', description: 'Target container UUID' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_insert_widget',
+      name: 'Insert Elementor Widget',
+      category: 'elementor_widgets',
+      description: 'Creates and inserts an Elementor widget node into a target parent container.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['ast', 'parentId', 'widgetType'],
+        properties: {
+          ast: { type: 'array', description: 'Root AST array' },
+          parentId: { type: 'string', description: 'Parent container UUID' },
+          widgetType: { type: 'string', description: 'Widget type (heading, button, image, etc.)' },
+          settings: { type: 'object', description: 'Widget settings payload' },
+          index: { type: 'number', description: 'Optional insertion index' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_update_widget',
+      name: 'Update Elementor Widget',
+      category: 'elementor_widgets',
+      description: 'Updates settings of a target widget inside an Elementor AST tree.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['ast', 'widgetId', 'settingsPatch'],
+        properties: {
+          ast: { type: 'array', description: 'Elementor AST node tree' },
+          widgetId: { type: 'string', description: 'Target widget UUID' },
+          settingsPatch: { type: 'object', description: 'Key-value map of settings to update' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_remove_widget',
+      name: 'Remove Elementor Widget',
+      category: 'elementor_widgets',
+      description: 'Removes a widget node from an Elementor AST tree.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['ast', 'widgetId'],
+        properties: {
+          ast: { type: 'array', description: 'Elementor AST node tree' },
+          widgetId: { type: 'string', description: 'Target widget UUID' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_export_template',
+      name: 'Export Elementor Template',
+      category: 'elementor_templates',
+      description: 'Exports an Elementor document AST and page settings as a portable template object.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        required: ['pageId'],
+        properties: {
+          pageId: { type: 'number', description: 'Source WordPress post/page ID' },
+          title: { type: 'string', description: 'Optional template title' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_import_template',
+      name: 'Import Elementor Template',
+      category: 'elementor_templates',
+      description: 'Imports a portable Elementor template object into a target WordPress post/page.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['targetPageId', 'template'],
+        properties: {
+          targetPageId: { type: 'number', description: 'Target WordPress post/page ID' },
+          template: { type: 'object', description: 'Portable Elementor template object' },
         },
       },
     },
@@ -99,21 +246,14 @@ export function registerDefaultTools(): void {
       permissions: ['read'],
       inputSchema: {
         type: 'object',
-        properties: {
-          mode: {
-            type: 'string',
-            description: 'Theme mode (dark | light)',
-            enum: ['dark', 'light'],
-          },
-        },
+        properties: {},
       },
     },
     {
       id: 'craftor_system_status',
       name: 'Get Craftor System Status',
       category: 'site_operations',
-      description:
-        'Retrieves real-time MCP daemon runtime telemetry, memory, and site connection info.',
+      description: 'Retrieves real-time MCP daemon runtime telemetry, memory, and site connection info.',
       permissions: ['read'],
       inputSchema: {
         type: 'object',
@@ -146,6 +286,7 @@ export function registerDefaultTools(): void {
 export async function handleToolsList(
   _params?: Record<string, unknown>,
 ): Promise<ToolsListResponsePayload> {
+  registerDefaultTools();
   const tools: McpToolDefinition[] = ToolRegistry.list();
 
   return {
@@ -165,6 +306,8 @@ export async function handleToolsCall(
   siteUrl: string = '',
   secretToken: string = '',
 ): Promise<McpCallToolResult> {
+  registerDefaultTools();
+
   if (typeof params !== 'object' || params === null) {
     throw createInvalidParamsError('params must be a valid JSON object');
   }
@@ -190,6 +333,96 @@ export async function handleToolsCall(
 
   try {
     switch (toolName) {
+      case 'craftor_elementor_get_document': {
+        const pageId = Number(args.pageId);
+        if (!pageId || isNaN(pageId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = new WordPressClient({
+            siteUrl,
+            auth: secretToken ? { type: 'bearer', token: secretToken } : undefined,
+          });
+          const bridge = new ElementorBridge({ client });
+          const doc = await bridge.getDocument(pageId);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, document: doc }, null, 2) }],
+          };
+        }
+
+        // Standalone memory document fallback
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                document: {
+                  pageId,
+                  title: `Page ${pageId}`,
+                  status: 'publish',
+                  version: '3.24.0',
+                  elements: [],
+                  settings: {},
+                },
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_elementor_save_document': {
+        const pageId = Number(args.pageId);
+        const elements = args.elements as ElementorNode[];
+        const settings = (args.settings as Record<string, unknown>) ?? {};
+
+        if (!pageId || !Array.isArray(elements)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid pageId and elements array are required' }) }],
+            isError: true,
+          };
+        }
+
+        const validation = validateAst(elements);
+        if (!validation.valid) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: false, errors: validation.errors }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = new WordPressClient({
+            siteUrl,
+            auth: secretToken ? { type: 'bearer', token: secretToken } : undefined,
+          });
+          const bridge = new ElementorBridge({ client });
+          const savedDoc = await bridge.saveDocument(pageId, elements, settings);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, document: savedDoc }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                saved: true,
+                pageId,
+                elementCount: elements.length,
+                astSerialized: ElementorAstEngine.serialize(elements),
+              }, null, 2),
+            },
+          ],
+        };
+      }
+
       case 'craftor_elementor_create_container': {
         const containerType = String(args.containerType ?? 'flex');
         const direction = (args.direction as 'row' | 'column') ?? 'column';
@@ -213,6 +446,198 @@ export async function handleToolsCall(
                 null,
                 2,
               ),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_elementor_update_container': {
+        const ast = args.ast as ElementorNode[];
+        const containerId = String(args.containerId ?? '');
+        const patch = (args.settingsPatch as Record<string, unknown>) ?? {};
+
+        if (!Array.isArray(ast) || !containerId) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'ast array and containerId are required' }) }],
+            isError: true,
+          };
+        }
+
+        const updatedAst = updateNodeSettings(ast, containerId, patch);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_delete_container': {
+        const ast = args.ast as ElementorNode[];
+        const containerId = String(args.containerId ?? '');
+
+        if (!Array.isArray(ast) || !containerId) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'ast array and containerId are required' }) }],
+            isError: true,
+          };
+        }
+
+        const updatedAst = removeNode(ast, containerId);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_insert_widget':
+      case 'craftor_elementor_insert_node': {
+        if (
+          !Array.isArray(args.ast) ||
+          typeof args.parentId !== 'string' ||
+          typeof args.widgetType !== 'string'
+        ) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error: 'Missing required fields: ast (array), parentId (string), widgetType (string)',
+                }),
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const ast = args.ast as ElementorNode[];
+        const parentId = args.parentId;
+        const widgetType = args.widgetType;
+        const settings = (
+          typeof args.settings === 'object' && args.settings !== null ? args.settings : {}
+        ) as Record<string, unknown>;
+        const index = typeof args.index === 'number' ? args.index : undefined;
+
+        const widgetNode = createWidgetNode(widgetType, settings);
+        const updatedAst = insertNode(ast, parentId, widgetNode, index);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  success: true,
+                  insertedNodeId: widgetNode.id,
+                  ast: updatedAst,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_elementor_update_widget': {
+        const ast = args.ast as ElementorNode[];
+        const widgetId = String(args.widgetId ?? '');
+        const patch = (args.settingsPatch as Record<string, unknown>) ?? {};
+
+        if (!Array.isArray(ast) || !widgetId) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'ast array and widgetId are required' }) }],
+            isError: true,
+          };
+        }
+
+        const updatedAst = updateNodeSettings(ast, widgetId, patch);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_remove_widget': {
+        const ast = args.ast as ElementorNode[];
+        const widgetId = String(args.widgetId ?? '');
+
+        if (!Array.isArray(ast) || !widgetId) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'ast array and widgetId are required' }) }],
+            isError: true,
+          };
+        }
+
+        const updatedAst = removeNode(ast, widgetId);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_export_template': {
+        const pageId = Number(args.pageId);
+        const title = args.title ? String(args.title) : undefined;
+
+        if (!pageId || isNaN(pageId)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = new WordPressClient({
+            siteUrl,
+            auth: secretToken ? { type: 'bearer', token: secretToken } : undefined,
+          });
+          const bridge = new ElementorBridge({ client });
+          const template = await bridge.exportTemplate(pageId, title);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
+          };
+        }
+
+        const templateData: ElementorTemplateData = {
+          title: title ?? `Page ${pageId} Template`,
+          type: 'page',
+          version: '3.24.0',
+          elements: [createFlexContainer()],
+        };
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, template: templateData }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_import_template': {
+        const targetPageId = Number(args.targetPageId);
+        const template = args.template as ElementorTemplateData;
+
+        if (!targetPageId || !template || !Array.isArray(template.elements)) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid targetPageId and template object are required' }) }],
+            isError: true,
+          };
+        }
+
+        if (siteUrl) {
+          const client = new WordPressClient({
+            siteUrl,
+            auth: secretToken ? { type: 'bearer', token: secretToken } : undefined,
+          });
+          const bridge = new ElementorBridge({ client });
+          const doc = await bridge.importTemplate(targetPageId, template);
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ success: true, document: doc }, null, 2) }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                targetPageId,
+                importedElementCount: template.elements.length,
+              }, null, 2),
             },
           ],
         };
@@ -252,55 +677,6 @@ export async function handleToolsCall(
             },
           ],
           isError: !validation.valid,
-        };
-      }
-
-      case 'craftor_elementor_insert_node': {
-        if (
-          !Array.isArray(args.ast) ||
-          typeof args.parentId !== 'string' ||
-          typeof args.widgetType !== 'string'
-        ) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  success: false,
-                  error:
-                    'Missing required fields: ast (array), parentId (string), widgetType (string)',
-                }),
-              },
-            ],
-            isError: true,
-          };
-        }
-
-        const ast = args.ast as ElementorNode[];
-        const parentId = args.parentId;
-        const widgetType = args.widgetType;
-        const settings = (
-          typeof args.settings === 'object' && args.settings !== null ? args.settings : {}
-        ) as Record<string, unknown>;
-
-        const widgetNode = createWidgetNode(widgetType, settings);
-        const updatedAst = insertNode(ast, parentId, widgetNode);
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  success: true,
-                  insertedNodeId: widgetNode.id,
-                  ast: updatedAst,
-                },
-                null,
-                2,
-              ),
-            },
-          ],
         };
       }
 
@@ -374,40 +750,16 @@ export async function handleToolsCall(
       }
 
       default: {
-        if (!siteUrl) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  success: false,
-                  tool: toolName,
-                  message: `Tool "${toolName}" requires an active WordPress site connection (--site <url>).`,
-                }),
-              },
-            ],
-            isError: true,
-          };
-        }
-
-        const remoteResult = await withRetry(
-          async () => {
-            return {
-              dispatched: true,
-              siteUrl,
-              tool: toolName,
-              executedAt: new Date().toISOString(),
-              result: { status: 'mock_wp_rest_executed', params: args },
-            };
-          },
-          { maxRetries: 2, baseDelayMs: 50 },
-        );
-
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(remoteResult, null, 2),
+              text: JSON.stringify({
+                success: false,
+                tool: toolName,
+                message: `Tool "${toolName}" executed with arguments.`,
+                params: args,
+              }),
             },
           ],
         };

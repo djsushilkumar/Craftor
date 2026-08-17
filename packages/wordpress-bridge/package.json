@@ -10,7 +10,8 @@
   "dependencies": {
     "@craftor/shared-types": "workspace:*",
     "@craftor/shared-utils": "workspace:*",
-    "@craftor/schemas": "workspace:*"
+    "@craftor/schemas": "workspace:*",
+    "@craftor/elementor-ast": "workspace:*"
   },
   "scripts": {
     "build": "tsc",

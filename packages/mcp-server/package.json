@@ -17,7 +17,8 @@
     "@craftor/elementor-ast": "workspace:*",
     "@craftor/client-adapters": "workspace:*",
     "@craftor/design-tokens": "workspace:*",
-    "@craftor/schemas": "workspace:*"
+    "@craftor/schemas": "workspace:*",
+    "@craftor/wordpress-bridge": "workspace:*"
   },
   "scripts": {
     "build": "tsc",

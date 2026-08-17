@@ -28,18 +28,35 @@ export class PromptRegistry {
   public static initDefaults(): void {
     const defaults: McpPromptDefinition[] = [
       {
-        name: 'generate_landing_page',
+        name: 'generate_elementor_homepage',
         description:
-          'Generates a complete, responsive Elementor Flex Container landing page with Hero, Features, and CTA.',
+          'Generates a comprehensive multi-section Elementor Flex/Grid homepage with Hero, Features Grid, Testimonials, and Footer CTA.',
+        arguments: [
+          {
+            name: 'brandName',
+            description: 'Brand or business name',
+            required: true,
+          },
+          {
+            name: 'industry',
+            description: 'Industry or niche (e.g., E-Commerce, Tech SaaS, Consulting)',
+            required: true,
+          },
+        ],
+      },
+      {
+        name: 'generate_elementor_landing_page',
+        description:
+          'Generates a high-converting Elementor landing page with Hero, Value Proposition, Pricing Table, and Action Button.',
         arguments: [
           {
             name: 'topic',
-            description: 'The business niche or topic of the landing page (e.g. "SaaS AI Tool")',
+            description: 'The business niche or product of the landing page',
             required: true,
           },
           {
             name: 'style',
-            description: 'Design aesthetic (e.g. "modern dark mode with neon accents")',
+            description: 'Design aesthetic (e.g. "sleek dark mode with glassmorphism")',
             required: false,
           },
         ],
@@ -57,20 +74,31 @@ export class PromptRegistry {
         ],
       },
       {
+        name: 'optimize_elementor_layout',
+        description:
+          'Optimizes DOM depth, reduces nested container redundancy, and enhances mobile responsiveness for an Elementor layout.',
+        arguments: [
+          {
+            name: 'astJson',
+            description: 'The Elementor AST JSON to optimize',
+            required: true,
+          },
+        ],
+      },
+      {
+        name: 'generate_landing_page',
+        description: 'Alias for generate_elementor_landing_page',
+        arguments: [
+          { name: 'topic', description: 'Landing page topic', required: true },
+        ],
+      },
+      {
         name: 'create_woocommerce_product',
         description:
           'Creates a full WooCommerce product card layout featuring dynamic tags, gallery, pricing badge, and add-to-cart button.',
         arguments: [
-          {
-            name: 'productName',
-            description: 'Name of the e-commerce product',
-            required: true,
-          },
-          {
-            name: 'price',
-            description: 'Product price formatted as string or number',
-            required: true,
-          },
+          { name: 'productName', description: 'Name of the e-commerce product', required: true },
+          { name: 'price', description: 'Product price formatted as string or number', required: true },
         ],
       },
       {
@@ -78,11 +106,7 @@ export class PromptRegistry {
         description:
           'Validates and automatically repairs broken element UUIDs, missing container attributes, and malformed widget settings.',
         arguments: [
-          {
-            name: 'corruptedAst',
-            description: 'The malformed Elementor AST JSON to repair',
-            required: true,
-          },
+          { name: 'corruptedAst', description: 'The malformed Elementor AST JSON to repair', required: true },
         ],
       },
     ];
@@ -131,6 +155,21 @@ export async function handlePromptsGet(params: unknown): Promise<PromptsGetRespo
   const messages: McpPromptMessage[] = [];
 
   switch (name) {
+    case 'generate_elementor_homepage': {
+      const brandName = String(args.brandName ?? 'Craftor Studio');
+      const industry = String(args.industry ?? 'Technology');
+
+      messages.push({
+        role: 'user',
+        content: {
+          type: 'text',
+          text: `You are the Principal Elementor Architect for Craftor. Generate a modern multi-section homepage for "${brandName}" in the ${industry} industry.\n\nStructure:\n1. Hero Section (Flex row, headline, CTA button, hero image)\n2. Features 3-Column Grid Container\n3. Social Proof & Testimonials\n4. Final Full-Width CTA Banner\n\nUse tool "craftor_elementor_create_container" and "craftor_elementor_insert_widget" to construct and validate the AST.`,
+        },
+      });
+      break;
+    }
+
+    case 'generate_elementor_landing_page':
     case 'generate_landing_page': {
       const topic = String(args.topic ?? 'Modern SaaS Application');
       const style = String(args.style ?? 'sleek dark mode with glassmorphism and subtle gradients');
@@ -139,7 +178,7 @@ export async function handlePromptsGet(params: unknown): Promise<PromptsGetRespo
         role: 'user',
         content: {
           type: 'text',
-          text: `You are the Lead Elementor Design Engineer for Craftor. Build a complete, responsive Elementor landing page for "${topic}" using modern Flexbox Containers. Design style: "${style}".\n\nEnsure all container elements use 7-character hex IDs and strict Draft-07 schema compliance. Use tool "craftor_elementor_create_container" and "craftor_elementor_insert_node".`,
+          text: `You are the Lead Elementor Design Engineer for Craftor. Build a complete, responsive Elementor landing page for "${topic}" using modern Flexbox Containers. Design style: "${style}".\n\nEnsure all container elements use 7-character hex IDs and strict Draft-07 schema compliance. Use tools "craftor_elementor_create_container", "craftor_elementor_insert_widget", and "craftor_elementor_save_document".`,
         },
       });
       break;
@@ -152,6 +191,18 @@ export async function handlePromptsGet(params: unknown): Promise<PromptsGetRespo
         content: {
           type: 'text',
           text: `Audit the following Elementor AST for layout correctness, missing settings, and WCAG AA color accessibility:\n\n\`\`\`json\n${astJson}\n\`\`\`\n\nRun validation using "craftor_elementor_validate_ast" and output a structured report.`,
+        },
+      });
+      break;
+    }
+
+    case 'optimize_elementor_layout': {
+      const astJson = String(args.astJson ?? '[]');
+      messages.push({
+        role: 'user',
+        content: {
+          type: 'text',
+          text: `Optimize the following Elementor AST to minimize DOM depth, remove empty wrappers, and convert legacy column structures to modern flexbox/grid containers:\n\n\`\`\`json\n${astJson}\n\`\`\``,
         },
       });
       break;

@@ -731,6 +731,293 @@ async function runContractTests(): Promise<void> {
     }
   }
 
+  // =========================================================================
+  // CONTRACT TEST 8C: Elementor Runtime + AST ↔ WordPress Bridge Integration
+  // =========================================================================
+  console.log('[Contract Test 8C] Validating Elementor Runtime + AST ↔ WordPress Bridge Integration...');
+  const { ElementorBridge } = await import('../../../packages/wordpress-bridge/dist/index.js');
+  const {
+    handleToolsCall,
+    handleToolsList,
+    handleResourcesList,
+    handleResourcesRead,
+    handlePromptsList,
+    handlePromptsGet,
+  } = await import('../../../packages/mcp-server/dist/index.js');
+
+  // In-memory WordPress mock storage for page 42
+  const mockStorage: Record<number, any> = {
+    42: {
+      id: 42,
+      title: { rendered: 'Elementor Hero Landing' },
+      status: 'publish',
+      meta: {
+        _elementor_edit_mode: 'builder',
+        _elementor_version: '3.24.0',
+        _elementor_page_settings: JSON.stringify({ custom_css: '.hero { color: #fff; }' }),
+        _elementor_data: JSON.stringify([
+          {
+            id: '1a2b3c4',
+            elType: 'container',
+            settings: { flexDirection: 'column' },
+            elements: [
+              {
+                id: '2b3c4d5',
+                elType: 'widget',
+                widgetType: 'heading',
+                settings: { title: 'Welcome to Craftor AI' },
+                elements: [],
+              },
+            ],
+          },
+        ]),
+      },
+    },
+  };
+
+  const mockBridgeClient = new WordPressClient({
+    siteUrl: 'https://craftor.test',
+    auth: { type: 'bearer', token: 'crf_live_bridge_secret_mock' },
+    customFetch: async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      const urlStr = input.toString();
+      const method = init?.method ?? 'GET';
+
+      if (urlStr.includes('/wp/v2/pages/42')) {
+        if (method === 'POST') {
+          const body = JSON.parse(init?.body as string);
+          mockStorage[42].meta = { ...mockStorage[42].meta, ...(body.meta ?? {}) };
+          return new Response(JSON.stringify(mockStorage[42]), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        return new Response(JSON.stringify(mockStorage[42]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (urlStr.includes('/wp/v2/pages') && method === 'POST') {
+        const body = JSON.parse(init?.body as string);
+        const newId = 101;
+        mockStorage[newId] = {
+          id: newId,
+          title: { rendered: body.title ?? 'New Page' },
+          status: body.status ?? 'draft',
+          meta: body.meta ?? {},
+        };
+        return new Response(JSON.stringify(mockStorage[newId]), {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (urlStr.includes('/wp/v2/pages/101')) {
+        if (method === 'POST') {
+          const body = JSON.parse(init?.body as string);
+          mockStorage[101].meta = { ...mockStorage[101].meta, ...(body.meta ?? {}) };
+          return new Response(JSON.stringify(mockStorage[101]), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        return new Response(JSON.stringify(mockStorage[101]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (urlStr.includes('/wp/v2/settings')) {
+        return new Response(JSON.stringify({ elementor_active_kit: '42' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      return new Response(JSON.stringify({ status: 'ok' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+  });
+
+  const elementorBridge = new ElementorBridge({ client: mockBridgeClient });
+
+  // 8C.1 Document Loading & AST Parsing
+  const loadedDoc = await elementorBridge.getDocument(42);
+  if (loadedDoc.pageId !== 42 || loadedDoc.elements.length !== 1 || loadedDoc.elements[0]?.id !== '1a2b3c4') {
+    throw new Error('ElementorBridge getDocument or AST parsing failed');
+  }
+
+  // 8C.2 Container & Widget Operations
+  const astNewContainer = elementorBridge.createContainer('row');
+  const astGridContainer = elementorBridge.createGridContainer({ columns: 3 });
+  if (astNewContainer.elType !== 'container' || astGridContainer.elType !== 'container') {
+    throw new Error('ElementorBridge createContainer failed');
+  }
+
+  // Insert Widget
+  const rootElement = loadedDoc.elements[0];
+  if (!rootElement) {
+    throw new Error('Root element not found in loadedDoc');
+  }
+  const withWidget = elementorBridge.insertWidget(
+    loadedDoc,
+    rootElement.id,
+    'button',
+    { text: 'Click Here' },
+  );
+  if (!withWidget.document.elements[0] || withWidget.document.elements[0].elements.length !== 2) {
+    throw new Error('ElementorBridge insertWidget failed');
+  }
+
+  // Update Widget
+  const updatedDoc = elementorBridge.updateWidget(
+    withWidget.document,
+    withWidget.widget.id,
+    { text: 'Get Started Now' },
+  );
+  const updatedWidget = ElementorBridge.AST.findById(updatedDoc.elements, withWidget.widget.id);
+  if (updatedWidget?.settings.text !== 'Get Started Now') {
+    throw new Error('ElementorBridge updateWidget failed');
+  }
+
+  // Duplicate Container
+  const duplicated = elementorBridge.duplicateContainer(updatedDoc, '1a2b3c4');
+  if (duplicated.document.elements.length !== 2 || duplicated.duplicatedNode.id === '1a2b3c4') {
+    throw new Error('ElementorBridge duplicateContainer failed');
+  }
+
+  // 8C.3 Save Document & Cache Invalidation
+  const savedDoc = await elementorBridge.saveDocument(42, updatedDoc.elements, { custom_css: '.hero { color: #000; }' });
+  if (savedDoc.pageId !== 42 || savedDoc.elements.length !== 1) {
+    throw new Error('ElementorBridge saveDocument failed');
+  }
+
+  const cacheResult = await elementorBridge.invalidateCache(42);
+  if (!cacheResult.success || !cacheResult.invalidated.includes('_elementor_css')) {
+    throw new Error('ElementorBridge invalidateCache failed');
+  }
+
+  // 8C.4 Template Export, Import & Duplication
+  const exportedTemplate = await elementorBridge.exportTemplate(42, 'Landing Template');
+  if (exportedTemplate.title !== 'Landing Template' || exportedTemplate.elements.length !== 1) {
+    throw new Error('ElementorBridge exportTemplate failed');
+  }
+
+  const duplicatedPage = await elementorBridge.duplicateTemplate(42, 'Cloned Landing Page');
+  if (duplicatedPage.pageId !== 101) {
+    throw new Error('ElementorBridge duplicateTemplate failed');
+  }
+
+  // 8C.5 Global Kit API
+  const activeKit = await elementorBridge.getActiveKit();
+  if (activeKit.id !== 42) {
+    throw new Error('ElementorBridge getActiveKit failed');
+  }
+
+  const globalColors = await elementorBridge.getGlobalColors();
+  if (!Array.isArray(globalColors.system) || globalColors.system.length === 0) {
+    throw new Error('ElementorBridge getGlobalColors failed');
+  }
+
+  // 8C.6 MCP Tools Registry & Execution
+  const toolsList = await handleToolsList();
+  const requiredTools = [
+    'craftor_elementor_get_document',
+    'craftor_elementor_save_document',
+    'craftor_elementor_create_container',
+    'craftor_elementor_update_container',
+    'craftor_elementor_delete_container',
+    'craftor_elementor_insert_widget',
+    'craftor_elementor_update_widget',
+    'craftor_elementor_remove_widget',
+    'craftor_elementor_export_template',
+    'craftor_elementor_import_template',
+  ];
+  for (const tName of requiredTools) {
+    const found = toolsList.tools.find((t) => t.name === tName);
+    if (!found) {
+      throw new Error(`Required MCP tool "${tName}" not registered.`);
+    }
+  }
+
+  // Tool Call: craftor_elementor_create_container
+  const toolCreateRes = await handleToolsCall({
+    name: 'craftor_elementor_create_container',
+    arguments: { containerType: 'flex', direction: 'row' },
+  });
+  if (toolCreateRes.isError) {
+    throw new Error('MCP tool call craftor_elementor_create_container failed');
+  }
+
+  // Tool Call: craftor_elementor_insert_widget
+  const sampleAst = [astNewContainer];
+  const toolInsertRes = await handleToolsCall({
+    name: 'craftor_elementor_insert_widget',
+    arguments: {
+      ast: sampleAst,
+      parentId: astNewContainer.id,
+      widgetType: 'heading',
+      settings: { title: 'MCP Headline' },
+    },
+  });
+  if (toolInsertRes.isError) {
+    throw new Error('MCP tool call craftor_elementor_insert_widget failed');
+  }
+
+  // Tool Call: craftor_elementor_save_document
+  const toolSaveRes = await handleToolsCall({
+    name: 'craftor_elementor_save_document',
+    arguments: { pageId: 42, elements: sampleAst },
+  });
+  if (toolSaveRes.isError) {
+    throw new Error('MCP tool call craftor_elementor_save_document failed');
+  }
+
+  // 8C.7 MCP Resources Registry & Read
+  const resourcesList = await handleResourcesList();
+  const requiredResources = [
+    'craftor://elementor/document',
+    'craftor://elementor/template',
+    'craftor://elementor/kit',
+    'craftor://elementor/ast',
+  ];
+  for (const uri of requiredResources) {
+    const found = resourcesList.resources.find((r) => r.uri === uri);
+    if (!found) {
+      throw new Error(`Required MCP resource "${uri}" not registered.`);
+    }
+  }
+
+  const docResource = await handleResourcesRead({ uri: 'craftor://elementor/document' });
+  if (docResource.contents.length === 0 || !docResource.contents[0]?.text) {
+    throw new Error('MCP resource read craftor://elementor/document failed');
+  }
+
+  // 8C.8 MCP Prompts Registry & Get
+  const promptsList = await handlePromptsList();
+  const requiredPrompts = [
+    'generate_elementor_homepage',
+    'generate_elementor_landing_page',
+    'audit_elementor_page',
+    'optimize_elementor_layout',
+  ];
+  for (const pName of requiredPrompts) {
+    const found = promptsList.prompts.find((p) => p.name === pName);
+    if (!found) {
+      throw new Error(`Required MCP prompt "${pName}" not registered.`);
+    }
+  }
+
+  const homepagePrompt = await handlePromptsGet({
+    name: 'generate_elementor_homepage',
+    arguments: { brandName: 'Craftor Pro', industry: 'Design Agency' },
+  });
+  if (homepagePrompt.messages.length === 0 || !homepagePrompt.messages[0]?.content.text) {
+    throw new Error('MCP prompt get generate_elementor_homepage failed');
+  }
+
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 

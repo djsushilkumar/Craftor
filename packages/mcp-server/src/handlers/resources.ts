@@ -31,29 +31,49 @@ export class ResourceRegistry {
       {
         uri: 'craftor://system/status',
         name: 'Craftor System & Runtime Status',
-        description:
-          'Real-time telemetry, memory metrics, connected WordPress site URL, and license state.',
+        description: 'Real-time telemetry, memory metrics, connected WordPress site URL, and license state.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'craftor://elementor/document',
+        name: 'Active Elementor Document AST Resource',
+        description: 'Access current page Elementor AST tree, element hierarchies, and page settings.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'craftor://elementor/template',
+        name: 'Elementor Template Library Resource',
+        description: 'Portable Elementor template library schemas and exported layouts.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'craftor://elementor/kit',
+        name: 'Elementor Global Kit & Design Tokens',
+        description: 'Active Global Kit styling tokens, system colors, typography, and site settings.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'craftor://elementor/ast',
+        name: 'Elementor Abstract Syntax Tree Specification',
+        description: 'AST specifications for flex containers, grid containers, and standard Elementor widgets.',
         mimeType: 'application/json',
       },
       {
         uri: 'craftor://elementor/schema',
         name: 'Elementor AST Document Schema',
-        description:
-          'JSON schema definitions for Elementor Flex/Grid containers, widgets, and styles.',
+        description: 'JSON schema definitions for Elementor Flex/Grid containers, widgets, and styles.',
         mimeType: 'application/json',
       },
       {
         uri: 'craftor://tokens/design',
         name: 'Craftor Master Design Tokens',
-        description:
-          'Master HSL color palette, typography hierarchy, spacing scale, and border radii.',
+        description: 'Master HSL color palette, typography hierarchy, spacing scale, and border radii.',
         mimeType: 'application/json',
       },
       {
         uri: 'craftor://tools/manifest',
         name: 'MCP Tools Catalog Manifest',
-        description:
-          'Full JSON catalog of all registered tools, descriptions, categories, and input schemas.',
+        description: 'Full JSON catalog of all registered tools, descriptions, categories, and input schemas.',
         mimeType: 'application/json',
       },
     ];
@@ -119,6 +139,48 @@ export async function handleResourcesRead(
       break;
     }
 
+    case 'craftor://elementor/document': {
+      textContent = JSON.stringify(
+        {
+          schema: 'craftor://elementor/document/v1',
+          description: 'Elementor Document Schema & Meta Representation',
+          storageKeys: ['_elementor_data', '_elementor_page_settings', '_elementor_version', '_elementor_css'],
+          activeSiteUrl: siteUrl || 'local',
+        },
+        null,
+        2,
+      );
+      break;
+    }
+
+    case 'craftor://elementor/template': {
+      textContent = JSON.stringify(
+        {
+          schema: 'craftor://elementor/template/v1',
+          types: ['page', 'section', 'container', 'header', 'footer', 'single', 'archive'],
+          exportVersion: '3.24.0',
+        },
+        null,
+        2,
+      );
+      break;
+    }
+
+    case 'craftor://elementor/kit': {
+      textContent = JSON.stringify(
+        {
+          schema: 'craftor://elementor/kit/v1',
+          defaultColors: ['primary', 'secondary', 'text', 'accent'],
+          defaultTypography: ['primary', 'secondary', 'text', 'accent'],
+          tokens: CRAFTOR_TOKENS,
+        },
+        null,
+        2,
+      );
+      break;
+    }
+
+    case 'craftor://elementor/ast':
     case 'craftor://elementor/schema': {
       textContent = JSON.stringify(
         {

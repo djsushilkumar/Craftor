@@ -255,6 +255,9 @@ importers:
       '@craftor/tool-registry':
         specifier: workspace:*
         version: link:../tool-registry
+      '@craftor/wordpress-bridge':
+        specifier: workspace:*
+        version: link:../wordpress-bridge
       '@craftor/workflow-registry':
         specifier: workspace:*
         version: link:../workflow-registry
@@ -320,6 +323,9 @@ importers:
 
   packages/wordpress-bridge:
     dependencies:
+      '@craftor/elementor-ast':
+        specifier: workspace:*
+        version: link:../elementor-ast
       '@craftor/schemas':
         specifier: workspace:*
         version: link:../schemas
