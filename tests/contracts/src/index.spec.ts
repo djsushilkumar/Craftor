@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length < 56) {
-    throw new Error(`Expected at least 56 registered MCP tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 60) {
+    throw new Error(`Expected at least 60 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -1417,6 +1417,87 @@ async function runContractTests(): Promise<void> {
     arguments: { blogId: 3 },
   });
   if (mcpSwitchSite.isError) throw new Error('switch_active_site alias resolution failed');
+
+  console.log('[Contract Test 14] Validating Phase 3 Multimodal Synthesis, Funnels, Local LLM & Compression...');
+  const { MultimodalSynthesizer, SalesFunnelGenerator, AstCompressor } = await import('../../../packages/elementor-ast/dist/index.js');
+  const { LocalLlmBridge } = await import('../../../packages/wordpress-bridge/dist/index.js');
+
+  // 14.1 Test Multimodal Synthesizer
+  const synth = new MultimodalSynthesizer();
+  const synthHero = synth.synthesizeFromDescriptor({
+    sectionType: 'hero',
+    title: 'Autonomous Multimodal Hero',
+    subtitle: 'Generating responsive Elementor AST directly from visual wireframes',
+  });
+  if (!synthHero.ast || synthHero.ast.length === 0 || synthHero.summary.widgetCount < 2) {
+    throw new Error('MultimodalSynthesizer hero synthesis failed');
+  }
+
+  const synthFeatures = synth.synthesizeFromDescriptor({
+    sectionType: 'features',
+    title: 'Core Features',
+    columns: 3,
+    items: [
+      { title: 'AI Canvas', description: 'Real-time sync' },
+      { title: 'AST Diffing', description: 'Structural audits' },
+      { title: 'Rollback', description: 'Zero loss' },
+    ],
+  });
+  if (synthFeatures.summary.widgetCount < 4) {
+    throw new Error('MultimodalSynthesizer features synthesis failed');
+  }
+
+  // 14.2 Test Sales Funnel Generator
+  const funnelGen = new SalesFunnelGenerator();
+  const funnel = funnelGen.generateFullFunnel({
+    funnelName: 'AI Accelerator Launch',
+    productName: 'Craftor Pro License',
+    price: '$199',
+    upsellProductName: 'Lifetime Multi-Site Addon',
+    upsellPrice: '$99',
+  });
+  if (funnel.length !== 4 || funnel[0]?.stepType !== 'landing' || funnel[3]?.stepType !== 'thank_you') {
+    throw new Error('SalesFunnelGenerator generation failed');
+  }
+
+  // 14.3 Test AST Compressor
+  const compressor = new AstCompressor();
+  const compRes = compressor.compress(synthHero.ast);
+  if (!compRes.compressedAst || compRes.compressedBytes > compRes.originalBytes) {
+    throw new Error('AstCompressor compression failed');
+  }
+
+  // 14.4 Test Local LLM Bridge
+  const localLlm = new LocalLlmBridge({ provider: 'ollama', model: 'llama3:8b' });
+  const llmQueryRes = await localLlm.query('Build landing page for coffee shop');
+  if (llmQueryRes.provider !== 'ollama' || !llmQueryRes.content) {
+    throw new Error('LocalLlmBridge query failed');
+  }
+
+  // 14.5 Test Phase 3 MCP Handlers & Aliases
+  const mcpSynth = await testHandleToolsCall({
+    name: 'craftor_elementor_synthesize_wireframe',
+    arguments: { sectionType: 'pricing', title: 'Enterprise Pricing' },
+  });
+  if (mcpSynth.isError) throw new Error('craftor_elementor_synthesize_wireframe MCP call failed');
+
+  const mcpFunnel = await testHandleToolsCall({
+    name: 'generate_sales_funnel',
+    arguments: { funnelName: 'Spring Sale Funnel', productName: 'Course', price: '$49' },
+  });
+  if (mcpFunnel.isError) throw new Error('generate_sales_funnel alias resolution failed');
+
+  const mcpLocal = await testHandleToolsCall({
+    name: 'query_local_model',
+    arguments: { prompt: 'Generate contact form section', provider: 'vllm' },
+  });
+  if (mcpLocal.isError) throw new Error('query_local_model alias resolution failed');
+
+  const mcpCompress = await testHandleToolsCall({
+    name: 'compress_ast',
+    arguments: { ast: synthHero.ast },
+  });
+  if (mcpCompress.isError) throw new Error('compress_ast alias resolution failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }

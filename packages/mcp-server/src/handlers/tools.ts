@@ -28,6 +28,11 @@ import {
   createSinglePostTemplate,
   DYNAMIC_TAG_PRESETS,
   injectDynamicTag,
+  MultimodalSynthesizer,
+  VisualLayoutDescriptor,
+  SalesFunnelGenerator,
+  SalesFunnelConfig,
+  AstCompressor,
 } from '../../../elementor-ast/dist/index.js';
 import {
   WordPressClient,
@@ -38,6 +43,7 @@ import {
   ElementorLiveSyncBridge,
   WooCommerceCouponsBridge,
   MultiSiteManager,
+  LocalLlmBridge,
 } from '../../../wordpress-bridge/dist/index.js';
 import { CRAFTOR_TOKENS } from '../../../design-tokens/dist/index.js';
 import { logger } from '../../../shared-utils/dist/index.js';
@@ -967,6 +973,79 @@ export function registerDefaultTools(): void {
         },
       },
     },
+
+    // =========================================================================
+    // 7. PHASE 3 ADVANCED MULTIMODAL, FUNNELS & LOCAL LLM (4 TOOLS)
+    // =========================================================================
+    {
+      id: 'craftor_elementor_synthesize_wireframe',
+      name: 'Synthesize Wireframe to Elementor AST',
+      category: 'elementor_containers',
+      description: 'Converts multimodal visual wireframe layout descriptors into fully nested Elementor AST JSON.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['sectionType'],
+        properties: {
+          sectionType: { type: 'string', enum: ['hero', 'features', 'pricing', 'testimonials', 'cta', 'contact', 'gallery'] },
+          title: { type: 'string' },
+          subtitle: { type: 'string' },
+          columns: { type: 'number' },
+          items: { type: 'array' },
+          theme: { type: 'object' },
+        },
+      },
+    },
+    {
+      id: 'craftor_elementor_generate_sales_funnel',
+      name: 'Generate E-Commerce Sales Funnel Suite',
+      category: 'woocommerce_catalog',
+      description: 'Generates a 4-step high-converting e-commerce sales funnel (Landing -> 1-Click Upsell -> Checkout -> Thank You).',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['funnelName', 'productName', 'price'],
+        properties: {
+          funnelName: { type: 'string', description: 'Sales funnel title' },
+          productName: { type: 'string', description: 'Featured product title' },
+          price: { type: 'string', description: 'Regular price string (e.g. $49)' },
+          upsellProductName: { type: 'string', description: '1-Click upsell upgrade title' },
+          upsellPrice: { type: 'string', description: 'Upsell price string (e.g. $29)' },
+          ctaText: { type: 'string' },
+        },
+      },
+    },
+    {
+      id: 'craftor_llm_query_local_model',
+      name: 'Query Local LLM Daemon',
+      category: 'multisite_enterprise',
+      description: 'Queries offline local LLM providers (Ollama, vLLM, LM Studio, LocalAI) for zero-cost AST synthesis.',
+      permissions: ['read', 'write'],
+      inputSchema: {
+        type: 'object',
+        required: ['prompt'],
+        properties: {
+          prompt: { type: 'string', description: 'User prompt to synthesize' },
+          provider: { type: 'string', enum: ['ollama', 'vllm', 'lmstudio', 'localai'], default: 'ollama' },
+          model: { type: 'string' },
+          temperature: { type: 'number', default: 0.2 },
+        },
+      },
+    },
+    {
+      id: 'craftor_ast_compress_payload',
+      name: 'Compress AST for LLM Context',
+      category: 'elementor_containers',
+      description: 'Minimizes and compresses large Elementor AST JSON payloads by stripping defaults and empty structures.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        required: ['ast'],
+        properties: {
+          ast: { type: 'array', description: 'Elementor AST node array to compress' },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1090,6 +1169,12 @@ function resolveToolName(name: string): string {
     switch_active_site: 'multisite_switch_active_site',
     batch_dispatch_tool: 'multisite_batch_dispatch_tool',
     sync_global_template: 'multisite_sync_global_template',
+
+    // Phase 3 Multimodal & Advanced
+    synthesize_wireframe: 'craftor_elementor_synthesize_wireframe',
+    generate_sales_funnel: 'craftor_elementor_generate_sales_funnel',
+    query_local_model: 'craftor_llm_query_local_model',
+    compress_ast: 'craftor_ast_compress_payload',
 
     // System & Auditing
     system_status: 'craftor_system_status',
@@ -2563,6 +2648,77 @@ export async function handleToolsCall(
         const syncRes = await msManager.syncGlobalTemplate(targetBlogIds, template);
         return {
           content: [{ type: 'text', text: JSON.stringify({ success: true, ...syncRes }, null, 2) }],
+        };
+      }
+
+      // =======================================================================
+      // PHASE 3 HANDLERS
+      // =======================================================================
+      case 'craftor_elementor_synthesize_wireframe': {
+        const synthesizer = new MultimodalSynthesizer();
+        const descriptor: VisualLayoutDescriptor = {
+          sectionType: (args.sectionType as VisualLayoutDescriptor['sectionType']) ?? 'hero',
+          title: args.title ? String(args.title) : undefined,
+          subtitle: args.subtitle ? String(args.subtitle) : undefined,
+          columns: args.columns ? Number(args.columns) : undefined,
+          items: (args.items as VisualLayoutDescriptor['items']) ?? undefined,
+          theme: (args.theme as VisualLayoutDescriptor['theme']) ?? undefined,
+        };
+        const synthesisRes = synthesizer.synthesizeFromDescriptor(descriptor);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, ...synthesisRes }, null, 2) }],
+        };
+      }
+
+      case 'craftor_elementor_generate_sales_funnel': {
+        const funnelGen = new SalesFunnelGenerator();
+        const funnelConfig: SalesFunnelConfig = {
+          funnelName: String(args.funnelName ?? 'E-Commerce Conversion Funnel'),
+          productName: String(args.productName ?? 'Premium Masterclass'),
+          price: String(args.price ?? '$97'),
+          upsellProductName: args.upsellProductName ? String(args.upsellProductName) : undefined,
+          upsellPrice: args.upsellPrice ? String(args.upsellPrice) : undefined,
+          ctaText: args.ctaText ? String(args.ctaText) : undefined,
+        };
+        const funnelSteps = funnelGen.generateFullFunnel(funnelConfig);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  success: true,
+                  funnelName: funnelConfig.funnelName,
+                  stepCount: funnelSteps.length,
+                  steps: funnelSteps,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+        };
+      }
+
+      case 'craftor_llm_query_local_model': {
+        const provider = (args.provider as 'ollama' | 'vllm' | 'lmstudio' | 'localai') ?? 'ollama';
+        const model = args.model ? String(args.model) : undefined;
+        const temperature = args.temperature ? Number(args.temperature) : undefined;
+        const prompt = String(args.prompt ?? 'Synthesize Elementor layout');
+
+        const localLlm = new LocalLlmBridge({ provider, model, temperature });
+        const llmRes = await localLlm.query(prompt);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, ...llmRes }, null, 2) }],
+        };
+      }
+
+      case 'craftor_ast_compress_payload': {
+        const compressor = new AstCompressor();
+        const inputAst = (args.ast as ElementorNode[]) ?? [];
+        const compressionRes = compressor.compress(inputAst);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, ...compressionRes }, null, 2) }],
         };
       }
 
