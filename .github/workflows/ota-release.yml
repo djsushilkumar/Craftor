@@ -8,6 +8,9 @@ on:
         required: true
         default: 'canary'
 
+permissions:
+  contents: write
+
 jobs:
   ota-deploy:
     name: Build and Sign OTA Package
@@ -15,6 +18,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Package Core Plugin
         run: |

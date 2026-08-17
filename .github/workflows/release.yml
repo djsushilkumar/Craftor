@@ -6,7 +6,14 @@ on:
       - main
       - master
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
 
 jobs:
   release:
@@ -15,24 +22,31 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
         with:
-          version: 9
+          node-version: 22
+          cache: 'pnpm'
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build Monorepo Packages
+        run: pnpm build
+
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
         with:
+          title: 'chore(release): version packages and update changelogs'
+          commit: 'chore(release): version packages [skip ci]'
           publish: pnpm release
+          version: pnpm version-packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

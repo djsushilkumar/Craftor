@@ -1,10 +1,19 @@
 name: Docker Multi-Version Matrix
 
 on:
+  push:
+    branches: [main, master]
   pull_request:
     branches: [main, master]
   schedule:
     - cron: '0 2 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   matrix-test:

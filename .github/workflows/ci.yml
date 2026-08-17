@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main, master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Lint, Test & Build
@@ -13,25 +20,32 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
         with:
-          version: 9
+          node-version: 22
+          cache: 'pnpm'
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Monorepo Verification
-        run: pnpm verify
+      - name: Run ESLint Checks
+        run: pnpm lint
 
-      - name: Run Build Pipeline
+      - name: Run TypeScript Build Pipeline
         run: pnpm build
 
-      - name: Run Contract Tests
+      - name: Run Contract & Protocol Tests
         run: pnpm test:contracts
+
+      - name: Run Monorepo Ecosystem Verification
+        run: pnpm verify
+
+      - name: Validate Turborepo Build Graph
+        run: pnpm exec turbo run build --dry-run
