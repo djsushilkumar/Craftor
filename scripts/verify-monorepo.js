@@ -78,7 +78,7 @@ const SKILL_NAMES = [
 ];
 
 const SKILL_FILES = [
-  'skill.md',
+  'SKILL.md',
   'metadata.json',
   'system-prompt.md',
   'tools.json',
@@ -97,7 +97,13 @@ let failCount = 0;
 
 function assertFile(relPath, label) {
   const fullPath = path.join(ROOT_DIR, relPath);
-  if (fs.existsSync(fullPath)) {
+  const uppercaseVariant = fullPath.replace(/skill\.md$/i, 'SKILL.md');
+  const lowercaseVariant = fullPath.replace(/skill\.md$/i, 'skill.md');
+  if (
+    fs.existsSync(fullPath) ||
+    fs.existsSync(uppercaseVariant) ||
+    fs.existsSync(lowercaseVariant)
+  ) {
     console.log(`[PASS] ${label}: ${relPath}`);
     passCount++;
   } else {
