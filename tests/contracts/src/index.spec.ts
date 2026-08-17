@@ -1037,8 +1037,8 @@ async function runContractTests(): Promise<void> {
   toolsHandlerModule.registerDefaultTools();
 
   const allToolsList = await toolsHandlerModule.handleToolsList();
-  if (allToolsList.tools.length < 78) {
-    throw new Error(`Expected at least 78 registered MCP tools, got: ${allToolsList.tools.length}`);
+  if (allToolsList.tools.length < 80) {
+    throw new Error(`Expected at least 80 registered MCP tools, got: ${allToolsList.tools.length}`);
   }
 
   // 9.1 Test WordPress Content Tools
@@ -1906,6 +1906,58 @@ async function runContractTests(): Promise<void> {
     arguments: { request: { provider: 'litespeed', purgeAll: true } },
   });
   if (mcpCdn.isError) throw new Error('purge_cdn_cache alias failed');
+
+  console.log('[Contract Test 21] Validating Phase 9 AI Voice Studio & Speech-to-Intent Bridge...');
+  const { VoiceIntentClassifier, VoiceSessionManager } = await import(
+    '../../../packages/shared-utils/dist/index.js'
+  );
+  const { VoiceStudio } = await import('../../../apps/dashboard/dist/index.js');
+
+  // 21.1 Test VoiceIntentClassifier
+  const classifier = new VoiceIntentClassifier();
+  const heroIntent = classifier.classify('Add a modern hero section with glassmorphism');
+  if (heroIntent.intentCategory !== 'layout_generation' || heroIntent.targetTool !== 'craftor_elementor_generate_container') {
+    throw new Error('VoiceIntentClassifier hero classification failed');
+  }
+
+  const pricingIntent = classifier.classify('Generate a 3-tier pricing comparison table');
+  if (pricingIntent.toolArguments?.layoutType !== 'pricing') {
+    throw new Error('VoiceIntentClassifier pricing classification failed');
+  }
+
+  const rollbackIntent = classifier.classify('Please rollback and undo latest changes');
+  if (rollbackIntent.targetTool !== 'craftor_restore_snapshot') {
+    throw new Error('VoiceIntentClassifier rollback classification failed');
+  }
+
+  // 21.2 Test VoiceSessionManager
+  const sessionMgr = new VoiceSessionManager();
+  sessionMgr.startSession('test_voice_session');
+  const updatedSession = sessionMgr.recordTurn('test_voice_session', 'user', 'Add hero section');
+  sessionMgr.recordTurn('test_voice_session', 'assistant', heroIntent.spokenConfirmation);
+  if (updatedSession.transcriptHistory.length !== 2) {
+    throw new Error('VoiceSessionManager turn recording failed');
+  }
+
+  // 21.3 Test VoiceStudio UI Component
+  const studio = new VoiceStudio();
+  const studioHtml = studio.renderVoiceStudio({ isListening: true, activeMicLevel: 0.8, recentTranscripts: [] });
+  if (!studioHtml.includes('AI Voice Studio') || !studioHtml.includes('LISTENING (LIVE)')) {
+    throw new Error('VoiceStudio renderVoiceStudio failed');
+  }
+
+  // 21.4 Test Phase 9 MCP Tool Calls & Aliases
+  const mcpClassify = await testHandleToolsCall({
+    name: 'classify_voice_intent',
+    arguments: { transcript: 'Purge Cloudflare CDN cache' },
+  });
+  if (mcpClassify.isError) throw new Error('classify_voice_intent alias failed');
+
+  const mcpDispatch = await testHandleToolsCall({
+    name: 'dispatch_voice_action',
+    arguments: { transcript: 'Add a hero banner with CTA' },
+  });
+  if (mcpDispatch.isError) throw new Error('dispatch_voice_action alias failed');
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }

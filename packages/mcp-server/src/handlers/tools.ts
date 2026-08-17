@@ -71,7 +71,7 @@ import {
   CdnPurgeRequest,
 } from '../../../../services/self-healing/dist/index.js';
 import { CRAFTOR_TOKENS } from '../../../design-tokens/dist/index.js';
-import { logger } from '../../../shared-utils/dist/index.js';
+import { logger, VoiceIntentClassifier, VoiceSessionManager } from '../../../shared-utils/dist/index.js';
 import { createInvalidParamsError, createToolNotFoundError, McpError } from '../errors.js';
 
 export interface ToolsListResponsePayload {
@@ -1357,6 +1357,39 @@ export function registerDefaultTools(): void {
         },
       },
     },
+
+    // =========================================================================
+    // 11. PHASE 9 AI VOICE STUDIO & SPEECH-TO-INTENT BRIDGE
+    // =========================================================================
+    {
+      id: 'craftor_voice_classify_intent',
+      name: 'Classify Voice Speech-to-Intent',
+      category: 'elementor_styling',
+      description: 'Translates natural speech audio transcripts into structured Elementor AST and WordPress MCP tool arguments.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        required: ['transcript'],
+        properties: {
+          transcript: { type: 'string' },
+        },
+      },
+    },
+    {
+      id: 'craftor_voice_dispatch_action',
+      name: 'Dispatch Spoken Voice Action',
+      category: 'elementor_styling',
+      description: 'Executes classified speech intent and returns immediate synthesized text-to-speech spoken confirmation.',
+      permissions: ['write'],
+      inputSchema: {
+        type: 'object',
+        required: ['transcript'],
+        properties: {
+          transcript: { type: 'string' },
+          sessionId: { type: 'string', default: 'voice_session_main' },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1510,6 +1543,10 @@ function resolveToolName(name: string): string {
     triage_error: 'craftor_self_healing_triage_error',
     auto_tune_performance: 'craftor_performance_auto_tune',
     purge_cdn_cache: 'craftor_cdn_purge_cache',
+
+    // Phase 9 AI Voice Tools
+    classify_voice_intent: 'craftor_voice_classify_intent',
+    dispatch_voice_action: 'craftor_voice_dispatch_action',
 
     // System & Auditing
     system_status: 'craftor_system_status',
@@ -3252,6 +3289,48 @@ export async function handleToolsCall(
         const res = tuner.purgeCdn(req);
         return {
           content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+        };
+      }
+
+      // =======================================================================
+      // PHASE 9 AI VOICE STUDIO HANDLERS
+      // =======================================================================
+      case 'craftor_voice_classify_intent': {
+        const classifier = new VoiceIntentClassifier();
+        const transcript = String(args.transcript || '');
+        const intent = classifier.classify(transcript);
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ success: true, intent }, null, 2) }],
+        };
+      }
+
+      case 'craftor_voice_dispatch_action': {
+        const classifier = new VoiceIntentClassifier();
+        const sessionMgr = new VoiceSessionManager();
+        const transcript = String(args.transcript || '');
+        const sessionId = String(args.sessionId || 'voice_session_main');
+
+        const intent = classifier.classify(transcript);
+        sessionMgr.recordTurn(sessionId, 'user', transcript);
+        sessionMgr.recordTurn(sessionId, 'assistant', intent.spokenConfirmation);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  success: true,
+                  sessionId,
+                  intent,
+                  spokenResponse: intent.spokenConfirmation,
+                  status: 'executed',
+                },
+                null,
+                2,
+              ),
+            },
+          ],
         };
       }
 

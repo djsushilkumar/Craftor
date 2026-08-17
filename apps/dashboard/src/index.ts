@@ -14,5 +14,7 @@ export * from './components/SiteMonitor.js';
 export * from './components/AstCanvasRenderer.js';
 export * from './components/PromptPlayground.js';
 export * from './components/PaletteManager.js';
+export * from './components/VoiceStudio.js';
 export * from './components/DashboardApp.js';
+
 
