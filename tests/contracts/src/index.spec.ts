@@ -1349,6 +1349,29 @@ async function runContractTests(): Promise<void> {
   });
   if (aliasCpnRes.isError) throw new Error('Short alias "create_coupon" resolution failed');
 
+  console.log('[Contract Test 12] Validating VisualDiffViewer UI Component & SVG Generation...');
+  const { VisualDiffViewer } = await import('../../../packages/shared-ui/dist/index.js');
+  const viewer = new VisualDiffViewer({ splitRatio: 60 });
+  if (viewer.getSplitRatio() !== 60) {
+    throw new Error('VisualDiffViewer split ratio failed');
+  }
+
+  const summaryStats = viewer.generateSummaryStats({
+    added: 3,
+    removed: 1,
+    modified: 2,
+    unchanged: 10,
+    percentageChanged: '37.5%',
+  });
+  if (!summaryStats.percentage || summaryStats.changedNodes !== 6) {
+    throw new Error('VisualDiffViewer summary stats generation failed');
+  }
+
+  const svgOutput = viewer.renderSvgComparison('<div>Before</div>', '<div>After</div>', 1000, 600);
+  if (!svgOutput.includes('<svg') || !svgOutput.includes('Before (Original Snapshot)')) {
+    throw new Error('VisualDiffViewer SVG rendering failed');
+  }
+
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 

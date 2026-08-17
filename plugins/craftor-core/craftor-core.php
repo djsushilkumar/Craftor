@@ -74,3 +74,29 @@ add_action( 'plugins_loaded', function() {
     \Craftor\Core\Plugin::instance()->init();
 } );
 
+// Enqueue Live-Sync Bridge assets in Elementor Editor
+add_action( 'elementor/editor/after_enqueue_scripts', function() {
+    wp_enqueue_script(
+        'craftor-editor-livesync',
+        CRAFTOR_CORE_URL . 'assets/js/editor-livesync.js',
+        [ 'elementor-editor' ],
+        CRAFTOR_CORE_VERSION,
+        true
+    );
+    wp_localize_script( 'craftor-editor-livesync', 'craftorLiveSyncData', [
+        'sseEndpoint' => rest_url( 'craftor/v1/editor/events' ),
+        'restEndpoint' => rest_url( 'craftor/v1/editor/sync' ),
+        'nonce' => wp_create_nonce( 'wp_rest' ),
+    ] );
+} );
+
+add_action( 'elementor/editor/after_enqueue_styles', function() {
+    wp_enqueue_style(
+        'craftor-editor-livesync',
+        CRAFTOR_CORE_URL . 'assets/css/editor-livesync.css',
+        [],
+        CRAFTOR_CORE_VERSION
+    );
+} );
+
+
