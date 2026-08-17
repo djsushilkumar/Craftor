@@ -45,6 +45,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
+        continue-on-error: true
         with:
           title: 'chore(release): version packages and update changelogs'
           commit: 'chore(release): version packages [skip ci]'
