@@ -11,8 +11,10 @@ console.log('================================================================');
 console.log('       CRAFTOR MONOREPO ESLINT EXECUTION RUNNER                 ');
 console.log('================================================================\n');
 
+const ESLINT_BIN = path.join(ROOT_DIR, 'node_modules', 'eslint', 'bin', 'eslint.js');
+
 try {
-  execSync('npx eslint packages apps services tests --ext .ts --max-warnings 0', {
+  execSync(`"${process.execPath}" "${ESLINT_BIN}" packages apps services tests --ext .ts --max-warnings 0`, {
     cwd: ROOT_DIR,
     stdio: 'inherit',
   });

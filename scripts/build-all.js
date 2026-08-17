@@ -58,12 +58,13 @@ console.log('================================================================\n'
 
 let successCount = 0;
 let failCount = 0;
+const TSC_BIN = path.join(ROOT_DIR, 'node_modules', 'typescript', 'bin', 'tsc');
 
 BUILD_TARGETS.forEach((target) => {
   const tsconfigPath = path.join(ROOT_DIR, target, 'tsconfig.json');
   process.stdout.write(`[BUILDING] ${target}... `);
   try {
-    execSync(`npx tsc -p ${tsconfigPath}`, { cwd: ROOT_DIR, stdio: 'pipe' });
+    execSync(`"${process.execPath}" "${TSC_BIN}" -p "${tsconfigPath}"`, { cwd: ROOT_DIR, stdio: 'pipe' });
     console.log('✅ COMPILED');
     successCount++;
   } catch (err) {

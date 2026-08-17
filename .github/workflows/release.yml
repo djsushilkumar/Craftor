@@ -54,6 +54,13 @@ jobs:
             echo "has_changesets=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Skip When No Pending Changesets
+        if: steps.check_changesets.outputs.has_changesets != 'true'
+        shell: bash
+        run: |
+          echo "✅ No pending changesets detected in .changeset directory."
+          echo "✅ Skipping release publish & PR creation. Pipeline successful."
+
       - name: Create Release Pull Request or Publish
         if: steps.check_changesets.outputs.has_changesets == 'true'
         uses: changesets/action@v1

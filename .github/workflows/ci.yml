@@ -38,11 +38,11 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run ESLint Checks
-        run: pnpm lint
-
       - name: Run TypeScript Build Pipeline
         run: pnpm build
+
+      - name: Run ESLint Checks
+        run: pnpm lint
 
       - name: Run Contract & Protocol Tests
         run: pnpm test:contracts
