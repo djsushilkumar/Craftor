@@ -34,8 +34,8 @@ const BUILD_TARGETS = [
   'packages/client-adapters',
 
   // 4. Daemon, Bridge & Microservices
-  'packages/mcp-server',
   'packages/wordpress-bridge',
+  'packages/mcp-server',
   'services/authentication',
   'services/licensing',
   'services/analytics',
