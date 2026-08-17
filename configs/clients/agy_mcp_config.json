@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "craftor-elementor": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\420\\Crafter\\packages\\mcp-server\\dist\\index.js"
+      ],
+      "env": {
+        "WORDPRESS_BASE_URL": "http://craftor.local",
+        "WORDPRESS_API_TOKEN": "crf_live_demo_token_xyz"
+      }
+    }
+  }
+}

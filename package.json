@@ -23,7 +23,12 @@
     "validate:devops": "node scripts/validate-devops.js",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "node scripts/publish-packages.js"
+    "release": "node scripts/publish-packages.js",
+    "package:binaries": "node scripts/package-binaries.js",
+    "package:svn": "node scripts/package-wordpress-org.js",
+    "package:npm": "node scripts/package-npm-bundles.js",
+    "configure:clients": "node scripts/configure-ai-clients.js",
+    "dist": "node scripts/package-binaries.js && node scripts/package-wordpress-org.js && node scripts/package-npm-bundles.js && node scripts/configure-ai-clients.js"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",

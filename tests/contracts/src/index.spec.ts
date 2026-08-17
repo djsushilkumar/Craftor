@@ -1626,6 +1626,54 @@ async function runContractTests(): Promise<void> {
   });
   if (mcpQuota.isError) throw new Error('check_quota alias resolution failed');
 
+  console.log('[Contract Test 17] Validating Phase 5 Standalone Binaries, WordPress.org SVN, NPM & AI Clients...');
+  // @ts-expect-error Dynamic script import without ambient declaration
+  const { generateBinaryLaunchers } = await import('../../../scripts/package-binaries.js');
+  // @ts-expect-error Dynamic script import without ambient declaration
+  const { packageWordPressOrg } = await import('../../../scripts/package-wordpress-org.js');
+  // @ts-expect-error Dynamic script import without ambient declaration
+  const { packageNpmBundles } = await import('../../../scripts/package-npm-bundles.js');
+  // @ts-expect-error Dynamic script import without ambient declaration
+  const { generateClientConfigs } = await import('../../../scripts/configure-ai-clients.js');
+
+
+
+  // 17.1 Run Binary Packager
+  generateBinaryLaunchers();
+  const fs = await import('fs');
+  const path = await import('path');
+  const root = path.resolve(__dirname, '../../..');
+  if (!fs.existsSync(path.join(root, 'dist-bin', 'craftor-daemon.bat'))) {
+    throw new Error('craftor-daemon.bat missing from dist-bin');
+  }
+
+  // 17.2 Run SVN Packager
+  packageWordPressOrg();
+  if (!fs.existsSync(path.join(root, 'dist-svn', 'craftor-core', 'trunk', 'readme.txt'))) {
+    throw new Error('readme.txt missing from SVN trunk');
+  }
+
+  // 17.3 Run NPM Bundle Packager
+  packageNpmBundles();
+  if (!fs.existsSync(path.join(root, 'dist-npm', 'npm-release-manifest.json'))) {
+    throw new Error('npm-release-manifest.json missing from dist-npm');
+  }
+
+  // 17.4 Run AI Client Configs Generator
+  generateClientConfigs();
+  const requiredConfigs = [
+    'claude_desktop_config.json',
+    'cursor_mcp.json',
+    'agy_mcp_config.json',
+    'vscode_settings.json',
+    'claude_code.json',
+  ];
+  for (const cfg of requiredConfigs) {
+    if (!fs.existsSync(path.join(root, 'configs', 'clients', cfg))) {
+      throw new Error(`AI client config missing: ${cfg}`);
+    }
+  }
+
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 
@@ -1635,3 +1683,4 @@ runContractTests().then(() => {
   console.error('[Contract Test Failure]', err);
   process.exit(1);
 });
+

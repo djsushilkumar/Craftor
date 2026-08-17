@@ -1,0 +1,30 @@
+{
+  "name": "craftor-mcp-server",
+  "version": "1.0.0",
+  "buildDate": "2026-08-17T15:24:03.188Z",
+  "platforms": {
+    "win32": {
+      "launcher": "craftor-daemon.bat",
+      "architecture": [
+        "x64",
+        "arm64"
+      ]
+    },
+    "darwin": {
+      "launcher": "craftor-daemon.sh",
+      "architecture": [
+        "arm64",
+        "x64"
+      ]
+    },
+    "linux": {
+      "launcher": "craftor-daemon.sh",
+      "architecture": [
+        "x64",
+        "arm64"
+      ]
+    }
+  },
+  "defaultTransport": "stdio",
+  "availableToolsCount": 68
+}
