@@ -17,10 +17,22 @@ const { ApprovalEngine } = require('../packages/mcp-server/dist/safety/approval.
 const { AstValidator } = require('../packages/elementor-ast/dist/validator.js');
 const { diffAst } = require('../packages/elementor-ast/dist/diff.js');
 
+const SITE_URL = process.env.WORDPRESS_BASE_URL || '';
+const SECRET_TOKEN = process.env.WORDPRESS_API_TOKEN || '';
+
+async function callTool(params) {
+  return handleToolsCall(params, SITE_URL, SECRET_TOKEN);
+}
+
 async function runGoldenPath() {
   console.log('================================================================');
   console.log('       CRAFTOR GOLDEN PATH PRODUCTION ACCEPTANCE EXECUTION       ');
   console.log('================================================================\n');
+  if (SITE_URL) {
+    console.log(`[MODE] LIVE WORDPRESS EXECUTION -> ${SITE_URL}`);
+  } else {
+    console.log(`[MODE] NATIVE / OFFLINE EXECUTION (Set WORDPRESS_BASE_URL for live)`);
+  }
 
   const metrics = {};
   const t0_total = Date.now();
@@ -28,9 +40,9 @@ async function runGoldenPath() {
   // ---------------------------------------------------------------------------
   // STEP 1: SITE SYSTEM STATUS & CONNECTION CHECK
   // ---------------------------------------------------------------------------
-  console.log('[Step 1] System Status & Module Inspection...');
+  console.log('\n[Step 1] System Status & Module Inspection...');
   const t0_status = Date.now();
-  const statusRes = await handleToolsCall({
+  const statusRes = await callTool({
     name: 'craftor_system_status',
     arguments: {}
   });
@@ -58,7 +70,7 @@ async function runGoldenPath() {
 
   const generatedContainers = [];
   for (const sec of sections) {
-    const res = await handleToolsCall({
+    const res = await callTool({
       name: 'craftor_elementor_generate_container',
       arguments: {
         layoutType: sec.type === 'trainers' || sec.type === 'classes' || sec.type === 'faq' ? 'feature_grid' : (sec.type === 'cta' ? 'cta_banner' : sec.type),
@@ -79,7 +91,7 @@ async function runGoldenPath() {
   // ---------------------------------------------------------------------------
   console.log('\n[Step 3] Validating Elementor AST Hierarchy & Schema...');
   const t0_val = Date.now();
-  const validationRes = await handleToolsCall({
+  const validationRes = await callTool({
     name: 'craftor_elementor_validate_ast',
     arguments: { ast: generatedContainers }
   });
@@ -101,7 +113,7 @@ async function runGoldenPath() {
 
   const createdProducts = [];
   for (const p of products) {
-    const res = await handleToolsCall({
+    const res = await callTool({
       name: 'craftor_wc_create_product',
       arguments: p
     });
@@ -117,7 +129,7 @@ async function runGoldenPath() {
   // ---------------------------------------------------------------------------
   console.log('\n[Step 5] Applying SEO Metadata & OpenGraph Tags...');
   const t0_seo = Date.now();
-  const seoRes = await handleToolsCall({
+  const seoRes = await callTool({
     name: 'craftor_seo_update_metadata',
     arguments: {
       postId: 101,
@@ -137,7 +149,7 @@ async function runGoldenPath() {
   // ---------------------------------------------------------------------------
   console.log('\n[Step 6] Capturing Pre-Mutation Micro-Snapshot...');
   const t0_snap = Date.now();
-  const snapRes = await handleToolsCall({
+  const snapRes = await callTool({
     name: 'craftor_create_snapshot',
     arguments: {
       targetType: 'elementor_data',
@@ -159,7 +171,7 @@ async function runGoldenPath() {
   const productToDelete = createdProducts[0];
 
   // 7a. AI requests delete product
-  const deleteReq1 = await handleToolsCall({
+  const deleteReq1 = await callTool({
     name: 'craftor_wc_delete_product',
     arguments: { productId: productToDelete.id, force: true }
   });
@@ -169,7 +181,7 @@ async function runGoldenPath() {
   const approvalId = deleteReq1Data.approvalId;
 
   // 7b. Parameter tampering attempt
-  const tamperReq = await handleToolsCall({
+  const tamperReq = await callTool({
     name: 'craftor_wc_delete_product',
     arguments: { productId: 9999, approvalId }
   });
@@ -181,7 +193,7 @@ async function runGoldenPath() {
   console.log(`  ✅ 7c. Human Administrator Authenticates & Approves: status = "APPROVED"`);
 
   // 7d. AI Retries with Approved ID
-  const deleteApproved = await handleToolsCall({
+  const deleteApproved = await callTool({
     name: 'craftor_wc_delete_product',
     arguments: { productId: productToDelete.id, force: true, approvalId }
   });
@@ -189,7 +201,7 @@ async function runGoldenPath() {
   console.log(`  ✅ 7d. Approved Mutation Executed: deleted = ${deleteApprovedData.deleted}`);
 
   // 7e. Replay Attack Attempt
-  const replayReq = await handleToolsCall({
+  const replayReq = await callTool({
     name: 'craftor_wc_delete_product',
     arguments: { productId: productToDelete.id, force: true, approvalId }
   });
@@ -214,7 +226,7 @@ async function runGoldenPath() {
   // ---------------------------------------------------------------------------
   console.log('\n[Step 9] Executing Post-Deployment Verification...');
   const t0_ver = Date.now();
-  const verifyRes = await handleToolsCall({
+  const verifyRes = await callTool({
     name: 'craftor_elementor_get_document',
     arguments: { pageId: 101 }
   });
@@ -230,7 +242,7 @@ async function runGoldenPath() {
   const t0_rb = Date.now();
   
   // Create an approval for rollback
-  const rbApprovalReq = await handleToolsCall({
+  const rbApprovalReq = await callTool({
     name: 'craftor_restore_snapshot',
     arguments: { snapshotId: baselineSnapshotId }
   });
@@ -241,7 +253,7 @@ async function runGoldenPath() {
   ApprovalEngine.approve(rbApprovalId, 'admin_user_session_1');
 
   // Execute rollback
-  const rollbackExec = await handleToolsCall({
+  const rollbackExec = await callTool({
     name: 'craftor_restore_snapshot',
     arguments: { snapshotId: baselineSnapshotId, approvalId: rbApprovalId }
   });
