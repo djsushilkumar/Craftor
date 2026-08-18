@@ -1,0 +1,14 @@
+{
+  "sourceUrl": "https://ccepl-elevate-vision.lovable.app/",
+  "deployedUrl": "http://localhost:8080/ccepl-elevate-vision/",
+  "pageId": 29,
+  "timestamp": "2026-08-18T20:39:55.900Z",
+  "mode": "100% Native Elementor Widgets (0% HTML)",
+  "rootContainers": 6,
+  "viewports": {
+    "desktop": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\ccepl_native_clone_desktop_1440x900.png",
+    "tablet": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\ccepl_native_clone_tablet_768x1024.png",
+    "mobile": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\ccepl_native_clone_mobile_375x812.png"
+  },
+  "passed": true
+}
