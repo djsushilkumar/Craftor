@@ -7,6 +7,7 @@ export * from './handlers/tools.js';
 export * from './handlers/resources.js';
 export * from './handlers/prompts.js';
 export * from './safety/confirmation.js';
+export * from './safety/approval.js';
 
 import { McpServerDaemon } from './daemon.js';
 

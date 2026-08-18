@@ -88,7 +88,7 @@ import {
   EdgeRequestContext,
 } from '../../../edge-runtime/dist/index.js';
 import { createInvalidParamsError, createToolNotFoundError, McpError } from '../errors.js';
-import { ConfirmationManager } from '../safety/confirmation.js';
+import { ApprovalEngine } from '../safety/approval.js';
 
 export interface ToolsListResponsePayload {
   tools: Array<{
@@ -1627,6 +1627,20 @@ export function registerDefaultTools(): void {
         },
       },
     },
+    {
+      id: 'craftor_get_approval_status',
+      name: 'Get Human Approval Status',
+      category: 'security',
+      description: 'Queries the status of a pending or approved human authorization request for destructive operations.',
+      permissions: ['read'],
+      inputSchema: {
+        type: 'object',
+        required: ['approvalId'],
+        properties: {
+          approvalId: { type: 'string', description: 'The unique approval identifier (e.g. crf_appr_...)' },
+        },
+      },
+    },
   ];
 
   for (const tool of defaultTools) {
@@ -1639,6 +1653,10 @@ export function registerDefaultTools(): void {
  */
 function resolveToolName(name: string): string {
   const aliasMap: Record<string, string> = {
+    // Security & Approvals
+    get_approval_status: 'craftor_get_approval_status',
+    approval_status: 'craftor_get_approval_status',
+
     // WordPress
     create_post: 'craftor_wp_create_post',
     wp_create_post: 'craftor_wp_create_post',
@@ -1942,11 +1960,23 @@ export async function handleToolsCall(
           };
         }
 
-        const token = args.confirmationToken as string;
-        if (!ConfirmationManager.verifyAndConsume('craftor_wp_delete_post', postId, token)) {
-          const challenge = ConfirmationManager.issueChallenge('craftor_wp_delete_post', postId);
+        const approvalId = args.approvalId as string | undefined;
+        const verification = ApprovalEngine.verifyAndConsume('craftor_wp_delete_post', postId, args, approvalId);
+        if (!verification.authorized) {
+          if (!approvalId || !ApprovalEngine.getApproval(approvalId)) {
+            const request = ApprovalEngine.createApprovalRequest('craftor_wp_delete_post', postId, args);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(request, null, 2) }],
+            };
+          }
           return {
-            content: [{ type: 'text', text: JSON.stringify(challenge, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({
+              requiresHumanApproval: true,
+              approvalId,
+              status: verification.record?.status || 'PENDING',
+              error: verification.reason,
+            }, null, 2) }],
+            isError: true,
           };
         }
 
@@ -1954,12 +1984,12 @@ export async function handleToolsCall(
           const client = getClient();
           const result = await client.deletePost(postId, Boolean(args.force));
           return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, result }, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({ success: true, result, approvalId }, null, 2) }],
           };
         }
 
         return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, postId, deleted: true }, null, 2) }],
+          content: [{ type: 'text', text: JSON.stringify({ success: true, postId, deleted: true, approvalId }, null, 2) }],
         };
       }
 
@@ -2739,11 +2769,23 @@ export async function handleToolsCall(
           };
         }
 
-        const token = args.confirmationToken as string;
-        if (!ConfirmationManager.verifyAndConsume('craftor_wc_delete_product', productId, token)) {
-          const challenge = ConfirmationManager.issueChallenge('craftor_wc_delete_product', productId);
+        const approvalId = args.approvalId as string | undefined;
+        const verification = ApprovalEngine.verifyAndConsume('craftor_wc_delete_product', productId, args, approvalId);
+        if (!verification.authorized) {
+          if (!approvalId || !ApprovalEngine.getApproval(approvalId)) {
+            const request = ApprovalEngine.createApprovalRequest('craftor_wc_delete_product', productId, args);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(request, null, 2) }],
+            };
+          }
           return {
-            content: [{ type: 'text', text: JSON.stringify(challenge, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({
+              requiresHumanApproval: true,
+              approvalId,
+              status: verification.record?.status || 'PENDING',
+              error: verification.reason,
+            }, null, 2) }],
+            isError: true,
           };
         }
 
@@ -2755,12 +2797,12 @@ export async function handleToolsCall(
             actionContext: 'mcp_tool_delete_product',
           });
           return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, result }, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({ success: true, result, approvalId }, null, 2) }],
           };
         }
 
         return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, productId, deleted: true }, null, 2) }],
+          content: [{ type: 'text', text: JSON.stringify({ success: true, productId, deleted: true, approvalId }, null, 2) }],
         };
       }
 
@@ -3011,11 +3053,23 @@ export async function handleToolsCall(
           };
         }
 
-        const token = args.confirmationToken as string;
-        if (!ConfirmationManager.verifyAndConsume('craftor_restore_snapshot', snapshotId, token)) {
-          const challenge = ConfirmationManager.issueChallenge('craftor_restore_snapshot', snapshotId);
+        const approvalId = args.approvalId as string | undefined;
+        const verification = ApprovalEngine.verifyAndConsume('craftor_restore_snapshot', snapshotId, args, approvalId);
+        if (!verification.authorized) {
+          if (!approvalId || !ApprovalEngine.getApproval(approvalId)) {
+            const request = ApprovalEngine.createApprovalRequest('craftor_restore_snapshot', snapshotId, args);
+            return {
+              content: [{ type: 'text', text: JSON.stringify(request, null, 2) }],
+            };
+          }
           return {
-            content: [{ type: 'text', text: JSON.stringify(challenge, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({
+              requiresHumanApproval: true,
+              approvalId,
+              status: verification.record?.status || 'PENDING',
+              error: verification.reason,
+            }, null, 2) }],
+            isError: true,
           };
         }
 
@@ -3024,7 +3078,7 @@ export async function handleToolsCall(
           const rollbacks = new RollbackManager({ client });
           const result = await rollbacks.restoreSnapshot(snapshotId);
           return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, rollback: result }, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({ success: true, rollback: result, approvalId }, null, 2) }],
           };
         }
 
@@ -3815,15 +3869,24 @@ export async function handleToolsCall(
         const pluginFile = String(args.pluginFile || '');
         const action = String(args.action || 'activate');
 
-        if (action === 'deactivate') {
-          const token = args.confirmationToken as string;
-          if (!ConfirmationManager.verifyAndConsume('craftor_manage_plugin', pluginFile, token)) {
-            const challenge = ConfirmationManager.issueChallenge('craftor_manage_plugin', pluginFile);
+        if (action === 'deactivate' || action === 'delete') {
+          const approvalId = args.approvalId as string | undefined;
+          const verification = ApprovalEngine.verifyAndConsume('craftor_manage_plugin', pluginFile, args, approvalId);
+          if (!verification.authorized) {
+            if (!approvalId || !ApprovalEngine.getApproval(approvalId)) {
+              const request = ApprovalEngine.createApprovalRequest('craftor_manage_plugin', pluginFile, args);
+              return {
+                content: [{ type: 'text', text: JSON.stringify(request, null, 2) }],
+              };
+            }
             return {
-              content: [{
-                type: 'text',
-                text: JSON.stringify(challenge, null, 2),
-              }],
+              content: [{ type: 'text', text: JSON.stringify({
+                requiresHumanApproval: true,
+                approvalId,
+                status: verification.record?.status || 'PENDING',
+                error: verification.reason,
+              }, null, 2) }],
+              isError: true,
             };
           }
         }
@@ -3836,8 +3899,42 @@ export async function handleToolsCall(
               pluginFile,
               action,
               message: `Plugin "${pluginFile}" ${action}d successfully`,
+              approvalId: args.approvalId,
             }, null, 2),
           }],
+        };
+      }
+
+      case 'craftor_get_approval_status': {
+        const approvalId = String(args.approvalId || '');
+        if (!approvalId) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: '"approvalId" is required' }) }],
+            isError: true,
+          };
+        }
+        const record = ApprovalEngine.getApproval(approvalId);
+        if (!record) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ error: `Approval record "${approvalId}" not found` }) }],
+            isError: true,
+          };
+        }
+        const clean = {
+          approvalId: record.approvalId,
+          action: record.action,
+          targetId: record.targetId,
+          status: record.status,
+          requestedAt: record.requestedAt,
+          expiresAt: record.expiresAt,
+          approvedAt: record.approvedAt,
+          approvedBy: record.approvedBy,
+          deniedAt: record.deniedAt,
+          deniedBy: record.deniedBy,
+          consumedAt: record.consumedAt,
+        };
+        return {
+          content: [{ type: 'text', text: JSON.stringify(clean, null, 2) }],
         };
       }
 

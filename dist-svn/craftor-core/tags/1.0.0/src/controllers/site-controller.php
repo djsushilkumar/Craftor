@@ -2,6 +2,7 @@
 namespace Craftor\Core\Controllers;
 
 use Craftor\Core\Auth\CraftorAuth;
+use Craftor\Core\Auth\CraftorApproval;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -229,6 +230,19 @@ class SiteController {
             $res = activate_plugin( $plugin_file );
             return new \WP_REST_Response( [ 'success' => ! is_wp_error( $res ) ], is_wp_error( $res ) ? 400 : 200 );
         } elseif ( 'deactivate' === $action ) {
+            // Machine token callers must supply an approved human authorization
+            if ( ! is_user_logged_in() ) {
+                $approval_id = $request->get_header( 'X-Craftor-Approval-Id' ) ?: $request->get_param( 'approvalId' );
+                $verification = CraftorApproval::verify_and_consume( (string) $approval_id, 'deactivate_plugin', $plugin_file, $params );
+                if ( ! $verification['authorized'] ) {
+                    if ( empty( $approval_id ) || ! CraftorApproval::get_approval( $approval_id ) ) {
+                        $req = CraftorApproval::create_approval( 'deactivate_plugin', $plugin_file, $params );
+                        return new \WP_REST_Response( $req, 403 );
+                    }
+                    return new \WP_REST_Response( [ 'error' => $verification['error'], 'requiresHumanApproval' => true ], 403 );
+                }
+            }
+
             $protected_slugs = [
                 'craftor-core',
                 'craftor-pro',

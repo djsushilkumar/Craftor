@@ -1,7 +1,6 @@
-<?php
-namespace Craftor\Core\Controllers;
-
 use Craftor\Core\Auth\CraftorAuth;
+use Craftor\Core\Auth\CraftorSsrfValidator;
+use Craftor\Core\Auth\CraftorApproval;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -32,6 +31,14 @@ class ContentController {
             [
                 'methods'             => 'POST',
                 'callback'            => [ $this, 'create_post' ],
+                'permission_callback' => [ $this, 'check_auth' ],
+            ],
+        ] );
+
+        register_rest_route( $namespace, '/content/posts/(?P<id>\d+)', [
+            [
+                'methods'             => 'DELETE',
+                'callback'            => [ $this, 'delete_post' ],
                 'permission_callback' => [ $this, 'check_auth' ],
             ],
         ] );
@@ -75,30 +82,13 @@ class ContentController {
             ], 400 );
         }
 
-        // Strict SSRF Guard: Disallow non-HTTP(S), local loopback, cloud metadata, and RFC1918 private IP ranges
-        $parsed_url = wp_parse_url( $image_url );
-        if ( ! $parsed_url || ! in_array( strtolower( $parsed_url['scheme'] ?? '' ), [ 'http', 'https' ], true ) ) {
+        // Comprehensive Defense-in-Depth SSRF Validation (IP normalization, DNS rebinding, and metadata protection)
+        $ssrf_result = CraftorSsrfValidator::validate_url( $image_url );
+        if ( ! $ssrf_result['safe'] ) {
             return new \WP_REST_Response( [
                 'success' => false,
-                'error'   => 'Only HTTP and HTTPS URLs are allowed for media upload',
-            ], 400 );
-        }
-
-        $host = strtolower( $parsed_url['host'] ?? '' );
-        if ( empty( $host ) || $host === 'localhost' || $host === '127.0.0.1' || $host === '::1' || $host === '169.254.169.254' || $host === 'metadata.google.internal' ) {
-            return new \WP_REST_Response( [
-                'success' => false,
-                'error'   => 'Access to local, loopback, or cloud metadata network addresses is strictly prohibited (SSRF Guard)',
+                'error'   => $ssrf_result['error'],
             ], 403 );
-        }
-
-        if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
-            if ( ! filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
-                return new \WP_REST_Response( [
-                    'success' => false,
-                    'error'   => 'Access to private or reserved IP ranges is strictly prohibited',
-                ], 403 );
-            }
         }
 
         require_once ABSPATH . 'wp-admin/includes/media.php';
@@ -198,5 +188,25 @@ class ContentController {
         }
 
         return new \WP_REST_Response( [ 'success' => true, 'termId' => $res['term_id'] ], 201 );
+    }
+
+    public function delete_post( \WP_REST_Request $request ): \WP_REST_Response {
+        $id = (int) $request->get_param( 'id' );
+
+        // Machine token callers must supply an approved human authorization
+        if ( ! is_user_logged_in() ) {
+            $approval_id = $request->get_header( 'X-Craftor-Approval-Id' ) ?: $request->get_param( 'approvalId' );
+            $verification = CraftorApproval::verify_and_consume( (string) $approval_id, 'delete_post', $id, $request->get_json_params() ?? [] );
+            if ( ! $verification['authorized'] ) {
+                if ( empty( $approval_id ) || ! CraftorApproval::get_approval( $approval_id ) ) {
+                    $req = CraftorApproval::create_approval( 'delete_post', $id, $request->get_json_params() ?? [] );
+                    return new \WP_REST_Response( $req, 403 );
+                }
+                return new \WP_REST_Response( [ 'error' => $verification['error'], 'requiresHumanApproval' => true ], 403 );
+            }
+        }
+
+        $res = wp_delete_post( $id, true );
+        return new \WP_REST_Response( [ 'id' => $id, 'deleted' => ! empty( $res ) ], 200 );
     }
 }

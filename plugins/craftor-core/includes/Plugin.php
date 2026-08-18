@@ -41,10 +41,18 @@ class Plugin {
     }
 
     public function register_rest_routes(): void {
-        // 0. Load Central Auth Authority
+        // 0. Load Central Auth, Approval & SSRF Authorities
         $auth_file = CRAFTOR_CORE_PATH . 'src/auth/craftor-auth.php';
         if ( file_exists( $auth_file ) ) {
             require_once $auth_file;
+        }
+        $approval_file = CRAFTOR_CORE_PATH . 'src/auth/craftor-approval.php';
+        if ( file_exists( $approval_file ) ) {
+            require_once $approval_file;
+        }
+        $ssrf_file = CRAFTOR_CORE_PATH . 'src/auth/craftor-ssrf-validator.php';
+        if ( file_exists( $ssrf_file ) ) {
+            require_once $ssrf_file;
         }
 
         // Core Handshake
@@ -104,7 +112,17 @@ class Plugin {
             $seo_controller->register_routes();
         }
 
-        // 6. Native Built-in MCP SSE Endpoint (Direct AI Client Connection)
+        // 6. Load & Register Human Approval Controller
+        $approval_ctrl_file = CRAFTOR_CORE_PATH . 'src/controllers/approval-controller.php';
+        if ( file_exists( $approval_ctrl_file ) ) {
+            require_once $approval_ctrl_file;
+        }
+        if ( class_exists( 'Craftor\\Core\\Controllers\\ApprovalController' ) ) {
+            $approval_controller = new \Craftor\Core\Controllers\ApprovalController();
+            $approval_controller->register_routes();
+        }
+
+        // 7. Native Built-in MCP SSE Endpoint (Direct AI Client Connection)
         register_rest_route( 'craftor/v1', '/sse', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'handle_sse_stream' ],

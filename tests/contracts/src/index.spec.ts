@@ -2166,8 +2166,17 @@ async function runContractTests(): Promise<void> {
     return JSON.parse(text) as Record<string, unknown>;
   };
 
-  // 26.1 Destructive Confirmation Protocol for craftor_wp_delete_post
-  const unconfirmedDeletePost = await secRouter.dispatch({
+  // =========================================================================
+  // 26. SERVER-SIDE HUMAN APPROVAL STATE MACHINE & SSRF HARDENING
+  // =========================================================================
+  console.log('[Contract Test 26] Validating Server-Side Human Approval Engine & SSRF Protections...');
+  const { ApprovalEngine } = await import('../../../packages/mcp-server/dist/safety/approval.js');
+  const { SsrfValidator } = await import('../../../packages/shared-utils/dist/ssrf-validator.js');
+
+  ApprovalEngine.reset();
+
+  // 26.1 Destructive Request WITHOUT human approval creates PENDING record
+  const unapprovedDeletePost = await secRouter.dispatch({
     jsonrpc: '2.0',
     id: 2601,
     method: 'tools/call',
@@ -2176,128 +2185,152 @@ async function runContractTests(): Promise<void> {
       arguments: { postId: 99 },
     },
   });
-  const unconfirmedDeleteResult = extractToolResponse(unconfirmedDeletePost);
+  const unapprovedDeleteResult = extractToolResponse(unapprovedDeletePost);
   if (
-    !unconfirmedDeleteResult.requiresConfirmation ||
-    !String(unconfirmedDeleteResult.confirmationToken).startsWith('crf_cfm_')
+    !unapprovedDeleteResult.requiresHumanApproval ||
+    unapprovedDeleteResult.status !== 'PENDING' ||
+    !String(unapprovedDeleteResult.approvalId).startsWith('crf_appr_')
   ) {
-    throw new Error('craftor_wp_delete_post did not issue required ephemeral confirmation challenge');
+    throw new Error('craftor_wp_delete_post did not create required PENDING approval record');
   }
 
-  const deleteToken = unconfirmedDeleteResult.confirmationToken as string;
+  // 26.2 PROOF: Response to AI contains NO execution authorization or confirmation token
+  if (
+    unapprovedDeleteResult.confirmationToken !== undefined ||
+    unapprovedDeleteResult.executionToken !== undefined ||
+    unapprovedDeleteResult.approvalSecret !== undefined
+  ) {
+    throw new Error('SECURITY VIOLATION: Initial response to AI leaked execution authorization token before human approval!');
+  }
 
-  // 26.2 AI Attempt to bypass via `confirmed: true` MUST BE BLOCKED
-  const aiBypassAttempt = await secRouter.dispatch({
+  const approvalId = unapprovedDeleteResult.approvalId as string;
+
+  // 26.3 AI Attempt to self-approve / bypass via `confirmed: true` MUST BE BLOCKED
+  const aiSelfBypass = await secRouter.dispatch({
     jsonrpc: '2.0',
     id: 2602,
     method: 'tools/call',
     params: {
       name: 'craftor_wp_delete_post',
-      arguments: { postId: 99, confirmed: true },
+      arguments: { postId: 99, confirmed: true, approvalId },
     },
   });
-  const aiBypassResult = extractToolResponse(aiBypassAttempt);
-  if (!aiBypassResult.requiresConfirmation) {
+  const aiSelfBypassResult = extractToolResponse(aiSelfBypass);
+  if (aiSelfBypassResult.success === true) {
     throw new Error('craftor_wp_delete_post allowed AI self-bypass with confirmed: true');
   }
 
-  // 26.3 Confirmed craftor_wp_delete_post with valid single-use token
-  const confirmedDeletePost = await secRouter.dispatch({
+  // 26.4 Read-Only Status Tool Check: craftor_get_approval_status
+  const statusCheckBefore = await secRouter.dispatch({
     jsonrpc: '2.0',
     id: 2603,
     method: 'tools/call',
     params: {
-      name: 'craftor_wp_delete_post',
-      arguments: { postId: 99, confirmationToken: deleteToken },
+      name: 'craftor_get_approval_status',
+      arguments: { approvalId },
     },
   });
-  const confirmedDeleteResult = extractToolResponse(confirmedDeletePost);
-  if (!confirmedDeleteResult.success || !confirmedDeleteResult.deleted) {
-    throw new Error('craftor_wp_delete_post failed with valid confirmation token');
+  const statusResultBefore = extractToolResponse(statusCheckBefore);
+  if (statusResultBefore.status !== 'PENDING') {
+    throw new Error(`Expected PENDING status, got ${statusResultBefore.status}`);
   }
 
-  // 26.4 Replay Attack: Using already consumed token MUST BE BLOCKED
-  const replayAttempt = await secRouter.dispatch({
+  // 26.5 Parameter Tampering Prevention: Attempt to use pending approval on different target (postId: 55)
+  const tamperingAttempt = await secRouter.dispatch({
     jsonrpc: '2.0',
     id: 2604,
     method: 'tools/call',
     params: {
       name: 'craftor_wp_delete_post',
-      arguments: { postId: 99, confirmationToken: deleteToken },
+      arguments: { postId: 55, approvalId },
     },
   });
-  const replayResult = extractToolResponse(replayAttempt);
-  if (!replayResult.requiresConfirmation) {
-    throw new Error('craftor_wp_delete_post allowed replay of burned confirmation token');
+  const tamperingResult = extractToolResponse(tamperingAttempt);
+  if (tamperingResult.success === true) {
+    throw new Error('Parameter tampering succeeded on different targetId');
   }
 
-  // 26.5 Destructive Confirmation Protocol for craftor_restore_snapshot
-  const unconfirmedRollback = await secRouter.dispatch({
+  // 26.6 Independent Human Approval Event (Originating from Human Session / Admin)
+  const approvalRes = ApprovalEngine.approve(approvalId, 'human_administrator_1');
+  if (!approvalRes.success || approvalRes.record?.status !== 'APPROVED') {
+    throw new Error('Human approval failed to transition state to APPROVED');
+  }
+
+  // 26.7 Read-Only Status Tool confirms APPROVED status
+  const statusCheckAfter = await secRouter.dispatch({
     jsonrpc: '2.0',
     id: 2605,
     method: 'tools/call',
     params: {
-      name: 'craftor_restore_snapshot',
-      arguments: { snapshotId: 'crf_snp_test123' },
+      name: 'craftor_get_approval_status',
+      arguments: { approvalId },
     },
   });
-  const unconfirmedRollbackResult = extractToolResponse(unconfirmedRollback);
-  if (
-    !unconfirmedRollbackResult.requiresConfirmation ||
-    !String(unconfirmedRollbackResult.confirmationToken).startsWith('crf_cfm_')
-  ) {
-    throw new Error('craftor_restore_snapshot did not issue required ephemeral confirmation challenge');
+  const statusResultAfter = extractToolResponse(statusCheckAfter);
+  if (statusResultAfter.status !== 'APPROVED') {
+    throw new Error(`Expected APPROVED status, got ${statusResultAfter.status}`);
   }
 
-  const rollbackToken = unconfirmedRollbackResult.confirmationToken as string;
-
-  // 26.6 Confirmed craftor_restore_snapshot
-  const confirmedRollback = await secRouter.dispatch({
+  // 26.8 Execution of Approved Operation Succeeds
+  const executionCall = await secRouter.dispatch({
     jsonrpc: '2.0',
     id: 2606,
     method: 'tools/call',
     params: {
-      name: 'craftor_restore_snapshot',
-      arguments: {
-        snapshotId: 'crf_snp_test123',
-        confirmationToken: rollbackToken,
-      },
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99, approvalId },
     },
   });
-  const confirmedRollbackResult = extractToolResponse(confirmedRollback);
-  if (!confirmedRollbackResult.success) {
-    throw new Error('craftor_restore_snapshot failed with valid confirmation token');
+  const executionResult = extractToolResponse(executionCall);
+  if (!executionResult.success || !executionResult.deleted) {
+    throw new Error('Execution of human-approved operation failed');
   }
 
-  // 26.7 Destructive Confirmation for plugin deactivation
-  const unconfirmedPluginDeact = await secRouter.dispatch({
+  // 26.9 Replay Attack Blocked: Attempting to reuse consumed approval record MUST FAIL
+  const replayCall = await secRouter.dispatch({
     jsonrpc: '2.0',
     id: 2607,
     method: 'tools/call',
     params: {
-      name: 'craftor_manage_plugin',
-      arguments: { pluginFile: 'woocommerce/woocommerce.php', action: 'deactivate' },
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99, approvalId },
     },
   });
-  const unconfirmedPluginDeactResult = extractToolResponse(unconfirmedPluginDeact);
-  if (!unconfirmedPluginDeactResult.requiresConfirmation || !String(unconfirmedPluginDeactResult.confirmationToken).startsWith('crf_cfm_')) {
-    throw new Error('craftor_manage_plugin did not issue confirmation challenge on deactivation');
+  const replayResult = extractToolResponse(replayCall);
+  if (replayResult.success === true) {
+    throw new Error('Replay attack succeeded: consumed approval was reused!');
   }
 
-  const pluginDeactToken = unconfirmedPluginDeactResult.confirmationToken as string;
+  // 26.10 SSRF Validation Defense-in-Depth Matrix
+  const ssrfBlockedUrls = [
+    'http://127.0.0.1/test.png',
+    'http://localhost/test.png',
+    'http://2130706433/test.png',           // Decimal IP
+    'http://0x7f000001/test.png',           // Hexadecimal IP
+    'http://0177.0.0.1/test.png',           // Octal IP
+    'http://127.000.000.001/test.png',      // Leading zeroes
+    'http://169.254.169.254/latest/meta',   // Cloud Metadata
+    'http://metadata.google.internal/meta', // GCP Metadata
+    'http://10.0.0.1/image.jpg',            // RFC1918 Private
+    'http://192.168.1.1/image.jpg',         // RFC1918 Private
+    'http://172.16.0.1/image.jpg',          // RFC1918 Private
+    'http://[::1]/image.jpg',               // IPv6 loopback
+    'http://[0:0:0:0:0:0:0:1]/image.jpg',   // IPv6 uncompressed loopback
+    'http://[::ffff:127.0.0.1]/image.jpg',  // IPv4-mapped IPv6
+    'file:///etc/passwd',                   // Forbidden protocol
+    'ftp://example.com/image.jpg',          // Forbidden protocol
+  ];
 
-  const confirmedPluginDeact = await secRouter.dispatch({
-    jsonrpc: '2.0',
-    id: 2608,
-    method: 'tools/call',
-    params: {
-      name: 'craftor_manage_plugin',
-      arguments: { pluginFile: 'woocommerce/woocommerce.php', action: 'deactivate', confirmationToken: pluginDeactToken },
-    },
-  });
-  const confirmedPluginDeactResult = extractToolResponse(confirmedPluginDeact);
-  if (!confirmedPluginDeactResult.success) {
-    throw new Error('craftor_manage_plugin failed with valid confirmation token');
+  for (const badUrl of ssrfBlockedUrls) {
+    const res = SsrfValidator.validateUrl(badUrl);
+    if (res.safe) {
+      throw new Error(`SSRF Guard failed to block prohibited URL: ${badUrl}`);
+    }
+  }
+
+  const safeUrlRes = SsrfValidator.validateUrl('https://images.unsplash.com/photo-123456');
+  if (!safeUrlRes.safe) {
+    throw new Error(`SSRF Guard erroneously blocked valid public HTTPS URL: ${safeUrlRes.error}`);
   }
 
   console.log('[Contract Test] All contract assertions PASSED ✅');

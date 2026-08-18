@@ -154,12 +154,23 @@ function runSecurityAudit() {
 
   assert(routes.length === 33, 'All 33 Craftor Core REST routes protected by capability/token authorization');
 
-  // --- 5. Verify Strict SSRF Protection in content-controller.php ---
-  console.log('\n[Phase 5] Verifying SSRF Protection in content-controller.php...');
+  // --- 5. Verify Advanced SSRF Protection ---
+  console.log('\n[Phase 5] Verifying Advanced SSRF Protection in CraftorSsrfValidator & content-controller.php...');
+  const ssrfValidatorPath = path.join(PLUGIN_DIR, 'src', 'auth', 'craftor-ssrf-validator.php');
+  assert(fs.existsSync(ssrfValidatorPath), 'CraftorSsrfValidator PHP authority exists');
+  const ssrfContent = fs.readFileSync(ssrfValidatorPath, 'utf-8');
+  assert(
+    ssrfContent.includes('169.254.169.254') &&
+    ssrfContent.includes('metadata.google.internal') &&
+    ssrfContent.includes('normalize_ip_literal') &&
+    ssrfContent.includes('resolve_all_ips'),
+    'CraftorSsrfValidator implements IP normalization, DNS resolution, and cloud metadata blocking'
+  );
+
   const contentCtrl = fs.readFileSync(path.join(CONTROLLERS_DIR, 'content-controller.php'), 'utf-8');
   assert(
-    contentCtrl.includes('169.254.169.254') && contentCtrl.includes('FILTER_FLAG_NO_PRIV_RANGE'),
-    'content-controller.php blocks loopback, cloud metadata, and RFC1918 private IPs (SSRF Guard)'
+    contentCtrl.includes('CraftorSsrfValidator::validate_url'),
+    'content-controller.php integrates CraftorSsrfValidator for media upload sideloading'
   );
 
   // --- 6. Verify Protected Plugins Guard in site-controller.php ---
@@ -170,21 +181,35 @@ function runSecurityAudit() {
     'site-controller.php prevents deactivating Craftor and critical security plugins'
   );
 
-  // --- 7. Verify Ephemeral ConfirmationManager in MCP Server ---
-  console.log('\n[Phase 7] Verifying Ephemeral ConfirmationManager in MCP Server...');
-  const confManagerPath = path.join(ROOT_DIR, 'packages', 'mcp-server', 'src', 'safety', 'confirmation.ts');
-  assert(fs.existsSync(confManagerPath), 'ConfirmationManager module exists');
-  const confContent = fs.readFileSync(confManagerPath, 'utf-8');
+  // --- 7. Verify Server-Side Human Approval Engine in MCP Server & WordPress ---
+  console.log('\n[Phase 7] Verifying Server-Side Human Approval Engine in MCP Server & WordPress Core...');
+  const approvalEnginePath = path.join(ROOT_DIR, 'packages', 'mcp-server', 'src', 'safety', 'approval.ts');
+  assert(fs.existsSync(approvalEnginePath), 'ApprovalEngine module exists in mcp-server/safety');
+  const approvalContent = fs.readFileSync(approvalEnginePath, 'utf-8');
   assert(
-    confContent.includes('verifyAndConsume') && confContent.includes('issueChallenge') && confContent.includes('consumed = true'),
-    'ConfirmationManager enforces single-use ephemeral tokens and replay prevention'
+    approvalContent.includes('verifyAndConsume') &&
+    approvalContent.includes('computeArgumentsHash') &&
+    approvalContent.includes('createApprovalRequest') &&
+    approvalContent.includes('approve(') &&
+    approvalContent.includes('deny('),
+    'ApprovalEngine enforces state transitions (PENDING -> APPROVED -> CONSUMED) and argument hashing'
+  );
+
+  const phpApprovalPath = path.join(PLUGIN_DIR, 'src', 'auth', 'craftor-approval.php');
+  assert(fs.existsSync(phpApprovalPath), 'CraftorApproval PHP authority exists');
+  const phpApprovalContent = fs.readFileSync(phpApprovalPath, 'utf-8');
+  assert(
+    phpApprovalContent.includes('approve_by_human') && phpApprovalContent.includes('verify_and_consume'),
+    'CraftorApproval enforces independent human authorization on WordPress REST bridge'
   );
 
   const toolsTsPath = path.join(ROOT_DIR, 'packages', 'mcp-server', 'src', 'handlers', 'tools.ts');
   const toolsTsContent = fs.readFileSync(toolsTsPath, 'utf-8');
   assert(
-    !toolsTsContent.includes('args.confirmed !== true') && toolsTsContent.includes('ConfirmationManager.verifyAndConsume'),
-    'tools.ts eliminates AI self-bypass and integrates ConfirmationManager'
+    !toolsTsContent.includes('args.confirmed !== true') &&
+    toolsTsContent.includes('ApprovalEngine.verifyAndConsume') &&
+    toolsTsContent.includes('craftor_get_approval_status'),
+    'tools.ts integrates ApprovalEngine and exposes read-only craftor_get_approval_status'
   );
 
   // --- 8. Summary ---

@@ -65,32 +65,42 @@ export async function runRollbackFlowE2e(): Promise<{ name: string; passed: bool
     throw new Error('craftor_elementor_save_document failed during mutation step');
   }
 
-  // 3. Perform 1-Click Atomic Rollback to Original Snapshot (Challenge & Response Protocol)
-  const challengeRes = await handleToolsCall({
+  // 3. Perform 1-Click Atomic Rollback to Original Snapshot (Human Approval Protocol)
+  const pendingRes = await handleToolsCall({
     name: 'craftor_restore_snapshot',
     arguments: { snapshotId },
   });
   assertions++;
-  if (challengeRes.isError || !challengeRes.content?.[0]?.text) {
-    throw new Error('craftor_restore_snapshot challenge request failed');
+  if (pendingRes.isError || !pendingRes.content?.[0]?.text) {
+    throw new Error('craftor_restore_snapshot initial approval request failed');
   }
 
-  const challengeData = JSON.parse(challengeRes.content[0].text);
-  if (!challengeData.requiresConfirmation || !challengeData.confirmationToken) {
-    throw new Error(`Expected confirmation challenge but received: ${JSON.stringify(challengeData)}`);
+  const pendingData = JSON.parse(pendingRes.content[0].text);
+  if (!pendingData.requiresHumanApproval || !pendingData.approvalId || pendingData.status !== 'PENDING') {
+    throw new Error(`Expected PENDING human approval but received: ${JSON.stringify(pendingData)}`);
   }
 
-  // Supply single-use ephemeral token
+  const approvalId = pendingData.approvalId as string;
+
+  // Independent Human Approval Event (e.g. from WordPress Admin session)
+  const { ApprovalEngine } = await import('../../../packages/mcp-server/dist/safety/approval.js');
+  const approvalRes = ApprovalEngine.approve(approvalId, 'admin_e2e_user');
+  assertions++;
+  if (!approvalRes.success || approvalRes.record?.status !== 'APPROVED') {
+    throw new Error('ApprovalEngine.approve failed to transition to APPROVED state');
+  }
+
+  // Execute human-approved atomic rollback
   const rollbackRes = await handleToolsCall({
     name: 'craftor_restore_snapshot',
     arguments: {
       snapshotId,
-      confirmationToken: challengeData.confirmationToken,
+      approvalId,
     },
   });
   assertions++;
   if (rollbackRes.isError || !rollbackRes.content?.[0]?.text) {
-    throw new Error('craftor_restore_snapshot confirmation execution failed');
+    throw new Error('craftor_restore_snapshot human-approved execution failed');
   }
 
   const rollData = JSON.parse(rollbackRes.content[0].text);
