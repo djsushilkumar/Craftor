@@ -2,6 +2,8 @@
 namespace Craftor\Core;
 
 use Craftor\Core\Controllers\WooCommerceController;
+use Craftor\Core\Controllers\ElementorController;
+use Craftor\Core\Admin\AdminSettings;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -9,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Plugin {
     private static $instance = null;
+    private $admin_settings = null;
 
     public static function instance(): self {
         if ( null === self::$instance ) {
@@ -18,6 +21,10 @@ class Plugin {
     }
 
     public function init(): void {
+        if ( is_admin() && class_exists( 'Craftor\\Core\\Admin\\AdminSettings' ) ) {
+            $this->admin_settings = new AdminSettings();
+        }
+
         add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
     }
 
@@ -28,9 +35,16 @@ class Plugin {
             'permission_callback' => '__return_true',
         ] );
 
+        // 1. Elementor Controller
+        if ( class_exists( 'Craftor\\Core\\Controllers\\ElementorController' ) ) {
+            $elementor_ctrl = new ElementorController();
+            $elementor_ctrl->register_routes();
+        }
+
+        // 2. WooCommerce Controller
         if ( class_exists( 'Craftor\\Core\\Controllers\\WooCommerceController' ) ) {
-            $controller = new WooCommerceController();
-            $controller->register_routes();
+            $woo_ctrl = new WooCommerceController();
+            $woo_ctrl->register_routes();
         }
     }
 
@@ -40,8 +54,10 @@ class Plugin {
             'plugin'        => 'craftor-core',
             'version'       => CRAFTOR_CORE_VERSION,
             'tier'          => 'core',
-            'tools_count'   => 47,
+            'tools_count'   => 86,
             'server_status' => 'listening',
+            'elementor'     => class_exists( '\\Elementor\\Plugin' ) ? 'active' : 'standby',
+            'woocommerce'   => class_exists( '\\WooCommerce' ) ? 'active' : 'standby',
         ], 200 );
     }
 }
