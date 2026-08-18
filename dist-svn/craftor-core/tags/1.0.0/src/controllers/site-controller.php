@@ -229,6 +229,25 @@ class SiteController {
             $res = activate_plugin( $plugin_file );
             return new \WP_REST_Response( [ 'success' => ! is_wp_error( $res ) ], is_wp_error( $res ) ? 400 : 200 );
         } elseif ( 'deactivate' === $action ) {
+            $protected_slugs = [
+                'craftor-core',
+                'craftor-pro',
+                'craftor-enterprise',
+                'wordfence',
+                'sucuri-scanner',
+                'better-wp-security',
+                'all-in-one-wp-security-and-firewall',
+            ];
+
+            foreach ( $protected_slugs as $slug ) {
+                if ( stripos( $plugin_file, $slug ) !== false ) {
+                    return new \WP_REST_Response( [
+                        'success' => false,
+                        'error'   => sprintf( 'Deactivating protected core/security plugin "%s" via REST API is blocked for site safety', $plugin_file ),
+                    ], 403 );
+                }
+            }
+
             deactivate_plugins( $plugin_file );
             return new \WP_REST_Response( [ 'success' => true ], 200 );
         }

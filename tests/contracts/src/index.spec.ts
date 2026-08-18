@@ -2179,30 +2179,62 @@ async function runContractTests(): Promise<void> {
   const unconfirmedDeleteResult = extractToolResponse(unconfirmedDeletePost);
   if (
     !unconfirmedDeleteResult.requiresConfirmation ||
-    unconfirmedDeleteResult.confirmationChallenge !== 'CONFIRM_DELETE_POST_99'
+    !String(unconfirmedDeleteResult.confirmationToken).startsWith('crf_cfm_')
   ) {
-    throw new Error('craftor_wp_delete_post did not issue required confirmation challenge');
+    throw new Error('craftor_wp_delete_post did not issue required ephemeral confirmation challenge');
   }
 
-  // 26.2 Confirmed craftor_wp_delete_post
-  const confirmedDeletePost = await secRouter.dispatch({
+  const deleteToken = unconfirmedDeleteResult.confirmationToken as string;
+
+  // 26.2 AI Attempt to bypass via `confirmed: true` MUST BE BLOCKED
+  const aiBypassAttempt = await secRouter.dispatch({
     jsonrpc: '2.0',
     id: 2602,
     method: 'tools/call',
     params: {
       name: 'craftor_wp_delete_post',
-      arguments: { postId: 99, confirmationChallenge: 'CONFIRM_DELETE_POST_99' },
+      arguments: { postId: 99, confirmed: true },
+    },
+  });
+  const aiBypassResult = extractToolResponse(aiBypassAttempt);
+  if (!aiBypassResult.requiresConfirmation) {
+    throw new Error('craftor_wp_delete_post allowed AI self-bypass with confirmed: true');
+  }
+
+  // 26.3 Confirmed craftor_wp_delete_post with valid single-use token
+  const confirmedDeletePost = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2603,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99, confirmationToken: deleteToken },
     },
   });
   const confirmedDeleteResult = extractToolResponse(confirmedDeletePost);
   if (!confirmedDeleteResult.success || !confirmedDeleteResult.deleted) {
-    throw new Error('craftor_wp_delete_post failed with valid confirmation challenge');
+    throw new Error('craftor_wp_delete_post failed with valid confirmation token');
   }
 
-  // 26.3 Destructive Confirmation Protocol for craftor_restore_snapshot
+  // 26.4 Replay Attack: Using already consumed token MUST BE BLOCKED
+  const replayAttempt = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2604,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99, confirmationToken: deleteToken },
+    },
+  });
+  const replayResult = extractToolResponse(replayAttempt);
+  if (!replayResult.requiresConfirmation) {
+    throw new Error('craftor_wp_delete_post allowed replay of burned confirmation token');
+  }
+
+  // 26.5 Destructive Confirmation Protocol for craftor_restore_snapshot
   const unconfirmedRollback = await secRouter.dispatch({
     jsonrpc: '2.0',
-    id: 2603,
+    id: 2605,
     method: 'tools/call',
     params: {
       name: 'craftor_restore_snapshot',
@@ -2212,33 +2244,35 @@ async function runContractTests(): Promise<void> {
   const unconfirmedRollbackResult = extractToolResponse(unconfirmedRollback);
   if (
     !unconfirmedRollbackResult.requiresConfirmation ||
-    unconfirmedRollbackResult.confirmationChallenge !== 'CONFIRM_RESTORE_SNAPSHOT_crf_snp_test123'
+    !String(unconfirmedRollbackResult.confirmationToken).startsWith('crf_cfm_')
   ) {
-    throw new Error('craftor_restore_snapshot did not issue required confirmation challenge');
+    throw new Error('craftor_restore_snapshot did not issue required ephemeral confirmation challenge');
   }
 
-  // 26.4 Confirmed craftor_restore_snapshot
+  const rollbackToken = unconfirmedRollbackResult.confirmationToken as string;
+
+  // 26.6 Confirmed craftor_restore_snapshot
   const confirmedRollback = await secRouter.dispatch({
     jsonrpc: '2.0',
-    id: 2604,
+    id: 2606,
     method: 'tools/call',
     params: {
       name: 'craftor_restore_snapshot',
       arguments: {
         snapshotId: 'crf_snp_test123',
-        confirmationChallenge: 'CONFIRM_RESTORE_SNAPSHOT_crf_snp_test123',
+        confirmationToken: rollbackToken,
       },
     },
   });
   const confirmedRollbackResult = extractToolResponse(confirmedRollback);
   if (!confirmedRollbackResult.success) {
-    throw new Error('craftor_restore_snapshot failed with valid confirmation challenge');
+    throw new Error('craftor_restore_snapshot failed with valid confirmation token');
   }
 
-  // 26.5 Destructive Confirmation for plugin deactivation
+  // 26.7 Destructive Confirmation for plugin deactivation
   const unconfirmedPluginDeact = await secRouter.dispatch({
     jsonrpc: '2.0',
-    id: 2605,
+    id: 2607,
     method: 'tools/call',
     params: {
       name: 'craftor_manage_plugin',
@@ -2246,8 +2280,24 @@ async function runContractTests(): Promise<void> {
     },
   });
   const unconfirmedPluginDeactResult = extractToolResponse(unconfirmedPluginDeact);
-  if (!unconfirmedPluginDeactResult.requiresConfirmation) {
+  if (!unconfirmedPluginDeactResult.requiresConfirmation || !String(unconfirmedPluginDeactResult.confirmationToken).startsWith('crf_cfm_')) {
     throw new Error('craftor_manage_plugin did not issue confirmation challenge on deactivation');
+  }
+
+  const pluginDeactToken = unconfirmedPluginDeactResult.confirmationToken as string;
+
+  const confirmedPluginDeact = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2608,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_manage_plugin',
+      arguments: { pluginFile: 'woocommerce/woocommerce.php', action: 'deactivate', confirmationToken: pluginDeactToken },
+    },
+  });
+  const confirmedPluginDeactResult = extractToolResponse(confirmedPluginDeact);
+  if (!confirmedPluginDeactResult.success) {
+    throw new Error('craftor_manage_plugin failed with valid confirmation token');
   }
 
   console.log('[Contract Test] All contract assertions PASSED ✅');

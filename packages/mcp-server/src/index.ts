@@ -6,6 +6,7 @@ export * from './transports/sse.js';
 export * from './handlers/tools.js';
 export * from './handlers/resources.js';
 export * from './handlers/prompts.js';
+export * from './safety/confirmation.js';
 
 import { McpServerDaemon } from './daemon.js';
 

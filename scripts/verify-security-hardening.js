@@ -154,7 +154,40 @@ function runSecurityAudit() {
 
   assert(routes.length === 33, 'All 33 Craftor Core REST routes protected by capability/token authorization');
 
-  // --- 5. Summary ---
+  // --- 5. Verify Strict SSRF Protection in content-controller.php ---
+  console.log('\n[Phase 5] Verifying SSRF Protection in content-controller.php...');
+  const contentCtrl = fs.readFileSync(path.join(CONTROLLERS_DIR, 'content-controller.php'), 'utf-8');
+  assert(
+    contentCtrl.includes('169.254.169.254') && contentCtrl.includes('FILTER_FLAG_NO_PRIV_RANGE'),
+    'content-controller.php blocks loopback, cloud metadata, and RFC1918 private IPs (SSRF Guard)'
+  );
+
+  // --- 6. Verify Protected Plugins Guard in site-controller.php ---
+  console.log('\n[Phase 6] Verifying Protected Plugins Guard in site-controller.php...');
+  const siteCtrl = fs.readFileSync(path.join(CONTROLLERS_DIR, 'site-controller.php'), 'utf-8');
+  assert(
+    siteCtrl.includes('craftor-core') && siteCtrl.includes('wordfence') && siteCtrl.includes('sucuri-scanner'),
+    'site-controller.php prevents deactivating Craftor and critical security plugins'
+  );
+
+  // --- 7. Verify Ephemeral ConfirmationManager in MCP Server ---
+  console.log('\n[Phase 7] Verifying Ephemeral ConfirmationManager in MCP Server...');
+  const confManagerPath = path.join(ROOT_DIR, 'packages', 'mcp-server', 'src', 'safety', 'confirmation.ts');
+  assert(fs.existsSync(confManagerPath), 'ConfirmationManager module exists');
+  const confContent = fs.readFileSync(confManagerPath, 'utf-8');
+  assert(
+    confContent.includes('verifyAndConsume') && confContent.includes('issueChallenge') && confContent.includes('consumed = true'),
+    'ConfirmationManager enforces single-use ephemeral tokens and replay prevention'
+  );
+
+  const toolsTsPath = path.join(ROOT_DIR, 'packages', 'mcp-server', 'src', 'handlers', 'tools.ts');
+  const toolsTsContent = fs.readFileSync(toolsTsPath, 'utf-8');
+  assert(
+    !toolsTsContent.includes('args.confirmed !== true') && toolsTsContent.includes('ConfirmationManager.verifyAndConsume'),
+    'tools.ts eliminates AI self-bypass and integrates ConfirmationManager'
+  );
+
+  // --- 8. Summary ---
   console.log('\n================================================================');
   console.log(`SECURITY AUDIT SUMMARY: ${passCount} Passed | ${failCount} Failed`);
   console.log('================================================================\n');

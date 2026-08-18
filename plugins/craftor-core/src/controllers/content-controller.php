@@ -75,6 +75,32 @@ class ContentController {
             ], 400 );
         }
 
+        // Strict SSRF Guard: Disallow non-HTTP(S), local loopback, cloud metadata, and RFC1918 private IP ranges
+        $parsed_url = wp_parse_url( $image_url );
+        if ( ! $parsed_url || ! in_array( strtolower( $parsed_url['scheme'] ?? '' ), [ 'http', 'https' ], true ) ) {
+            return new \WP_REST_Response( [
+                'success' => false,
+                'error'   => 'Only HTTP and HTTPS URLs are allowed for media upload',
+            ], 400 );
+        }
+
+        $host = strtolower( $parsed_url['host'] ?? '' );
+        if ( empty( $host ) || $host === 'localhost' || $host === '127.0.0.1' || $host === '::1' || $host === '169.254.169.254' || $host === 'metadata.google.internal' ) {
+            return new \WP_REST_Response( [
+                'success' => false,
+                'error'   => 'Access to local, loopback, or cloud metadata network addresses is strictly prohibited (SSRF Guard)',
+            ], 403 );
+        }
+
+        if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
+            if ( ! filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+                return new \WP_REST_Response( [
+                    'success' => false,
+                    'error'   => 'Access to private or reserved IP ranges is strictly prohibited',
+                ], 403 );
+            }
+        }
+
         require_once ABSPATH . 'wp-admin/includes/media.php';
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/image.php';

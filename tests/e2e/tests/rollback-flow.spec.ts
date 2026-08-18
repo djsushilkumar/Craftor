@@ -65,17 +65,32 @@ export async function runRollbackFlowE2e(): Promise<{ name: string; passed: bool
     throw new Error('craftor_elementor_save_document failed during mutation step');
   }
 
-  // 3. Perform 1-Click Atomic Rollback to Original Snapshot
+  // 3. Perform 1-Click Atomic Rollback to Original Snapshot (Challenge & Response Protocol)
+  const challengeRes = await handleToolsCall({
+    name: 'craftor_restore_snapshot',
+    arguments: { snapshotId },
+  });
+  assertions++;
+  if (challengeRes.isError || !challengeRes.content?.[0]?.text) {
+    throw new Error('craftor_restore_snapshot challenge request failed');
+  }
+
+  const challengeData = JSON.parse(challengeRes.content[0].text);
+  if (!challengeData.requiresConfirmation || !challengeData.confirmationToken) {
+    throw new Error(`Expected confirmation challenge but received: ${JSON.stringify(challengeData)}`);
+  }
+
+  // Supply single-use ephemeral token
   const rollbackRes = await handleToolsCall({
     name: 'craftor_restore_snapshot',
     arguments: {
       snapshotId,
-      confirmationChallenge: `CONFIRM_RESTORE_SNAPSHOT_${snapshotId}`,
+      confirmationToken: challengeData.confirmationToken,
     },
   });
   assertions++;
   if (rollbackRes.isError || !rollbackRes.content?.[0]?.text) {
-    throw new Error('craftor_restore_snapshot failed');
+    throw new Error('craftor_restore_snapshot confirmation execution failed');
   }
 
   const rollData = JSON.parse(rollbackRes.content[0].text);
