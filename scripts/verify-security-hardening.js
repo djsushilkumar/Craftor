@@ -166,11 +166,18 @@ function runSecurityAudit() {
     ssrfContent.includes('resolve_all_ips'),
     'CraftorSsrfValidator implements IP normalization, DNS resolution, and cloud metadata blocking'
   );
+  assert(
+    ssrfContent.includes('CURLOPT_RESOLVE') &&
+    ssrfContent.includes('CURLOPT_SSL_VERIFYPEER') &&
+    ssrfContent.includes('CURLOPT_SSL_VERIFYHOST') &&
+    ssrfContent.includes('safe_download_image'),
+    'CraftorSsrfValidator enforces socket-level DNS pinning (CURLOPT_RESOLVE), strict TLS, and redirect re-validation'
+  );
 
   const contentCtrl = fs.readFileSync(path.join(CONTROLLERS_DIR, 'content-controller.php'), 'utf-8');
   assert(
-    contentCtrl.includes('CraftorSsrfValidator::validate_url'),
-    'content-controller.php integrates CraftorSsrfValidator for media upload sideloading'
+    contentCtrl.includes('CraftorSsrfValidator::safe_download_image'),
+    'content-controller.php integrates CraftorSsrfValidator::safe_download_image with DNS pinning'
   );
 
   // --- 6. Verify Protected Plugins Guard in site-controller.php ---

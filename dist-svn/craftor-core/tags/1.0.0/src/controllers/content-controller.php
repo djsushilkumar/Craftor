@@ -82,27 +82,16 @@ class ContentController {
             ], 400 );
         }
 
-        // Comprehensive Defense-in-Depth SSRF Validation (IP normalization, DNS rebinding, and metadata protection)
-        $ssrf_result = CraftorSsrfValidator::validate_url( $image_url );
-        if ( ! $ssrf_result['safe'] ) {
-            return new \WP_REST_Response( [
-                'success' => false,
-                'error'   => $ssrf_result['error'],
-            ], 403 );
-        }
-
-        require_once ABSPATH . 'wp-admin/includes/media.php';
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-        require_once ABSPATH . 'wp-admin/includes/image.php';
-
-        // Download and attach to media library
-        $attachment_id = media_sideload_image( $image_url, $post_id, $alt_text, 'id' );
+        // Sideload with Transport-Level DNS Pinning (CURLOPT_RESOLVE), Strict TLS, and Redirect Re-validation
+        $attachment_id = CraftorSsrfValidator::safe_download_image( $image_url, $post_id, $alt_text );
 
         if ( is_wp_error( $attachment_id ) ) {
+            $err_code = $attachment_id->get_error_code();
+            $status = ( 'craftor_ssrf_blocked' === $err_code || 'craftor_redirect_error' === $err_code ) ? 403 : 400;
             return new \WP_REST_Response( [
                 'success' => false,
                 'error'   => $attachment_id->get_error_message(),
-            ], 500 );
+            ], $status );
         }
 
         $media_url = wp_get_attachment_url( $attachment_id );

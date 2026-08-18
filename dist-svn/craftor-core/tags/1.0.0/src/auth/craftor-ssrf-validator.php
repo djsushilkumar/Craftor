@@ -277,4 +277,119 @@ class CraftorSsrfValidator {
         $mask_long = -1 << ( 32 - (int) $mask );
         return ( $ip_long & $mask_long ) === ( $subnet_long & $mask_long );
     }
+
+    /**
+     * Sideloads an image with transport-level DNS Pinning (CURLOPT_RESOLVE),
+     * strict TLS validation (CURLOPT_SSL_VERIFYPEER = true, CURLOPT_SSL_VERIFYHOST = 2),
+     * and recursive redirect revalidation.
+     *
+     * @param string $url The image URL.
+     * @param int $post_id Post ID to attach to.
+     * @param string $desc Description/Alt text.
+     * @return int|\WP_Error Attachment ID on success, or WP_Error on failure.
+     */
+    public static function safe_download_image( string $url, int $post_id = 0, string $desc = '' ) {
+        $current_url = $url;
+        $redirect_count = 0;
+        $max_redirects = 5;
+
+        if ( ! function_exists( 'media_handle_sideload' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/media.php';
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            require_once ABSPATH . 'wp-admin/includes/image.php';
+        }
+
+        while ( $redirect_count <= $max_redirects ) {
+            // 1. SSRF Pre-flight & Full DNS A/AAAA Resolution
+            $validation = self::validate_url( $current_url );
+            if ( ! $validation['safe'] ) {
+                return new \WP_Error( 'craftor_ssrf_blocked', 'SSRF protection blocked the requested destination.' );
+            }
+
+            $parsed = wp_parse_url( $current_url );
+            $host   = $parsed['host'];
+            $scheme = strtolower( $parsed['scheme'] ?? 'http' );
+            $port   = isset( $parsed['port'] ) ? (int) $parsed['port'] : ( 'https' === $scheme ? 443 : 80 );
+            $pinned_ip = $validation['resolved_ips'][0] ?? null;
+
+            if ( empty( $pinned_ip ) ) {
+                return new \WP_Error( 'craftor_ssrf_dns_fail', 'Unable to resolve destination IP address.' );
+            }
+
+            // 2. Perform HTTP GET with CURLOPT_RESOLVE Pinning
+            $tmp_file = wp_tempnam( 'crf_media_' );
+            $fp = fopen( $tmp_file, 'w+' );
+            if ( ! $fp ) {
+                return new \WP_Error( 'craftor_fs_error', 'Failed to create temporary file for media sideloading.' );
+            }
+
+            $ch = curl_init();
+            curl_setopt( $ch, CURLOPT_URL, $current_url );
+            curl_setopt( $ch, CURLOPT_FILE, $fp );
+            curl_setopt( $ch, CURLOPT_HEADER, false );
+            curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, false ); // Disable unpinned automatic redirects
+            curl_setopt( $ch, CURLOPT_TIMEOUT, 30 );
+            curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+            curl_setopt( $ch, CURLOPT_USERAGENT, 'Craftor/1.0 (+https://craftor.dev)' );
+
+            // Strict TLS / HTTPS Verification
+            curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, true );
+            curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, 2 );
+
+            // Socket-Level DNS Connection Pinning (CURLOPT_RESOLVE)
+            // Binds libcurl connection directly to the pre-validated IP address, eliminating TOCTOU DNS rebinding
+            $resolve_rule = sprintf( '%s:%d:%s', $host, $port, $pinned_ip );
+            curl_setopt( $ch, CURLOPT_RESOLVE, [ $resolve_rule ] );
+
+            $exec_res = curl_exec( $ch );
+            $http_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+            $curl_error = curl_error( $ch );
+            $redirect_url = curl_getinfo( $ch, CURLINFO_REDIRECT_URL );
+            curl_close( $ch );
+            fclose( $fp );
+
+            if ( ! $exec_res ) {
+                @unlink( $tmp_file );
+                return new \WP_Error( 'craftor_http_error', sprintf( 'Failed to fetch media: %s', $curl_error ?: 'cURL execution failed' ) );
+            }
+
+            // 3. Handle Redirects with Re-Validation (301, 302, 303, 307, 308)
+            if ( in_array( $http_code, [ 301, 302, 303, 307, 308 ], true ) ) {
+                @unlink( $tmp_file );
+                if ( empty( $redirect_url ) ) {
+                    return new \WP_Error( 'craftor_redirect_error', 'Invalid redirect response without Location header.' );
+                }
+                $current_url = $redirect_url;
+                $redirect_count++;
+                continue;
+            }
+
+            if ( 200 !== $http_code ) {
+                @unlink( $tmp_file );
+                return new \WP_Error( 'craftor_http_status', sprintf( 'Remote server returned non-200 HTTP status code: %d', $http_code ) );
+            }
+
+            // 4. Ingest into WordPress Media Library
+            $filename = basename( $parsed['path'] ?? 'asset.jpg' );
+            if ( empty( pathinfo( $filename, PATHINFO_EXTENSION ) ) ) {
+                $filename .= '.jpg';
+            }
+
+            $file_array = [
+                'name'     => sanitize_file_name( $filename ),
+                'tmp_name' => $tmp_file,
+            ];
+
+            $attachment_id = media_handle_sideload( $file_array, $post_id, $desc );
+            @unlink( $tmp_file );
+
+            if ( is_wp_error( $attachment_id ) ) {
+                return $attachment_id;
+            }
+
+            return (int) $attachment_id;
+        }
+
+        return new \WP_Error( 'craftor_max_redirects', 'Maximum redirect limit exceeded.' );
+    }
 }

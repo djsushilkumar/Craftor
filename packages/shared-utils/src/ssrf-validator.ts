@@ -127,6 +127,11 @@ export class SsrfValidator {
       }
     }
 
+    // Generic IPv6 notation (e.g. fc00::1, fe80::1, 2001:db8::1)
+    if (host.includes(':')) {
+      return host;
+    }
+
     return null;
   }
 
@@ -134,7 +139,20 @@ export class SsrfValidator {
    * Checks if an IP is in a private, loopback, link-local, or metadata range.
    */
   public static isProhibitedIp(ip: string): boolean {
-    if (ip === '::1' || ip === '::' || ip.startsWith('fe80:') || ip.startsWith('fc00:') || ip.startsWith('fd00:')) {
+    const lower = ip.toLowerCase();
+    // IPv6 Loopback, Link-Local (fe80::/10), Unique Local (fc00::/7), Multicast (ff00::/8)
+    if (
+      lower === '::1' ||
+      lower === '::' ||
+      lower === '0:0:0:0:0:0:0:1' ||
+      lower.startsWith('fe8') ||
+      lower.startsWith('fe9') ||
+      lower.startsWith('fea') ||
+      lower.startsWith('feb') ||
+      lower.startsWith('fc') ||
+      lower.startsWith('fd') ||
+      lower.startsWith('ff')
+    ) {
       return true;
     }
 

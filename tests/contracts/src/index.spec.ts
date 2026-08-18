@@ -2317,6 +2317,9 @@ async function runContractTests(): Promise<void> {
     'http://[::1]/image.jpg',               // IPv6 loopback
     'http://[0:0:0:0:0:0:0:1]/image.jpg',   // IPv6 uncompressed loopback
     'http://[::ffff:127.0.0.1]/image.jpg',  // IPv4-mapped IPv6
+    'http://[::ffff:7f00:1]/image.jpg',     // IPv4-mapped IPv6 hex
+    'http://[fc00::1]/image.jpg',           // Unique Local IPv6 (RFC4193)
+    'http://[fe80::1]/image.jpg',           // Link-Local IPv6 (RFC4291)
     'file:///etc/passwd',                   // Forbidden protocol
     'ftp://example.com/image.jpg',          // Forbidden protocol
   ];
