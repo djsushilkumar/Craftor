@@ -102,20 +102,37 @@ class ElementorController {
         );
 
         // 2. Format and slash JSON elements for WordPress DB
+        $raw_elements = is_string( $elements ) ? json_decode( $elements, true ) : $elements;
         $encoded_elements = is_string( $elements ) ? $elements : wp_json_encode( $elements );
+
         update_post_meta( $post_id, '_elementor_data', wp_slash( $encoded_elements ) );
         update_post_meta( $post_id, '_elementor_edit_mode', 'builder' );
+        update_post_meta( $post_id, '_wp_page_template', 'elementor_header_footer' );
+        update_post_meta( $post_id, '_elementor_version', defined( 'ELEMENTOR_VERSION' ) ? ELEMENTOR_VERSION : '3.24.0' );
 
         if ( ! empty( $settings ) ) {
             update_post_meta( $post_id, '_elementor_page_settings', $settings );
         }
 
-        // 3. Clear Elementor CSS Cache if Elementor plugin active
+        // Ensure post is published
+        wp_update_post( [
+            'ID'          => $post_id,
+            'post_status' => 'publish',
+        ] );
+
+        // 3. Save via native Elementor Document API & Compile CSS Cache
         if ( class_exists( '\\Elementor\\Plugin' ) ) {
             try {
+                $document = \Elementor\Plugin::$instance->documents->get( $post_id );
+                if ( $document ) {
+                    $document->save( [
+                        'elements' => $raw_elements,
+                        'settings' => $settings,
+                    ] );
+                }
                 \Elementor\Plugin::$instance->files_manager->clear_cache();
             } catch ( \Throwable $e ) {
-                // Non-fatal
+                // Non-fatal fallback
             }
         }
 
