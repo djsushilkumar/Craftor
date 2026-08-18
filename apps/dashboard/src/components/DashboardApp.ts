@@ -7,6 +7,7 @@ import { SiteMonitor } from './SiteMonitor.js';
 import { AstCanvasRenderer } from './AstCanvasRenderer.js';
 import { PromptPlayground } from './PromptPlayground.js';
 import { PaletteManager } from './PaletteManager.js';
+import { VoiceStudio } from './VoiceStudio.js';
 import { ElementorNode } from '@craftor/shared-types';
 
 export class DashboardApp {
@@ -14,6 +15,7 @@ export class DashboardApp {
   private canvasRenderer = new AstCanvasRenderer();
   private playground = new PromptPlayground();
   private paletteManager = new PaletteManager();
+  private voiceStudio = new VoiceStudio();
 
   public getSiteMonitor(): SiteMonitor {
     return this.siteMonitor;
@@ -29,6 +31,10 @@ export class DashboardApp {
 
   public getPaletteManager(): PaletteManager {
     return this.paletteManager;
+  }
+
+  public getVoiceStudio(): VoiceStudio {
+    return this.voiceStudio;
   }
 
   /**
@@ -136,9 +142,11 @@ export class DashboardApp {
       <h1 style="margin: 0; font-size: 1.25rem; font-family: 'Outfit', sans-serif; font-weight: 700;">Craftor AI Studio</h1>
     </div>
     <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.85rem;">
-      <span style="color: #10B981;">● 68 MCP Tools Active</span>
+      <span style="color: #10B981;">● 86 MCP Tools Active</span>
       <span style="color: #9CA3AF;">|</span>
       <span style="color: #818CF8;">8 AI Clients Ready</span>
+      <span style="color: #9CA3AF;">|</span>
+      <span style="color: #F59E0B;">Production 1.0 GA Certified</span>
     </div>
   </header>
 
@@ -146,6 +154,11 @@ export class DashboardApp {
     <section style="margin-bottom: 2.5rem;">
       <div class="section-title">🌐 Connected WordPress Instances</div>
       ${this.siteMonitor.renderHtml()}
+    </section>
+
+    <section style="margin-bottom: 2.5rem;">
+      <div class="section-title">🎙️ Conversational AI Voice Studio</div>
+      ${this.voiceStudio.renderVoiceStudio()}
     </section>
 
     <section style="margin-bottom: 2.5rem;">

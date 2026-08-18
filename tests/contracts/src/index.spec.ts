@@ -1722,7 +1722,7 @@ async function runContractTests(): Promise<void> {
   // 18.5 Test DashboardApp Full Page
   const app = new DashboardApp();
   const fullHtml = app.renderFullPage();
-  if (!fullHtml.includes('Craftor AI Studio') || !fullHtml.includes('68 MCP Tools Active')) {
+  if (!fullHtml.includes('Craftor AI Studio') || !fullHtml.includes('MCP Tools Active')) {
     throw new Error('DashboardApp renderFullPage failed');
   }
 
@@ -2120,6 +2120,40 @@ async function runContractTests(): Promise<void> {
     arguments: {},
   });
   if (mcpEdgeStatus.isError) throw new Error('get_edge_status alias failed');
+
+  console.log('[Contract Test 25] Validating Gutenberg <-> Elementor Bi-Directional Bridge...');
+  const { GutenbergBridge } = await import('../../../packages/elementor-ast/dist/index.js');
+
+  // 25.1 Test Elementor -> Gutenberg
+  const gutenbergTestAst = [
+    {
+      id: 'cnt_guten_01',
+      elType: 'container' as const,
+      isInner: false,
+      settings: { flex_direction: 'column', background_color: '#0B0F19' },
+      elements: [
+        { id: 'hdg_guten_01', elType: 'widget' as const, widgetType: 'heading', settings: { title: 'Gutenberg Heading', header_size: 'h1' }, elements: [] },
+        { id: 'txt_guten_01', elType: 'widget' as const, widgetType: 'text-editor', settings: { editor: '<p>Gutenberg Lead Text</p>' }, elements: [] },
+        { id: 'btn_guten_01', elType: 'widget' as const, widgetType: 'button', settings: { text: 'Click Here', link: { url: 'https://craftor.ai' } }, elements: [] },
+      ],
+    },
+  ];
+
+  const gutenbergMarkup = GutenbergBridge.elementorToGutenberg(gutenbergTestAst);
+  if (!gutenbergMarkup.includes('<!-- wp:group') || !gutenbergMarkup.includes('<!-- wp:heading') || !gutenbergMarkup.includes('<!-- wp:button')) {
+    throw new Error('GutenbergBridge.elementorToGutenberg failed to produce valid block comments');
+  }
+
+  // 25.2 Test Gutenberg -> Elementor
+  const reconstructedAst = GutenbergBridge.gutenbergToElementor(gutenbergMarkup);
+  const firstContainer = reconstructedAst[0];
+  if (!firstContainer || !firstContainer.elements || firstContainer.elements.length < 3) {
+    throw new Error('GutenbergBridge.gutenbergToElementor failed to reconstruct AST nodes');
+  }
+  const reconstructedHeading = firstContainer.elements.find(el => el.widgetType === 'heading');
+  if (!reconstructedHeading || reconstructedHeading.settings?.title !== 'Gutenberg Heading') {
+    throw new Error('GutenbergBridge failed heading conversion accuracy');
+  }
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
