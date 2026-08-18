@@ -1,3 +1,6 @@
+<?php
+namespace Craftor\Core\Controllers;
+
 use Craftor\Core\Auth\CraftorAuth;
 use Craftor\Core\Auth\CraftorSsrfValidator;
 use Craftor\Core\Auth\CraftorApproval;

@@ -119,6 +119,28 @@ importers:
         specifier: ^5.5.2
         version: 5.9.3
 
+  packages/agent-runtime:
+    dependencies:
+      '@craftor/elementor-ast':
+        specifier: workspace:*
+        version: link:../elementor-ast
+      '@craftor/schemas':
+        specifier: workspace:*
+        version: link:../schemas
+      '@craftor/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@craftor/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
+      '@craftor/wordpress-bridge':
+        specifier: workspace:*
+        version: link:../wordpress-bridge
+    devDependencies:
+      typescript:
+        specifier: ^5.5.2
+        version: 5.9.3
+
   packages/client-adapters:
     dependencies:
       '@craftor/client-adapter-antigravity':
