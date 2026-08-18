@@ -1,5 +1,5 @@
 {
-  "name": "@craftor/agent-runtime",
+  "name": "@craftor/visual-intelligence",
   "version": "1.0.0",
   "private": true,
   "main": "./dist/index.js",
@@ -7,10 +7,7 @@
   "dependencies": {
     "@craftor/shared-types": "workspace:*",
     "@craftor/shared-utils": "workspace:*",
-    "@craftor/schemas": "workspace:*",
-    "@craftor/elementor-ast": "workspace:*",
-    "@craftor/wordpress-bridge": "workspace:*",
-    "@craftor/visual-intelligence": "workspace:*"
+    "@craftor/elementor-ast": "workspace:*"
   },
   "scripts": {
     "build": "tsc",
@@ -18,6 +15,7 @@
     "clean": "rm -rf dist"
   },
   "devDependencies": {
+    "@types/node": "^20.14.9",
     "typescript": "^5.5.2"
   }
 }

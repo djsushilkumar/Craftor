@@ -8,8 +8,10 @@ export type TaskStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'BLOCKED
 
 export type PlanStatus = 'DRAFT' | 'APPROVED' | 'EXECUTING' | 'VERIFYING' | 'COMPLETED' | 'FAILED' | 'ROLLED_BACK';
 
+export type VerificationType = 'VISUAL' | 'REST_READBACK' | 'INTEGRITY_SNAPSHOT';
+
 export interface PlanPostcondition {
-  type: 'REST_FIELD' | 'DOM_SELECTOR' | 'AST_ELEMENT_COUNT' | 'HTTP_STATUS';
+  type: 'REST_FIELD' | 'DOM_SELECTOR' | 'AST_ELEMENT_COUNT' | 'HTTP_STATUS' | 'VISUAL_AUDIT';
   field?: string;
   expectedValue?: unknown;
   minCount?: number;
@@ -22,6 +24,7 @@ export interface PlanTask {
   arguments: Record<string, unknown>;
   dependencies: string[]; // Step IDs that must succeed before this task can execute
   riskLevel: RiskLevel;
+  verificationType?: VerificationType;
   rollbackSnapshotTarget?: {
     type: 'elementor_data' | 'woocommerce_product' | 'wp_post' | 'wp_option';
     targetIdParam: string; // e.g. '$steps.create_page.output.page.id' or 'targetPageId'
@@ -46,6 +49,7 @@ export interface ExecutionPlan {
   totalTasks: number;
   completedTasks: number;
   currentTaskIndex: number;
+  maxVerificationAttempts?: number;
   context: Record<string, unknown>;
 }
 

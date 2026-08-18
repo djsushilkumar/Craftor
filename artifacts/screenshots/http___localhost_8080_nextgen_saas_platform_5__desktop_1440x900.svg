@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+      <rect width="100%" height="100%" fill="#0B0F19"/>
+      <rect x="0" y="0" width="100%" height="40" fill="#1E293B"/>
+      <text x="20" y="25" fill="#94A3B8" font-family="sans-serif" font-size="14">NextGen SaaS Platform &#8211; Craftor Live Test Environment (desktop: 1440x900)</text>
+      <text x="20" y="70" fill="#F8FAFC" font-family="sans-serif" font-size="18" font-weight="bold">Elementor Layout (14 Root Containers, 42 Widgets)</text>
+      <text x="20" y="100" fill="#38BDF8" font-family="sans-serif" font-size="14">Headings: 5 | Buttons: 5 | Images: 0</text>
+      <rect x="20" y="120" width="1400" height="180" fill="#1E293B" rx="8"/>
+      <text x="40" y="160" fill="#6366F1" font-family="sans-serif" font-size="16" font-weight="bold">Hero Container</text>
+      <text x="40" y="190" fill="#E2E8F0" font-family="sans-serif" font-size="14">Empower Your Business with AI</text>
+      <rect x="20" y="320" width="1400" height="140" fill="#1E293B" rx="8"/>
+      <text x="40" y="360" fill="#10B981" font-family="sans-serif" font-size="16" font-weight="bold">Feature Matrix (14 Sections)</text>
+      <text x="20" y="880" fill="#10B981" font-family="sans-serif" font-size="12">
+        Overflow: PASS (0px)
+      </text>
+    </svg>

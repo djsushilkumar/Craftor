@@ -47,6 +47,7 @@ const BUILD_TARGETS = [
   'services/self-healing',
   'services/collaboration',
   'packages/mcp-server',
+  'packages/visual-intelligence',
   'packages/agent-runtime',
 
 

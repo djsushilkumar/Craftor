@@ -4,6 +4,7 @@
  */
 
 import { logger } from '@craftor/shared-utils';
+import { VisualVerifier } from '@craftor/visual-intelligence';
 import {
   ExecutionPlan,
   PlanTask,
@@ -42,6 +43,7 @@ export class ExecutionSupervisor {
 
     const completedTaskMap = new Map<string, PlanTask>();
     const generatedSections: unknown[] = [];
+    const maxAttempts = plan.maxVerificationAttempts || 3;
 
     for (let i = 0; i < plan.tasks.length; i++) {
       const task = plan.tasks[i];
@@ -72,7 +74,62 @@ export class ExecutionSupervisor {
 
       const t0 = Date.now();
       try {
-        const rawResult = await this.dispatcher(task.tool, resolvedArgs);
+        let rawResult: unknown;
+        if (task.tool === 'craftor_verify_visual' || task.verificationType === 'VISUAL') {
+          let targetUrl = String(resolvedArgs.url || '');
+          if (!targetUrl || targetUrl === 'undefined' || targetUrl === plan.siteUrl) {
+            if (resolvedArgs.pageId) {
+              targetUrl = `${plan.siteUrl}/?p=${resolvedArgs.pageId}`;
+            } else {
+              targetUrl = plan.siteUrl;
+            }
+          }
+          const minRootContainers = typeof resolvedArgs.minRootContainers === 'number' ? resolvedArgs.minRootContainers : 1;
+          
+          let lastError: Error | null = null;
+          let verificationPassed = false;
+          let verificationOutput: Record<string, unknown> = {};
+
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            logger.info(`[ExecutionSupervisor] Executing visual verification (Attempt ${attempt}/${maxAttempts}) for ${targetUrl}`);
+            const verification = await VisualVerifier.verify({
+              url: targetUrl,
+              minRootContainers,
+            });
+
+            verificationOutput = {
+              success: verification.overallStatus !== 'FAIL',
+              overallStatus: verification.overallStatus,
+              summary: verification.summary,
+              viewports: verification.viewports.map((v) => ({
+                viewport: v.viewport.name,
+                width: v.width,
+                height: v.height,
+                status: v.status,
+                rootContainers: v.domMetrics.rootContainers,
+                hasOverflow: v.overflow.hasHorizontalOverflow,
+                screenshotPath: v.screenshotPath,
+              })),
+              failures: verification.failures,
+              warnings: verification.warnings,
+            };
+
+            if (verification.overallStatus !== 'FAIL') {
+              verificationPassed = true;
+              break;
+            } else {
+              lastError = new Error(`Visual verification failed on attempt ${attempt}: ${verification.failures.join('; ')}`);
+            }
+          }
+
+          if (!verificationPassed && lastError) {
+            throw lastError;
+          }
+          rawResult = verificationOutput;
+        } else {
+          rawResult = await this.dispatcher(task.tool, resolvedArgs);
+        }
+
         const durationMs = Date.now() - t0;
 
         let parsedOutput: Record<string, unknown> = {};
@@ -223,10 +280,24 @@ export class ExecutionSupervisor {
     if (!task || !task.output) return undefined;
 
     let current: unknown = task.output;
-    for (let i = 1; i < parts.length; i++) {
+    const startIndex = parts[1] === 'output' ? 2 : 1;
+    for (let i = startIndex; i < parts.length; i++) {
       const partKey = parts[i];
-      if (partKey && current && typeof current === 'object' && partKey in current) {
-        current = (current as Record<string, unknown>)[partKey];
+      if (partKey && current && typeof current === 'object') {
+        const obj = current as Record<string, unknown>;
+        if (partKey in obj) {
+          current = obj[partKey];
+        } else if (partKey === 'page' && 'post' in obj) {
+          current = obj['post'];
+        } else if (partKey === 'post' && 'page' in obj) {
+          current = obj['page'];
+        } else if (partKey === 'id' && 'postId' in obj) {
+          current = obj['postId'];
+        } else if (partKey === 'link' && 'url' in obj) {
+          current = obj['url'];
+        } else {
+          return undefined;
+        }
       } else {
         return undefined;
       }

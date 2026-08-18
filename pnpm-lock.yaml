@@ -133,6 +133,9 @@ importers:
       '@craftor/shared-utils':
         specifier: workspace:*
         version: link:../shared-utils
+      '@craftor/visual-intelligence':
+        specifier: workspace:*
+        version: link:../visual-intelligence
       '@craftor/wordpress-bridge':
         specifier: workspace:*
         version: link:../wordpress-bridge
@@ -359,6 +362,25 @@ importers:
         specifier: workspace:*
         version: link:../shared-types
     devDependencies:
+      typescript:
+        specifier: ^5.5.2
+        version: 5.9.3
+
+  packages/visual-intelligence:
+    dependencies:
+      '@craftor/elementor-ast':
+        specifier: workspace:*
+        version: link:../elementor-ast
+      '@craftor/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+      '@craftor/shared-utils':
+        specifier: workspace:*
+        version: link:../shared-utils
+    devDependencies:
+      '@types/node':
+        specifier: ^20.14.9
+        version: 20.19.43
       typescript:
         specifier: ^5.5.2
         version: 5.9.3

@@ -1,7 +1,7 @@
 {
   "name": "craftor-mcp-server",
   "version": "1.0.0",
-  "buildDate": "2026-08-18T19:15:41.563Z",
+  "buildDate": "2026-08-18T19:28:36.095Z",
   "platforms": {
     "win32": {
       "launcher": "craftor-daemon.bat",

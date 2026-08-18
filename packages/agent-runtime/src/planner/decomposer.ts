@@ -200,6 +200,23 @@ export class GoalDecomposer {
       status: 'PENDING',
     });
 
+    // Step 9: Multi-Viewport Visual Intelligence & Responsive Closed-Loop Verification
+    tasks.push({
+      id: 'verify_visual',
+      title: 'Execute Multi-Viewport Visual Layout & Responsive Verification (1440px/768px/375px)',
+      tool: 'craftor_verify_visual',
+      arguments: {
+        url: '$steps.create_page.output.page.link',
+        pageId: '$steps.create_page.output.page.id',
+        minRootContainers: sections.length,
+      },
+      dependencies: ['verify_deployment'],
+      riskLevel: 'READ_ONLY',
+      verificationType: 'VISUAL',
+      expectedPostcondition: { type: 'VISUAL_AUDIT', minCount: sections.length },
+      status: 'PENDING',
+    });
+
     return {
       planId,
       goal,
@@ -211,6 +228,7 @@ export class GoalDecomposer {
       totalTasks: tasks.length,
       completedTasks: 0,
       currentTaskIndex: 0,
+      maxVerificationAttempts: 3,
       context: {},
     };
   }
