@@ -1,0 +1,23 @@
+{
+  "name": "@craftor/agent-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@craftor/shared-types": "workspace:*",
+    "@craftor/shared-utils": "workspace:*",
+    "@craftor/schemas": "workspace:*",
+    "@craftor/elementor-ast": "workspace:*",
+    "@craftor/wordpress-bridge": "workspace:*",
+    "@craftor/visual-intelligence": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.2"
+  }
+}

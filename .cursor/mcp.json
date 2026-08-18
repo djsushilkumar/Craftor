@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "craftor": {
+      "command": "node",
+      "args": [
+        "c:/Users/420/Crafter/packages/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "WORDPRESS_BASE_URL": "https://bradhive.in",
+        "WORDPRESS_API_TOKEN": "crf_icFPLOsNpVEha59E8ZUTKJR0"
+      }
+    }
+  }
+}

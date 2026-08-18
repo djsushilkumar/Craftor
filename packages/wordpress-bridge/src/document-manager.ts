@@ -33,33 +33,50 @@ export class ElementorDocumentManager {
     }
 
     logger.debug(`ElementorDocumentManager: Loading document for page ${pageId}`);
-    const page = await this.client.getPage(pageId);
+    try {
+      const rest = this.client.getRestClient();
+      const res = await rest.get<{ success?: boolean; pageId?: number; elements?: unknown[]; settings?: Record<string, unknown>; title?: string; status?: string }>(
+        `/wp-json/craftor/v1/elementor/document/${pageId}`
+      );
 
-    const meta = page.meta ?? {};
-    const rawData = meta._elementor_data;
-    let elements: ElementorNode[] = [];
+      if (res && (res.success || Array.isArray(res.elements))) {
+        const elements = Array.isArray(res.elements) ? this.parseDocument(res.elements as unknown[]) : [];
+        const settings = res.settings ?? {};
 
-    if (rawData) {
-      elements = this.parseDocument(rawData as string | ElementorNode[]);
+        return {
+          pageId,
+          title: res.title ?? `Page ${pageId}`,
+          status: res.status ?? 'publish',
+          version: '3.24.0',
+          elements,
+          settings,
+          css: '',
+        };
+      }
+      throw new Error('Endpoint does not return Elementor document schema');
+    } catch {
+      // Fallback to standard getPage with meta._elementor_data
+      const page = await this.client.getPage(pageId);
+      const meta = page.meta ?? {};
+      const rawData = meta._elementor_data;
+      const elements = rawData ? this.parseDocument(rawData as string | ElementorNode[]) : [];
+      let settings: Record<string, unknown> = {};
+      if (meta._elementor_page_settings) {
+        settings =
+          typeof meta._elementor_page_settings === 'string'
+            ? JSON.parse(meta._elementor_page_settings)
+            : (meta._elementor_page_settings as Record<string, unknown>);
+      }
+      return {
+        pageId: page.id,
+        title: page.title?.rendered ?? `Page ${pageId}`,
+        status: page.status,
+        version: (meta._elementor_version as string) ?? '3.24.0',
+        elements,
+        settings,
+        css: (meta._elementor_css as string) ?? '',
+      };
     }
-
-    let settings: Record<string, unknown> = {};
-    if (meta._elementor_page_settings) {
-      settings =
-        typeof meta._elementor_page_settings === 'string'
-          ? JSON.parse(meta._elementor_page_settings)
-          : (meta._elementor_page_settings as Record<string, unknown>);
-    }
-
-    return {
-      pageId: page.id,
-      title: page.title?.rendered ?? `Page ${pageId}`,
-      status: page.status,
-      version: (meta._elementor_version as string) ?? '3.24.0',
-      elements,
-      settings,
-      css: (meta._elementor_css as string) ?? '',
-    };
   }
 
   /**
@@ -81,28 +98,32 @@ export class ElementorDocumentManager {
       throw new Error(`Cannot save invalid Elementor AST document: ${issues}`);
     }
 
-    const serializedData = ElementorAstEngine.serialize(elements);
     logger.info(`ElementorDocumentManager: Saving document for page ${pageId} (${elements.length} root elements)`);
-
-    const metaUpdate: Record<string, unknown> = {
-      _elementor_data: serializedData,
-      _elementor_edit_mode: 'builder',
-      _elementor_version: '3.24.0',
-      _elementor_css: '', // Invalidate CSS cache
-    };
-
-    if (pageSettings !== undefined) {
-      metaUpdate._elementor_page_settings = JSON.stringify(pageSettings);
+    try {
+      const rest = this.client.getRestClient();
+      await rest.post('/wp-json/craftor/v1/elementor/save', {
+        pageId,
+        elements,
+        settings: pageSettings ?? {},
+      });
+    } catch {
+      const serializedData = ElementorAstEngine.serialize(elements);
+      const metaUpdate: Record<string, unknown> = {
+        _elementor_data: serializedData,
+        _elementor_edit_mode: 'builder',
+        _elementor_version: '3.24.0',
+        _elementor_css: '',
+      };
+      if (pageSettings !== undefined) {
+        metaUpdate._elementor_page_settings = JSON.stringify(pageSettings);
+      }
+      await this.client.updatePage(pageId, { meta: metaUpdate });
     }
 
-    const updatedPage = await this.client.updatePage(pageId, {
-      meta: metaUpdate,
-    });
-
     return {
-      pageId: updatedPage.id,
-      title: updatedPage.title?.rendered ?? `Page ${pageId}`,
-      status: updatedPage.status,
+      pageId,
+      title: `Page ${pageId}`,
+      status: 'publish',
       version: '3.24.0',
       elements: ElementorAstEngine.clone(elements),
       settings: pageSettings ?? {},

@@ -50,7 +50,7 @@ export class WooCommerceBridge {
   public async getProducts(params: WooCommerceProductQuery = {}): Promise<WooCommerceProduct[]> {
     logger.debug('[WooCommerceBridge] Fetching products', { ...params });
     const rest = this.client.getRestClient();
-    return rest.get<WooCommerceProduct[]>('/wp-json/wc/v3/products', {
+    return rest.get<WooCommerceProduct[]>('/wp-json/craftor/v1/woocommerce/products', {
       params: params as Record<string, string | number | boolean | undefined>,
     });
   }
@@ -61,7 +61,7 @@ export class WooCommerceBridge {
   public async getProduct(id: number): Promise<WooCommerceProduct> {
     logger.debug(`[WooCommerceBridge] Fetching product ${id}`);
     const rest = this.client.getRestClient();
-    return rest.get<WooCommerceProduct>(`/wp-json/wc/v3/products/${id}`);
+    return rest.get<WooCommerceProduct>(`/wp-json/craftor/v1/woocommerce/products/${id}`);
   }
 
   /**
@@ -74,7 +74,7 @@ export class WooCommerceBridge {
     logger.info('[WooCommerceBridge] Creating new product', { name: data.name, sku: data.sku });
     const rest = this.client.getRestClient();
 
-    const createdProduct = await rest.post<WooCommerceProduct>('/wp-json/wc/v3/products', data);
+    const createdProduct = await rest.post<WooCommerceProduct>('/wp-json/craftor/v1/woocommerce/products', data);
 
     // Capture initial state snapshot
     await this.snapshots.createSnapshot(
@@ -119,7 +119,7 @@ export class WooCommerceBridge {
 
     // 3. Perform the mutation
     const rest = this.client.getRestClient();
-    return rest.put<WooCommerceProduct>(`/wp-json/wc/v3/products/${id}`, data);
+    return rest.put<WooCommerceProduct>(`/wp-json/craftor/v1/woocommerce/products/${id}`, data);
   }
 
   /**
@@ -128,7 +128,7 @@ export class WooCommerceBridge {
   public async deleteProduct(
     id: number,
     force: boolean = false,
-    options?: { token?: string; actionContext?: string },
+    options?: { token?: string; actionContext?: string; approvalId?: string },
   ): Promise<{ id: number; deleted: boolean }> {
     logger.info(`[WooCommerceBridge] Deleting product ${id} (force: ${force})`);
 
@@ -149,8 +149,8 @@ export class WooCommerceBridge {
     }
 
     const rest = this.client.getRestClient();
-    return rest.delete<{ id: number; deleted: boolean }>(`/wp-json/wc/v3/products/${id}`, {
-      params: { force },
+    return rest.delete<{ id: number; deleted: boolean }>(`/wp-json/craftor/v1/woocommerce/products/${id}`, {
+      params: { force, approvalId: options?.approvalId },
     });
   }
 
@@ -164,7 +164,7 @@ export class WooCommerceBridge {
   public async getOrders(params: WooCommerceOrderQuery = {}): Promise<WooCommerceOrder[]> {
     logger.debug('[WooCommerceBridge] Fetching orders', { ...params });
     const rest = this.client.getRestClient();
-    return rest.get<WooCommerceOrder[]>('/wp-json/wc/v3/orders', {
+    return rest.get<WooCommerceOrder[]>('/wp-json/craftor/v1/woocommerce/orders', {
       params: params as Record<string, string | number | boolean | undefined>,
     });
   }
@@ -175,7 +175,7 @@ export class WooCommerceBridge {
   public async getOrder(id: number): Promise<WooCommerceOrder> {
     logger.debug(`[WooCommerceBridge] Fetching order ${id}`);
     const rest = this.client.getRestClient();
-    return rest.get<WooCommerceOrder>(`/wp-json/wc/v3/orders/${id}`);
+    return rest.get<WooCommerceOrder>(`/wp-json/craftor/v1/woocommerce/orders/${id}`);
   }
 
   // =========================================================================
@@ -188,7 +188,7 @@ export class WooCommerceBridge {
   public async getCustomers(params: WooCommerceCustomerQuery = {}): Promise<WooCommerceCustomer[]> {
     logger.debug('[WooCommerceBridge] Fetching customers', { ...params });
     const rest = this.client.getRestClient();
-    return rest.get<WooCommerceCustomer[]>('/wp-json/wc/v3/customers', {
+    return rest.get<WooCommerceCustomer[]>('/wp-json/craftor/v1/woocommerce/customers', {
       params: params as Record<string, string | number | boolean | undefined>,
     });
   }
@@ -203,7 +203,7 @@ export class WooCommerceBridge {
   public async getCategories(params: WooCommerceCategoryQuery = {}): Promise<WooCommerceCategory[]> {
     logger.debug('[WooCommerceBridge] Fetching product categories', { ...params });
     const rest = this.client.getRestClient();
-    return rest.get<WooCommerceCategory[]>('/wp-json/wc/v3/products/categories', {
+    return rest.get<WooCommerceCategory[]>('/wp-json/craftor/v1/woocommerce/categories', {
       params: params as Record<string, string | number | boolean | undefined>,
     });
   }
@@ -233,7 +233,7 @@ export class WooCommerceBridge {
       payload.stock_status = stockQuantity > 0 ? 'instock' : 'outofstock';
     }
 
-    const updated = await rest.put<WooCommerceProduct>(`/wp-json/wc/v3/products/${productId}`, payload);
+    const updated = await rest.put<WooCommerceProduct>(`/wp-json/craftor/v1/woocommerce/products/${productId}`, payload);
     return {
       productId: updated.id,
       sku: updated.sku,
@@ -256,7 +256,7 @@ export class WooCommerceBridge {
   }): Promise<WooCommerceCategory> {
     logger.info('[WooCommerceBridge] Creating product category', { name: data.name });
     const rest = this.client.getRestClient();
-    return rest.post<WooCommerceCategory>('/wp-json/wc/v3/products/categories', data);
+    return rest.post<WooCommerceCategory>('/wp-json/craftor/v1/woocommerce/categories', data);
   }
 
   /**
@@ -274,7 +274,7 @@ export class WooCommerceBridge {
   ): Promise<WooCommerceCategory> {
     logger.info(`[WooCommerceBridge] Updating product category ${id}`, { ...data });
     const rest = this.client.getRestClient();
-    return rest.put<WooCommerceCategory>(`/wp-json/wc/v3/products/categories/${id}`, data);
+    return rest.put<WooCommerceCategory>(`/wp-json/craftor/v1/woocommerce/categories/${id}`, data);
   }
 }
 

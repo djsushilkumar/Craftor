@@ -1,24 +1,10 @@
 version: '3.8'
 
 services:
-  wordpress:
-    image: wordpress:6.5-php8.2-apache
-    ports:
-      - '8080:80'
-    environment:
-      WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: password
-      WORDPRESS_DB_NAME: craftor_test
-    volumes:
-      - ../plugins/craftor-core:/var/www/html/wp-content/plugins/craftor-core
-      - ../plugins/craftor-pro:/var/www/html/wp-content/plugins/craftor-pro
-      - ../plugins/craftor-enterprise:/var/www/html/wp-content/plugins/craftor-enterprise
-    depends_on:
-      - db
-
   db:
     image: mariadb:10.11
+    container_name: craftor_db
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: craftor_test
@@ -26,3 +12,75 @@ services:
       MYSQL_PASSWORD: password
     ports:
       - '3306:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  wordpress:
+    image: wordpress:6.5-php8.2-apache
+    container_name: craftor_wordpress
+    restart: unless-stopped
+    ports:
+      - '8080:80'
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: craftor_test
+      WORDPRESS_CONFIG_EXTRA: |
+        define( 'WP_DEBUG', true );
+        define( 'WP_DEBUG_LOG', true );
+        define( 'WP_DEBUG_DISPLAY', false );
+    volumes:
+      - wp_core:/var/www/html
+      - wp_content:/var/www/html/wp-content
+      - ../plugins/craftor-core:/var/www/html/wp-content/plugins/craftor-core
+      - ../plugins/craftor-pro:/var/www/html/wp-content/plugins/craftor-pro
+      - ../plugins/craftor-enterprise:/var/www/html/wp-content/plugins/craftor-enterprise
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  wp-cli:
+    image: wordpress:cli-php8.2
+    container_name: craftor_wp_cli
+    user: "33:33" # www-data user
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: craftor_test
+      WP_SITE_URL: http://localhost:8080
+      WP_ADMIN_USER: admin
+      WP_ADMIN_PASSWORD: adminpassword
+      WP_ADMIN_EMAIL: admin@craftor.test
+      CRAFTOR_API_TOKEN: crf_test_live_token_2026
+    volumes:
+      - wp_core:/var/www/html
+      - wp_content:/var/www/html/wp-content
+      - ../plugins/craftor-core:/var/www/html/wp-content/plugins/craftor-core
+      - ../plugins/craftor-pro:/var/www/html/wp-content/plugins/craftor-pro
+      - ../plugins/craftor-enterprise:/var/www/html/wp-content/plugins/craftor-enterprise
+      - ./init-wordpress.sh:/init-wordpress.sh:ro
+    entrypoint: ["/bin/sh", "-c", "bash /init-wordpress.sh"]
+    depends_on:
+      wordpress:
+        condition: service_started
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  wp_core:
+  wp_content:

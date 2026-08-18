@@ -1,0 +1,71 @@
+{
+  "url": "http://localhost:8080/gym-fitness-homepage/",
+  "timestamp": "2026-08-18T19:59:39.136Z",
+  "viewports": {
+    "desktop": {
+      "baselineScreenshot": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_baseline_desktop_1440x900.png",
+      "currentScreenshot": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_current_desktop_1440x900.png",
+      "diffImage": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_diff_desktop.png",
+      "diff": {
+        "similarity": 75.37,
+        "changedPixels": 319251,
+        "diffPercentage": 24.63,
+        "regions": [
+          {
+            "x": 0,
+            "y": 0,
+            "width": 1440,
+            "height": 900
+          }
+        ],
+        "diffImagePath": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_diff_desktop.png"
+      }
+    },
+    "tablet": {
+      "baselineScreenshot": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_baseline_tablet_768x1024.png",
+      "currentScreenshot": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_current_tablet_768x1024.png",
+      "diffImage": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_diff_tablet.png",
+      "diff": {
+        "similarity": 70.61,
+        "changedPixels": 231146,
+        "diffPercentage": 29.39,
+        "regions": [
+          {
+            "x": 0,
+            "y": 0,
+            "width": 768,
+            "height": 1024
+          }
+        ],
+        "diffImagePath": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_diff_tablet.png"
+      }
+    },
+    "mobile": {
+      "baselineScreenshot": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_baseline_mobile_375x812.png",
+      "currentScreenshot": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_current_mobile_375x812.png",
+      "diffImage": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_diff_mobile.png",
+      "diff": {
+        "similarity": 52.3,
+        "changedPixels": 145258,
+        "diffPercentage": 47.7,
+        "regions": [
+          {
+            "x": 0,
+            "y": 0,
+            "width": 375,
+            "height": 812
+          }
+        ],
+        "diffImagePath": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\gym_diff_mobile.png"
+      }
+    }
+  },
+  "passed": true,
+  "summary": {
+    "desktopSimilarity": 75.37,
+    "tabletSimilarity": 70.61,
+    "mobileSimilarity": 52.3,
+    "totalChangedRegions": 3,
+    "totalExecutionTimeMs": 20591
+  }
+}

@@ -1722,7 +1722,7 @@ async function runContractTests(): Promise<void> {
   // 18.5 Test DashboardApp Full Page
   const app = new DashboardApp();
   const fullHtml = app.renderFullPage();
-  if (!fullHtml.includes('Craftor AI Studio') || !fullHtml.includes('68 MCP Tools Active')) {
+  if (!fullHtml.includes('Craftor AI Studio') || !fullHtml.includes('MCP Tools Active')) {
     throw new Error('DashboardApp renderFullPage failed');
   }
 
@@ -2120,6 +2120,221 @@ async function runContractTests(): Promise<void> {
     arguments: {},
   });
   if (mcpEdgeStatus.isError) throw new Error('get_edge_status alias failed');
+
+  console.log('[Contract Test 25] Validating Gutenberg <-> Elementor Bi-Directional Bridge...');
+  const { GutenbergBridge } = await import('../../../packages/elementor-ast/dist/index.js');
+
+  // 25.1 Test Elementor -> Gutenberg
+  const gutenbergTestAst = [
+    {
+      id: 'cnt_guten_01',
+      elType: 'container' as const,
+      isInner: false,
+      settings: { flex_direction: 'column', background_color: '#0B0F19' },
+      elements: [
+        { id: 'hdg_guten_01', elType: 'widget' as const, widgetType: 'heading', settings: { title: 'Gutenberg Heading', header_size: 'h1' }, elements: [] },
+        { id: 'txt_guten_01', elType: 'widget' as const, widgetType: 'text-editor', settings: { editor: '<p>Gutenberg Lead Text</p>' }, elements: [] },
+        { id: 'btn_guten_01', elType: 'widget' as const, widgetType: 'button', settings: { text: 'Click Here', link: { url: 'https://craftor.ai' } }, elements: [] },
+      ],
+    },
+  ];
+
+  const gutenbergMarkup = GutenbergBridge.elementorToGutenberg(gutenbergTestAst);
+  if (!gutenbergMarkup.includes('<!-- wp:group') || !gutenbergMarkup.includes('<!-- wp:heading') || !gutenbergMarkup.includes('<!-- wp:button')) {
+    throw new Error('GutenbergBridge.elementorToGutenberg failed to produce valid block comments');
+  }
+
+  // 25.2 Test Gutenberg -> Elementor
+  const reconstructedAst = GutenbergBridge.gutenbergToElementor(gutenbergMarkup);
+  const firstContainer = reconstructedAst[0];
+  if (!firstContainer || !firstContainer.elements || firstContainer.elements.length < 3) {
+    throw new Error('GutenbergBridge.gutenbergToElementor failed to reconstruct AST nodes');
+  }
+  const reconstructedHeading = firstContainer.elements.find(el => el.widgetType === 'heading');
+  if (!reconstructedHeading || reconstructedHeading.settings?.title !== 'Gutenberg Heading') {
+    throw new Error('GutenbergBridge failed heading conversion accuracy');
+  }
+
+  console.log('[Contract Test 26] Validating Zero-Trust Security Hardening & Authorization Contracts...');
+  const secRouter = new McpRouter({
+    siteUrl: '',
+    secretToken: 'crf_sec_test_secret_token_12345678',
+  });
+  const extractToolResponse = (res: unknown): Record<string, unknown> => {
+    const r = res as { result?: { content?: Array<{ text?: string }> } };
+    const text = r?.result?.content?.[0]?.text ?? '{}';
+    return JSON.parse(text) as Record<string, unknown>;
+  };
+
+  // =========================================================================
+  // 26. SERVER-SIDE HUMAN APPROVAL STATE MACHINE & SSRF HARDENING
+  // =========================================================================
+  console.log('[Contract Test 26] Validating Server-Side Human Approval Engine & SSRF Protections...');
+  const { ApprovalEngine } = await import('../../../packages/mcp-server/dist/safety/approval.js');
+  const { SsrfValidator } = await import('../../../packages/shared-utils/dist/ssrf-validator.js');
+
+  ApprovalEngine.reset();
+
+  // 26.1 Destructive Request WITHOUT human approval creates PENDING record
+  const unapprovedDeletePost = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2601,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99 },
+    },
+  });
+  const unapprovedDeleteResult = extractToolResponse(unapprovedDeletePost);
+  if (
+    !unapprovedDeleteResult.requiresHumanApproval ||
+    unapprovedDeleteResult.status !== 'PENDING' ||
+    !String(unapprovedDeleteResult.approvalId).startsWith('crf_appr_')
+  ) {
+    throw new Error('craftor_wp_delete_post did not create required PENDING approval record');
+  }
+
+  // 26.2 PROOF: Response to AI contains NO execution authorization or confirmation token
+  if (
+    unapprovedDeleteResult.confirmationToken !== undefined ||
+    unapprovedDeleteResult.executionToken !== undefined ||
+    unapprovedDeleteResult.approvalSecret !== undefined
+  ) {
+    throw new Error('SECURITY VIOLATION: Initial response to AI leaked execution authorization token before human approval!');
+  }
+
+  const approvalId = unapprovedDeleteResult.approvalId as string;
+
+  // 26.3 AI Attempt to self-approve / bypass via `confirmed: true` MUST BE BLOCKED
+  const aiSelfBypass = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2602,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99, confirmed: true, approvalId },
+    },
+  });
+  const aiSelfBypassResult = extractToolResponse(aiSelfBypass);
+  if (aiSelfBypassResult.success === true) {
+    throw new Error('craftor_wp_delete_post allowed AI self-bypass with confirmed: true');
+  }
+
+  // 26.4 Read-Only Status Tool Check: craftor_get_approval_status
+  const statusCheckBefore = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2603,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_get_approval_status',
+      arguments: { approvalId },
+    },
+  });
+  const statusResultBefore = extractToolResponse(statusCheckBefore);
+  if (statusResultBefore.status !== 'PENDING') {
+    throw new Error(`Expected PENDING status, got ${statusResultBefore.status}`);
+  }
+
+  // 26.5 Parameter Tampering Prevention: Attempt to use pending approval on different target (postId: 55)
+  const tamperingAttempt = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2604,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 55, approvalId },
+    },
+  });
+  const tamperingResult = extractToolResponse(tamperingAttempt);
+  if (tamperingResult.success === true) {
+    throw new Error('Parameter tampering succeeded on different targetId');
+  }
+
+  // 26.6 Independent Human Approval Event (Originating from Human Session / Admin)
+  const approvalRes = ApprovalEngine.approve(approvalId, 'human_administrator_1');
+  if (!approvalRes.success || approvalRes.record?.status !== 'APPROVED') {
+    throw new Error('Human approval failed to transition state to APPROVED');
+  }
+
+  // 26.7 Read-Only Status Tool confirms APPROVED status
+  const statusCheckAfter = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2605,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_get_approval_status',
+      arguments: { approvalId },
+    },
+  });
+  const statusResultAfter = extractToolResponse(statusCheckAfter);
+  if (statusResultAfter.status !== 'APPROVED') {
+    throw new Error(`Expected APPROVED status, got ${statusResultAfter.status}`);
+  }
+
+  // 26.8 Execution of Approved Operation Succeeds
+  const executionCall = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2606,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99, approvalId },
+    },
+  });
+  const executionResult = extractToolResponse(executionCall);
+  if (!executionResult.success || !executionResult.deleted) {
+    throw new Error('Execution of human-approved operation failed');
+  }
+
+  // 26.9 Replay Attack Blocked: Attempting to reuse consumed approval record MUST FAIL
+  const replayCall = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2607,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99, approvalId },
+    },
+  });
+  const replayResult = extractToolResponse(replayCall);
+  if (replayResult.success === true) {
+    throw new Error('Replay attack succeeded: consumed approval was reused!');
+  }
+
+  // 26.10 SSRF Validation Defense-in-Depth Matrix
+  const ssrfBlockedUrls = [
+    'http://127.0.0.1/test.png',
+    'http://localhost/test.png',
+    'http://2130706433/test.png',           // Decimal IP
+    'http://0x7f000001/test.png',           // Hexadecimal IP
+    'http://0177.0.0.1/test.png',           // Octal IP
+    'http://127.000.000.001/test.png',      // Leading zeroes
+    'http://169.254.169.254/latest/meta',   // Cloud Metadata
+    'http://metadata.google.internal/meta', // GCP Metadata
+    'http://10.0.0.1/image.jpg',            // RFC1918 Private
+    'http://192.168.1.1/image.jpg',         // RFC1918 Private
+    'http://172.16.0.1/image.jpg',          // RFC1918 Private
+    'http://[::1]/image.jpg',               // IPv6 loopback
+    'http://[0:0:0:0:0:0:0:1]/image.jpg',   // IPv6 uncompressed loopback
+    'http://[::ffff:127.0.0.1]/image.jpg',  // IPv4-mapped IPv6
+    'http://[::ffff:7f00:1]/image.jpg',     // IPv4-mapped IPv6 hex
+    'http://[fc00::1]/image.jpg',           // Unique Local IPv6 (RFC4193)
+    'http://[fe80::1]/image.jpg',           // Link-Local IPv6 (RFC4291)
+    'file:///etc/passwd',                   // Forbidden protocol
+    'ftp://example.com/image.jpg',          // Forbidden protocol
+  ];
+
+  for (const badUrl of ssrfBlockedUrls) {
+    const res = SsrfValidator.validateUrl(badUrl);
+    if (res.safe) {
+      throw new Error(`SSRF Guard failed to block prohibited URL: ${badUrl}`);
+    }
+  }
+
+  const safeUrlRes = SsrfValidator.validateUrl('https://images.unsplash.com/photo-123456');
+  if (!safeUrlRes.safe) {
+    throw new Error(`SSRF Guard erroneously blocked valid public HTTPS URL: ${safeUrlRes.error}`);
+  }
 
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }

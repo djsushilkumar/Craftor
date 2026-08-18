@@ -1,0 +1,39 @@
+{
+  "siteId": "test_site",
+  "pageId": 18,
+  "viewport": "desktop",
+  "hash": "hash_msz22w8t_4_0",
+  "screenshotPath": "C:\\Users\\420\\Crafter\\artifacts\\screenshots\\http___localhost_8080__desktop_1440x900.svg",
+  "domMetrics": {
+    "hasElementorRoot": true,
+    "elementorVersion": "3.24.0",
+    "rootContainers": 4,
+    "totalWidgets": 0,
+    "headings": 16,
+    "buttons": 0,
+    "images": 3,
+    "missingImages": 0,
+    "forms": 0,
+    "pageTitle": "Craftor Live Test Environment",
+    "headingsList": [
+      "A commitment to innovation and sustainability",
+      "A passion for creating spaces",
+      "Renovation and restoration",
+      "Continuous Support",
+      "App Access",
+      "Consulting",
+      "Project Management",
+      "Architectural Solutions",
+      "An array of resources",
+      "Études Architect App",
+      "Études Newsletter",
+      "Watch, Read, Listen",
+      "Join 900+ subscribers",
+      "About",
+      "Privacy",
+      "Social"
+    ],
+    "ctaButtonsList": []
+  },
+  "createdAt": "2026-08-18T19:28:46.013Z"
+}

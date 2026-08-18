@@ -3,6 +3,8 @@ namespace Craftor\Core\Controllers;
 
 use Craftor\Core\Snapshots\SnapshotManager;
 use Craftor\Core\Snapshots\RollbackManager;
+use Craftor\Core\Auth\CraftorAuth;
+use Craftor\Core\Auth\CraftorApproval;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -119,12 +121,28 @@ class WooCommerceController {
         ] );
     }
 
-    public function check_read_permission(): bool {
-        return current_user_can( 'read' ) || defined( 'REST_REQUEST' );
+    public function check_read_permission( \WP_REST_Request $request ): bool {
+        $path = $request->get_route();
+        if ( strpos( $path, '/snapshots' ) !== false ) {
+            return CraftorAuth::verify_request( $request, 'manage_options' );
+        }
+        if ( strpos( $path, '/orders' ) !== false || strpos( $path, '/customers' ) !== false ) {
+            return CraftorAuth::verify_request( $request, 'manage_woocommerce' );
+        }
+        return CraftorAuth::verify_request( $request, 'read' );
     }
 
-    public function check_write_permission(): bool {
-        return current_user_can( 'manage_options' ) || current_user_can( 'edit_posts' ) || defined( 'REST_REQUEST' );
+    public function check_write_permission( \WP_REST_Request $request ): bool {
+        $path = $request->get_route();
+        $id = (int) $request->get_param( 'id' );
+
+        if ( strpos( $path, '/rollback' ) !== false || strpos( $path, '/snapshots' ) !== false ) {
+            return CraftorAuth::verify_request( $request, 'manage_options' );
+        }
+
+        $required_cap = $request->get_method() === 'DELETE' ? 'delete_posts' : 'edit_posts';
+        $object_cap = $request->get_method() === 'DELETE' ? 'delete_post' : 'edit_post';
+        return CraftorAuth::verify_request( $request, $required_cap, $id > 0 ? $id : null, $object_cap );
     }
 
     public function get_products( \WP_REST_Request $request ): \WP_REST_Response {
@@ -231,6 +249,20 @@ class WooCommerceController {
 
     public function delete_product( \WP_REST_Request $request ): \WP_REST_Response {
         $id = (int) $request->get_param( 'id' );
+
+        // Machine token callers must supply an approved human authorization
+        if ( ! is_user_logged_in() ) {
+            $approval_id = $request->get_header( 'X-Craftor-Approval-Id' ) ?: $request->get_param( 'approvalId' );
+            $verification = CraftorApproval::verify_and_consume( (string) $approval_id, 'delete_product', $id, $request->get_json_params() ?? [] );
+            if ( ! $verification['authorized'] ) {
+                if ( empty( $approval_id ) || ! CraftorApproval::get_approval( $approval_id ) ) {
+                    $req = CraftorApproval::create_approval( 'delete_product', $id, $request->get_json_params() ?? [] );
+                    return new \WP_REST_Response( $req, 403 );
+                }
+                return new \WP_REST_Response( [ 'error' => $verification['error'], 'requiresHumanApproval' => true ], 403 );
+            }
+        }
+
         $existing = get_post( $id );
         if ( $existing ) {
             $this->snapshots->capture_snapshot( $id, 'woocommerce_product', (array) $existing, '', 'delete_product' );
@@ -286,6 +318,20 @@ class WooCommerceController {
 
     public function delete_snapshot( \WP_REST_Request $request ): \WP_REST_Response {
         $id = $request->get_param( 'id' );
+
+        // Machine token callers must supply an approved human authorization
+        if ( ! is_user_logged_in() ) {
+            $approval_id = $request->get_header( 'X-Craftor-Approval-Id' ) ?: $request->get_param( 'approvalId' );
+            $verification = CraftorApproval::verify_and_consume( (string) $approval_id, 'delete_snapshot', $id, $request->get_json_params() ?? [] );
+            if ( ! $verification['authorized'] ) {
+                if ( empty( $approval_id ) || ! CraftorApproval::get_approval( $approval_id ) ) {
+                    $req = CraftorApproval::create_approval( 'delete_snapshot', $id, $request->get_json_params() ?? [] );
+                    return new \WP_REST_Response( $req, 403 );
+                }
+                return new \WP_REST_Response( [ 'error' => $verification['error'], 'requiresHumanApproval' => true ], 403 );
+            }
+        }
+
         $deleted = $this->snapshots->delete_snapshot( $id );
         return new \WP_REST_Response( [ 'deleted' => $deleted ], 200 );
     }
@@ -296,6 +342,20 @@ class WooCommerceController {
 
     public function restore_snapshot( \WP_REST_Request $request ): \WP_REST_Response {
         $id = $request->get_param( 'id' );
+
+        // Machine token callers must supply an approved human authorization
+        if ( ! is_user_logged_in() ) {
+            $approval_id = $request->get_header( 'X-Craftor-Approval-Id' ) ?: $request->get_param( 'approvalId' );
+            $verification = CraftorApproval::verify_and_consume( (string) $approval_id, 'restore_snapshot', $id, $request->get_json_params() ?? [] );
+            if ( ! $verification['authorized'] ) {
+                if ( empty( $approval_id ) || ! CraftorApproval::get_approval( $approval_id ) ) {
+                    $req = CraftorApproval::create_approval( 'restore_snapshot', $id, $request->get_json_params() ?? [] );
+                    return new \WP_REST_Response( $req, 403 );
+                }
+                return new \WP_REST_Response( [ 'error' => $verification['error'], 'requiresHumanApproval' => true ], 403 );
+            }
+        }
+
         $result = $this->rollback->restore_snapshot( $id );
         $status = $result['success'] ? 200 : 400;
         return new \WP_REST_Response( $result, $status );

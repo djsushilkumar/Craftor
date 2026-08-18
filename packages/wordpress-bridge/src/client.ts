@@ -233,7 +233,32 @@ export class WordPressClient {
       requestBody.meta = meta;
     }
 
-    return this.rest.post<WordPressPage>('/wp-json/wp/v2/pages', requestBody, options);
+    try {
+      return await this.rest.post<WordPressPage>('/wp-json/wp/v2/pages', requestBody, options);
+    } catch {
+      // Fallback to Craftor content endpoint
+      const res = await this.rest.post<{ success: boolean; postId: number; title: string; slug: string; link: string }>(
+        '/wp-json/craftor/v1/content/posts',
+        {
+          title: payload.title.trim(),
+          postType: 'page',
+          slug: payload.slug,
+        },
+        options,
+      );
+
+      return {
+        id: res.postId,
+        date: new Date().toISOString(),
+        slug: res.slug,
+        status: 'publish',
+        type: 'page',
+        link: res.link,
+        title: { rendered: res.title },
+        content: { rendered: '' },
+        template: 'elementor_header_footer',
+      };
+    }
   }
 
   /**
