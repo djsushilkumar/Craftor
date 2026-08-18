@@ -57,6 +57,10 @@ services:
     container_name: craftor_wp_cli
     user: "33:33" # www-data user
     environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: password
+      WORDPRESS_DB_NAME: craftor_test
       WP_SITE_URL: http://localhost:8080
       WP_ADMIN_USER: admin
       WP_ADMIN_PASSWORD: adminpassword

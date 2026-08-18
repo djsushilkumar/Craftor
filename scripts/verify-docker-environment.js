@@ -75,24 +75,26 @@ async function verifyEnvironment() {
       'Craftor REST namespace "craftor/v1" is registered in WordPress'
     );
 
-    // 2. Craftor System Status (Authenticated)
-    console.log('\n[2/4] Testing Authenticated Craftor System Status...');
-    const statusRes = await fetchJson('/wp-json/craftor/v1/system/status', {
+    // 2. Craftor Plugins & Environment Status (Authenticated)
+    console.log('\n[2/4] Testing Authenticated Craftor Plugins API (/site/plugins)...');
+    const pluginsRes = await fetchJson('/wp-json/craftor/v1/site/plugins', {
       'X-Craftor-Token': API_TOKEN,
     });
-    assert(statusRes.statusCode === 200, `Craftor system status responded with HTTP ${statusRes.statusCode}`);
-    if (statusRes.data) {
-      console.log(`     - WordPress Version : ${statusRes.data.wordpressVersion || 'Detected'}`);
-      console.log(`     - PHP Version       : ${statusRes.data.phpVersion || 'Detected'}`);
-      console.log(`     - Elementor Active  : ${statusRes.data.elementorActive ? 'YES' : 'NO'}`);
-      console.log(`     - WooCommerce Active: ${statusRes.data.woocommerceActive ? 'YES' : 'NO'}`);
-      assert(statusRes.data.elementorActive !== false, 'Elementor plugin is installed and active');
-      assert(statusRes.data.woocommerceActive !== false, 'WooCommerce plugin is installed and active');
+    assert(pluginsRes.statusCode === 200, `Craftor plugins endpoint responded with HTTP ${pluginsRes.statusCode}`);
+    if (Array.isArray(pluginsRes.data)) {
+      const activePlugins = pluginsRes.data.filter((p) => p.isActive).map((p) => p.name);
+      console.log(`     - Active Plugins : ${activePlugins.join(', ')}`);
+      const hasElementor = pluginsRes.data.some((p) => p.isActive && (p.name.includes('Elementor') || p.file.includes('elementor')));
+      const hasWooCommerce = pluginsRes.data.some((p) => p.isActive && (p.name.includes('WooCommerce') || p.file.includes('woocommerce')));
+      const hasCraftor = pluginsRes.data.some((p) => p.isActive && p.file.includes('craftor-core'));
+      assert(hasElementor, 'Elementor plugin is installed and active in WordPress');
+      assert(hasWooCommerce, 'WooCommerce plugin is installed and active in WordPress');
+      assert(hasCraftor, 'Craftor Core plugin is installed and active in WordPress');
     }
 
     // 3. Unauthenticated Rejection (Zero-Trust)
     console.log('\n[3/4] Verifying Zero-Trust Rejection for Missing Token...');
-    const unauthRes = await fetchJson('/wp-json/craftor/v1/system/status');
+    const unauthRes = await fetchJson('/wp-json/craftor/v1/site/plugins');
     assert(
       unauthRes.statusCode === 401 || unauthRes.statusCode === 403,
       `Unauthenticated REST request correctly rejected with HTTP ${unauthRes.statusCode}`

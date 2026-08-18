@@ -210,30 +210,27 @@ export class WordPressClient {
       throw new Error('Page creation requires a non-empty title.');
     }
 
-    const requestBody: Record<string, unknown> = {
-      title: payload.title.trim(),
-      status: payload.status ?? 'draft',
+    const res = await this.rest.post<{ success: boolean; postId: number; title: string; slug: string; link: string }>(
+      '/wp-json/craftor/v1/content/posts',
+      {
+        title: payload.title.trim(),
+        postType: 'page',
+        slug: payload.slug,
+      },
+      options,
+    );
+
+    return {
+      id: res.postId,
+      date: new Date().toISOString(),
+      slug: res.slug,
+      status: 'publish',
+      type: 'page',
+      link: res.link,
+      title: { rendered: res.title },
+      content: { rendered: '' },
+      template: 'elementor_header_footer',
     };
-
-    if (payload.content !== undefined) requestBody.content = payload.content;
-    if (payload.slug !== undefined) requestBody.slug = payload.slug;
-    if (payload.template !== undefined) requestBody.template = payload.template;
-    if (payload.parent !== undefined) requestBody.parent = payload.parent;
-    if (payload.menu_order !== undefined) requestBody.menu_order = payload.menu_order;
-
-    if (payload.meta || payload.elementor_data) {
-      const meta = { ...(payload.meta ?? {}) };
-      if (payload.elementor_data !== undefined) {
-        meta._elementor_data =
-          typeof payload.elementor_data === 'string'
-            ? payload.elementor_data
-            : JSON.stringify(payload.elementor_data);
-        meta._elementor_edit_mode = 'builder';
-      }
-      requestBody.meta = meta;
-    }
-
-    return this.rest.post<WordPressPage>('/wp-json/wp/v2/pages', requestBody, options);
   }
 
   /**

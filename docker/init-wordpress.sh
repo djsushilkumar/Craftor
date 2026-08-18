@@ -9,7 +9,7 @@ MARKER_FILE="/var/www/html/wp-content/.craftor_initialized"
 
 # 1. Wait for MariaDB / MySQL
 echo "[1/7] Waiting for MariaDB service..."
-until wp db check --path=/var/www/html --allow-root >/dev/null 2>&1; do
+until wp db query "SELECT 1;" --path=/var/www/html --allow-root >/dev/null 2>&1; do
   echo "  Waiting for database connection..."
   sleep 2
 done

@@ -33,32 +33,22 @@ export class ElementorDocumentManager {
     }
 
     logger.debug(`ElementorDocumentManager: Loading document for page ${pageId}`);
-    const page = await this.client.getPage(pageId);
+    const rest = this.client.getRestClient();
+    const res = await rest.get<{ success?: boolean; pageId?: number; elements?: unknown[]; settings?: Record<string, unknown>; title?: string; status?: string }>(
+      `/wp-json/craftor/v1/elementor/document/${pageId}`
+    );
 
-    const meta = page.meta ?? {};
-    const rawData = meta._elementor_data;
-    let elements: ElementorNode[] = [];
-
-    if (rawData) {
-      elements = this.parseDocument(rawData as string | ElementorNode[]);
-    }
-
-    let settings: Record<string, unknown> = {};
-    if (meta._elementor_page_settings) {
-      settings =
-        typeof meta._elementor_page_settings === 'string'
-          ? JSON.parse(meta._elementor_page_settings)
-          : (meta._elementor_page_settings as Record<string, unknown>);
-    }
+    const elements = Array.isArray(res.elements) ? this.parseDocument(res.elements as unknown[]) : [];
+    const settings = res.settings ?? {};
 
     return {
-      pageId: page.id,
-      title: page.title?.rendered ?? `Page ${pageId}`,
-      status: page.status,
-      version: (meta._elementor_version as string) ?? '3.24.0',
+      pageId,
+      title: res.title ?? `Page ${pageId}`,
+      status: res.status ?? 'publish',
+      version: '3.24.0',
       elements,
       settings,
-      css: (meta._elementor_css as string) ?? '',
+      css: '',
     };
   }
 
@@ -81,28 +71,19 @@ export class ElementorDocumentManager {
       throw new Error(`Cannot save invalid Elementor AST document: ${issues}`);
     }
 
-    const serializedData = ElementorAstEngine.serialize(elements);
     logger.info(`ElementorDocumentManager: Saving document for page ${pageId} (${elements.length} root elements)`);
+    const rest = this.client.getRestClient();
 
-    const metaUpdate: Record<string, unknown> = {
-      _elementor_data: serializedData,
-      _elementor_edit_mode: 'builder',
-      _elementor_version: '3.24.0',
-      _elementor_css: '', // Invalidate CSS cache
-    };
-
-    if (pageSettings !== undefined) {
-      metaUpdate._elementor_page_settings = JSON.stringify(pageSettings);
-    }
-
-    const updatedPage = await this.client.updatePage(pageId, {
-      meta: metaUpdate,
+    await rest.post('/wp-json/craftor/v1/elementor/save', {
+      pageId,
+      elements,
+      settings: pageSettings ?? {},
     });
 
     return {
-      pageId: updatedPage.id,
-      title: updatedPage.title?.rendered ?? `Page ${pageId}`,
-      status: updatedPage.status,
+      pageId,
+      title: `Page ${pageId}`,
+      status: 'publish',
       version: '3.24.0',
       elements: ElementorAstEngine.clone(elements),
       settings: pageSettings ?? {},

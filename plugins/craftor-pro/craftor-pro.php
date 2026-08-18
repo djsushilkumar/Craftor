@@ -21,6 +21,12 @@ define( 'CRAFTOR_PRO_FILE', __FILE__ );
 define( 'CRAFTOR_PRO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CRAFTOR_PRO_URL', plugin_dir_url( __FILE__ ) );
 
+if ( file_exists( __DIR__ . '/includes/Plugin.php' ) ) {
+    require_once __DIR__ . '/includes/Plugin.php';
+}
+
 add_action( 'plugins_loaded', function() {
-    \Craftor\Pro\Plugin::instance()->init();
+    if ( class_exists( '\\Craftor\\Pro\\Plugin' ) ) {
+        \Craftor\Pro\Plugin::instance()->init();
+    }
 } );
