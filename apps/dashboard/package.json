@@ -3,10 +3,10 @@
   "version": "1.0.1",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint src --ext .ts,.tsx"
+    "dev": "node dev-server.js",
+    "build": "tsc",
+    "start": "node dev-server.js",
+    "lint": "eslint src --ext .ts"
   },
   "dependencies": {
     "@craftor/design-tokens": "workspace:*",
