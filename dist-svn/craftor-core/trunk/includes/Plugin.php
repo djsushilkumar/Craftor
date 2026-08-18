@@ -41,6 +41,12 @@ class Plugin {
     }
 
     public function register_rest_routes(): void {
+        // 0. Load Central Auth Authority
+        $auth_file = CRAFTOR_CORE_PATH . 'src/auth/craftor-auth.php';
+        if ( file_exists( $auth_file ) ) {
+            require_once $auth_file;
+        }
+
         // Core Handshake
         register_rest_route( 'craftor/v1', '/auth/handshake', [
             'methods'             => 'GET',
@@ -107,18 +113,23 @@ class Plugin {
     }
 
     public function handle_sse_stream( \WP_REST_Request $request ) {
+        $token = $request->get_param( 'token' );
+        $auth_header = $request->get_header( 'X-Craftor-Token' ) ?: $request->get_header( 'Authorization' );
+        $header_token = $auth_header ? str_replace( 'Bearer ', '', trim( $auth_header ) ) : null;
+        $effective_token = ! empty( $token ) ? $token : $header_token;
+        $saved = get_option( 'craftor_api_token' );
+
+        if ( empty( $saved ) || empty( $effective_token ) || ! hash_equals( (string) $saved, (string) $effective_token ) ) {
+            header( 'Content-Type: application/json; charset=utf-8' );
+            status_header( 401 );
+            echo wp_json_encode( [ 'code' => 'rest_unauthorized', 'message' => 'Unauthorized token', 'data' => [ 'status' => 401 ] ] );
+            exit;
+        }
+
         header( 'Content-Type: text/event-stream' );
         header( 'Cache-Control: no-cache' );
         header( 'Connection: keep-alive' );
         header( 'X-Accel-Buffering: no' );
-
-        $token = $request->get_param( 'token' );
-        $saved = get_option( 'craftor_api_token', 'crf_live_demo_sec_key_2026' );
-
-        if ( ! empty( $token ) && ! hash_equals( (string) $saved, (string) $token ) ) {
-            echo "event: error\ndata: " . wp_json_encode( [ 'error' => 'Unauthorized token' ] ) . "\n\n";
-            exit;
-        }
 
         echo "event: endpoint\ndata: " . esc_url_raw( rest_url( 'craftor/v1/mcp/messages' ) ) . "\n\n";
         echo "event: ping\ndata: " . wp_json_encode( [ 'timestamp' => time(), 'status' => 'connected', 'tools_count' => 120 ] ) . "\n\n";

@@ -39,7 +39,11 @@ class AdminSettings {
     }
 
     public function render_page(): void {
-        $token = get_option( 'craftor_api_token', 'crf_live_demo_sec_key_2026' );
+        $token = get_option( 'craftor_api_token' );
+        if ( empty( $token ) ) {
+            $token = 'crf_' . wp_generate_password( 24, false );
+            update_option( 'craftor_api_token', $token );
+        }
         $site_url = site_url();
         $rest_url = rest_url( 'craftor/v1' );
         $is_elementor_active = class_exists( '\\Elementor\\Plugin' );

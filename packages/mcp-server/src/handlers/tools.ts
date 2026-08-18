@@ -1941,6 +1941,24 @@ export async function handleToolsCall(
           };
         }
 
+        const expectedChallenge = `CONFIRM_DELETE_POST_${postId}`;
+        if (args.confirmed !== true && args.confirmationChallenge !== expectedChallenge) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  requiresConfirmation: true,
+                  action: 'craftor_wp_delete_post',
+                  targetId: postId,
+                  confirmationChallenge: expectedChallenge,
+                  message: `[DESTRUCTIVE OPERATION] Deleting post #${postId} requires explicit confirmation. Please invoke again with confirmationChallenge: "${expectedChallenge}"`,
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
         if (siteUrl) {
           const client = getClient();
           const result = await client.deletePost(postId, Boolean(args.force));
@@ -2730,6 +2748,24 @@ export async function handleToolsCall(
           };
         }
 
+        const expectedChallenge = `CONFIRM_DELETE_PRODUCT_${productId}`;
+        if (args.confirmed !== true && args.confirmationChallenge !== expectedChallenge) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  requiresConfirmation: true,
+                  action: 'craftor_wc_delete_product',
+                  targetId: productId,
+                  confirmationChallenge: expectedChallenge,
+                  message: `[DESTRUCTIVE OPERATION] Deleting WooCommerce product #${productId} requires explicit confirmation. Please invoke again with confirmationChallenge: "${expectedChallenge}"`,
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
         if (siteUrl) {
           const client = getClient();
           const bridge = new WooCommerceBridge({ client });
@@ -2991,6 +3027,24 @@ export async function handleToolsCall(
           return {
             content: [{ type: 'text', text: JSON.stringify({ error: '"snapshotId" is required' }) }],
             isError: true,
+          };
+        }
+
+        const expectedChallenge = `CONFIRM_RESTORE_SNAPSHOT_${snapshotId}`;
+        if (args.confirmed !== true && args.confirmationChallenge !== expectedChallenge) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  requiresConfirmation: true,
+                  action: 'craftor_restore_snapshot',
+                  snapshotId,
+                  confirmationChallenge: expectedChallenge,
+                  message: `[DESTRUCTIVE OPERATION] Rollback to snapshot "${snapshotId}" will overwrite live database state. Please invoke again with confirmationChallenge: "${expectedChallenge}"`,
+                }, null, 2),
+              },
+            ],
           };
         }
 
@@ -3789,6 +3843,25 @@ export async function handleToolsCall(
       case 'craftor_manage_plugin': {
         const pluginFile = String(args.pluginFile || '');
         const action = String(args.action || 'activate');
+
+        if (action === 'deactivate') {
+          const expectedChallenge = `CONFIRM_DEACTIVATE_PLUGIN_${pluginFile.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          if (args.confirmed !== true && args.confirmationChallenge !== expectedChallenge) {
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  requiresConfirmation: true,
+                  action: 'craftor_manage_plugin',
+                  pluginFile,
+                  confirmationChallenge: expectedChallenge,
+                  message: `[DESTRUCTIVE OPERATION] Deactivating plugin "${pluginFile}" requires explicit confirmation. Please invoke again with confirmationChallenge: "${expectedChallenge}"`,
+                }, null, 2),
+              }],
+            };
+          }
+        }
+
         return {
           content: [{
             type: 'text',

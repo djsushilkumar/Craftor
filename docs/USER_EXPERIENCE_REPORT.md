@@ -22,7 +22,7 @@
 ```
 
 ### Step 1: Authentication & Connection
-- **User Action:** The user starts the Craftor daemon or connects from an AI IDE client (Cursor, Antigravity, Claude Desktop) using an Application Password or Zero-Trust Token (`crf_live_demo_sec_key_2026`).
+- **User Action:** The user starts the Craftor daemon or connects from an AI IDE client (Cursor, Antigravity, Claude Desktop) using an Application Password or Zero-Trust Machine Token (`crf_<unique_secure_key>`).
 - **User Interface:** Clean glassmorphic header shows `● 86 MCP Tools Active | 8 AI Clients Ready | Production 1.0 GA Certified`.
 
 ### Step 2: Dashboard Overview

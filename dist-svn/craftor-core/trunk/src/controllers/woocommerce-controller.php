@@ -3,6 +3,7 @@ namespace Craftor\Core\Controllers;
 
 use Craftor\Core\Snapshots\SnapshotManager;
 use Craftor\Core\Snapshots\RollbackManager;
+use Craftor\Core\Auth\CraftorAuth;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -119,12 +120,28 @@ class WooCommerceController {
         ] );
     }
 
-    public function check_read_permission(): bool {
-        return current_user_can( 'read' ) || defined( 'REST_REQUEST' );
+    public function check_read_permission( \WP_REST_Request $request ): bool {
+        $path = $request->get_route();
+        if ( strpos( $path, '/snapshots' ) !== false ) {
+            return CraftorAuth::verify_request( $request, 'manage_options' );
+        }
+        if ( strpos( $path, '/orders' ) !== false || strpos( $path, '/customers' ) !== false ) {
+            return CraftorAuth::verify_request( $request, 'manage_woocommerce' );
+        }
+        return CraftorAuth::verify_request( $request, 'read' );
     }
 
-    public function check_write_permission(): bool {
-        return current_user_can( 'manage_options' ) || current_user_can( 'edit_posts' ) || defined( 'REST_REQUEST' );
+    public function check_write_permission( \WP_REST_Request $request ): bool {
+        $path = $request->get_route();
+        $id = (int) $request->get_param( 'id' );
+
+        if ( strpos( $path, '/rollback' ) !== false || strpos( $path, '/snapshots' ) !== false ) {
+            return CraftorAuth::verify_request( $request, 'manage_options' );
+        }
+
+        $required_cap = $request->get_method() === 'DELETE' ? 'delete_posts' : 'edit_posts';
+        $object_cap = $request->get_method() === 'DELETE' ? 'delete_post' : 'edit_post';
+        return CraftorAuth::verify_request( $request, $required_cap, $id > 0 ? $id : null, $object_cap );
     }
 
     public function get_products( \WP_REST_Request $request ): \WP_REST_Response {

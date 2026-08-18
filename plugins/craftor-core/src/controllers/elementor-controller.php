@@ -2,6 +2,7 @@
 namespace Craftor\Core\Controllers;
 
 use Craftor\Core\Snapshots\SnapshotManager;
+use Craftor\Core\Auth\CraftorAuth;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -58,24 +59,9 @@ class ElementorController {
     }
 
     public function check_auth( \WP_REST_Request $request ): bool {
-        // Allow user capability if logged in
-        if ( current_user_can( 'edit_posts' ) ) {
-            return true;
-        }
-
-        // Check Craftor Secret API Token header
-        $auth_header = $request->get_header( 'X-Craftor-Token' ) ?: $request->get_header( 'Authorization' );
-        $saved_token = get_option( 'craftor_api_token', 'crf_live_demo_sec_key_2026' );
-
-        if ( $auth_header ) {
-            $clean_token = str_replace( 'Bearer ', '', $auth_header );
-            if ( hash_equals( (string) $saved_token, (string) $clean_token ) ) {
-                return true;
-            }
-        }
-
-        // Demo or local mode fallback
-        return true;
+        $params = $request->get_json_params() ?? [];
+        $page_id = isset( $params['pageId'] ) ? (int) $params['pageId'] : ( isset( $params['post_id'] ) ? (int) $params['post_id'] : (int) $request->get_param( 'id' ) );
+        return CraftorAuth::verify_request( $request, 'edit_posts', $page_id > 0 ? $page_id : null, 'edit_post' );
     }
 
     public function save_document( \WP_REST_Request $request ): \WP_REST_Response {

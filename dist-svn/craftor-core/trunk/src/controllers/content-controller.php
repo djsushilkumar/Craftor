@@ -1,6 +1,8 @@
 <?php
 namespace Craftor\Core\Controllers;
 
+use Craftor\Core\Auth\CraftorAuth;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -50,18 +52,11 @@ class ContentController {
     }
 
     public function check_auth( \WP_REST_Request $request ): bool {
-        if ( current_user_can( 'edit_posts' ) ) {
-            return true;
-        }
-        $auth_header = $request->get_header( 'X-Craftor-Token' ) ?: $request->get_header( 'Authorization' );
-        $saved_token = get_option( 'craftor_api_token', 'crf_live_demo_sec_key_2026' );
-        if ( $auth_header ) {
-            $clean_token = str_replace( 'Bearer ', '', $auth_header );
-            if ( hash_equals( (string) $saved_token, (string) $clean_token ) ) {
-                return true;
-            }
-        }
-        return true;
+        $params = $request->get_json_params() ?? [];
+        $post_id = isset( $params['postId'] ) ? (int) $params['postId'] : ( isset( $params['pageId'] ) ? (int) $params['pageId'] : (int) $request->get_param( 'id' ) );
+        $required_cap = $request->get_method() === 'GET' ? 'read' : 'edit_posts';
+        $object_cap = $request->get_method() === 'DELETE' ? 'delete_post' : ( $request->get_method() === 'GET' ? 'read_post' : 'edit_post' );
+        return CraftorAuth::verify_request( $request, $required_cap, $post_id > 0 ? $post_id : null, $object_cap );
     }
 
     /**

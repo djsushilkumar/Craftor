@@ -68,7 +68,10 @@ export async function runRollbackFlowE2e(): Promise<{ name: string; passed: bool
   // 3. Perform 1-Click Atomic Rollback to Original Snapshot
   const rollbackRes = await handleToolsCall({
     name: 'craftor_restore_snapshot',
-    arguments: { snapshotId },
+    arguments: {
+      snapshotId,
+      confirmationChallenge: `CONFIRM_RESTORE_SNAPSHOT_${snapshotId}`,
+    },
   });
   assertions++;
   if (rollbackRes.isError || !rollbackRes.content?.[0]?.text) {

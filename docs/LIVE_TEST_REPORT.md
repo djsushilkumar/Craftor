@@ -41,7 +41,7 @@ node packages/mcp-server/dist/index.js
 
 ## 3. Test Credentials & Demo Sites
 
-- **Demo Admin Token:** `crf_live_demo_sec_key_2026`
+- **Demo Admin Token:** Dynamic cryptographically generated `crf_<24_char_secret>` (Zero-Trust)
 - **Mock WordPress Site 1:** `https://apexstudio.wp` (WordPress 6.7.1, Elementor 3.24.5, Latency: 24ms, Snapshots: 14)
 - **Mock WordPress Site 2:** `https://staging.apexstudio.wp` (WooCommerce Staging, Latency: 42ms, Snapshots: 8)
 - **Demo Page ID:** Post ID `100` / Post ID `42`

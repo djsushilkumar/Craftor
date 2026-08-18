@@ -2155,6 +2155,101 @@ async function runContractTests(): Promise<void> {
     throw new Error('GutenbergBridge failed heading conversion accuracy');
   }
 
+  console.log('[Contract Test 26] Validating Zero-Trust Security Hardening & Authorization Contracts...');
+  const secRouter = new McpRouter({
+    siteUrl: '',
+    secretToken: 'crf_sec_test_secret_token_12345678',
+  });
+  const extractToolResponse = (res: unknown): Record<string, unknown> => {
+    const r = res as { result?: { content?: Array<{ text?: string }> } };
+    const text = r?.result?.content?.[0]?.text ?? '{}';
+    return JSON.parse(text) as Record<string, unknown>;
+  };
+
+  // 26.1 Destructive Confirmation Protocol for craftor_wp_delete_post
+  const unconfirmedDeletePost = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2601,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99 },
+    },
+  });
+  const unconfirmedDeleteResult = extractToolResponse(unconfirmedDeletePost);
+  if (
+    !unconfirmedDeleteResult.requiresConfirmation ||
+    unconfirmedDeleteResult.confirmationChallenge !== 'CONFIRM_DELETE_POST_99'
+  ) {
+    throw new Error('craftor_wp_delete_post did not issue required confirmation challenge');
+  }
+
+  // 26.2 Confirmed craftor_wp_delete_post
+  const confirmedDeletePost = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2602,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_wp_delete_post',
+      arguments: { postId: 99, confirmationChallenge: 'CONFIRM_DELETE_POST_99' },
+    },
+  });
+  const confirmedDeleteResult = extractToolResponse(confirmedDeletePost);
+  if (!confirmedDeleteResult.success || !confirmedDeleteResult.deleted) {
+    throw new Error('craftor_wp_delete_post failed with valid confirmation challenge');
+  }
+
+  // 26.3 Destructive Confirmation Protocol for craftor_restore_snapshot
+  const unconfirmedRollback = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2603,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_restore_snapshot',
+      arguments: { snapshotId: 'crf_snp_test123' },
+    },
+  });
+  const unconfirmedRollbackResult = extractToolResponse(unconfirmedRollback);
+  if (
+    !unconfirmedRollbackResult.requiresConfirmation ||
+    unconfirmedRollbackResult.confirmationChallenge !== 'CONFIRM_RESTORE_SNAPSHOT_crf_snp_test123'
+  ) {
+    throw new Error('craftor_restore_snapshot did not issue required confirmation challenge');
+  }
+
+  // 26.4 Confirmed craftor_restore_snapshot
+  const confirmedRollback = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2604,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_restore_snapshot',
+      arguments: {
+        snapshotId: 'crf_snp_test123',
+        confirmationChallenge: 'CONFIRM_RESTORE_SNAPSHOT_crf_snp_test123',
+      },
+    },
+  });
+  const confirmedRollbackResult = extractToolResponse(confirmedRollback);
+  if (!confirmedRollbackResult.success) {
+    throw new Error('craftor_restore_snapshot failed with valid confirmation challenge');
+  }
+
+  // 26.5 Destructive Confirmation for plugin deactivation
+  const unconfirmedPluginDeact = await secRouter.dispatch({
+    jsonrpc: '2.0',
+    id: 2605,
+    method: 'tools/call',
+    params: {
+      name: 'craftor_manage_plugin',
+      arguments: { pluginFile: 'woocommerce/woocommerce.php', action: 'deactivate' },
+    },
+  });
+  const unconfirmedPluginDeactResult = extractToolResponse(unconfirmedPluginDeact);
+  if (!unconfirmedPluginDeactResult.requiresConfirmation) {
+    throw new Error('craftor_manage_plugin did not issue confirmation challenge on deactivation');
+  }
+
   console.log('[Contract Test] All contract assertions PASSED ✅');
 }
 

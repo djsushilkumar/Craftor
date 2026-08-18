@@ -1,6 +1,8 @@
 <?php
 namespace Craftor\Core\Controllers;
 
+use Craftor\Core\Auth\CraftorAuth;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -27,7 +29,10 @@ class SeoController {
     }
 
     public function check_auth( \WP_REST_Request $request ): bool {
-        return true;
+        $params = $request->get_json_params() ?? [];
+        $post_id = (int) ( $params['pageId'] ?? ( $params['postId'] ?? (int) $request->get_param( 'id' ) ) );
+        $required_cap = $request->get_method() === 'GET' ? 'read' : 'edit_posts';
+        return CraftorAuth::verify_request( $request, $required_cap, $post_id > 0 ? $post_id : null, 'edit_post' );
     }
 
     public function update_seo_metadata( \WP_REST_Request $request ): \WP_REST_Response {

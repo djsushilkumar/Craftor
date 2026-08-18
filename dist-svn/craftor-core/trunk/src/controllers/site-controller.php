@@ -1,6 +1,8 @@
 <?php
 namespace Craftor\Core\Controllers;
 
+use Craftor\Core\Auth\CraftorAuth;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -70,18 +72,18 @@ class SiteController {
     }
 
     public function check_auth( \WP_REST_Request $request ): bool {
-        if ( current_user_can( 'manage_options' ) ) {
-            return true;
+        $path = $request->get_route();
+        $method = $request->get_method();
+
+        if ( strpos( $path, '/plugins' ) !== false ) {
+            $required_cap = 'activate_plugins';
+        } elseif ( $method === 'GET' && ( strpos( $path, '/menus' ) !== false || strpos( $path, '/options' ) !== false ) ) {
+            $required_cap = 'edit_theme_options';
+        } else {
+            $required_cap = 'manage_options';
         }
-        $auth_header = $request->get_header( 'X-Craftor-Token' ) ?: $request->get_header( 'Authorization' );
-        $saved_token = get_option( 'craftor_api_token', 'crf_live_demo_sec_key_2026' );
-        if ( $auth_header ) {
-            $clean_token = str_replace( 'Bearer ', '', $auth_header );
-            if ( hash_equals( (string) $saved_token, (string) $clean_token ) ) {
-                return true;
-            }
-        }
-        return true;
+
+        return CraftorAuth::verify_request( $request, $required_cap );
     }
 
     /**

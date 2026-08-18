@@ -57,7 +57,7 @@ async function generateCompleteAiSaasLandingPage() {
 
   const router = new McpRouter({
     siteUrl: 'https://demo.craftor.local',
-    secretToken: 'crf_live_demo_sec_key_2026',
+    secretToken: process.env.WORDPRESS_API_TOKEN || ('crf_' + require('crypto').randomBytes(16).toString('hex')),
   });
 
   // -------------------------------------------------------------
