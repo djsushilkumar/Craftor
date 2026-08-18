@@ -58,8 +58,15 @@ if ( file_exists( CRAFTOR_CORE_PATH . 'vendor/autoload.php' ) ) {
     } );
 }
 
+// Explicitly load main Plugin singleton
+require_once CRAFTOR_CORE_PATH . 'includes/Plugin.php';
+
 // Register database installation on plugin activation
 register_activation_hook( CRAFTOR_CORE_FILE, function() {
+    $schema_file = CRAFTOR_CORE_PATH . 'src/database/schema-installer.php';
+    if ( file_exists( $schema_file ) ) {
+        require_once $schema_file;
+    }
     if ( class_exists( 'Craftor\\Core\\Database\\SchemaInstaller' ) ) {
         \Craftor\Core\Database\SchemaInstaller::install();
     }
@@ -67,8 +74,14 @@ register_activation_hook( CRAFTOR_CORE_FILE, function() {
 
 add_action( 'plugins_loaded', function() {
     // Check and run DB migration if version upgraded
-    if ( get_option( 'craftor_db_version' ) !== CRAFTOR_CORE_VERSION && class_exists( 'Craftor\\Core\\Database\\SchemaInstaller' ) ) {
-        \Craftor\Core\Database\SchemaInstaller::install();
+    if ( get_option( 'craftor_db_version' ) !== CRAFTOR_CORE_VERSION ) {
+        $schema_file = CRAFTOR_CORE_PATH . 'src/database/schema-installer.php';
+        if ( file_exists( $schema_file ) ) {
+            require_once $schema_file;
+        }
+        if ( class_exists( 'Craftor\\Core\\Database\\SchemaInstaller' ) ) {
+            \Craftor\Core\Database\SchemaInstaller::install();
+        }
     }
 
     \Craftor\Core\Plugin::instance()->init();

@@ -1,17 +1,18 @@
 <?php
 namespace Craftor\Core;
 
-use Craftor\Core\Controllers\WooCommerceController;
-use Craftor\Core\Controllers\ElementorController;
-use Craftor\Core\Admin\AdminSettings;
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+/**
+ * Main Craftor Core Plugin Orchestrator
+ */
 class Plugin {
     private static $instance = null;
     private $admin_settings = null;
+    private $elementor_controller = null;
+    private $woocommerce_controller = null;
 
     public static function instance(): self {
         if ( null === self::$instance ) {
@@ -21,30 +22,50 @@ class Plugin {
     }
 
     public function init(): void {
-        if ( is_admin() && class_exists( 'Craftor\\Core\\Admin\\AdminSettings' ) ) {
-            $this->admin_settings = new AdminSettings();
+        // 1. Initialize Admin Settings Dashboard
+        if ( is_admin() ) {
+            $admin_file = CRAFTOR_CORE_PATH . 'src/admin/admin-settings.php';
+            if ( file_exists( $admin_file ) ) {
+                require_once $admin_file;
+            }
+            if ( class_exists( 'Craftor\\Core\\Admin\\AdminSettings' ) ) {
+                $this->admin_settings = new \Craftor\Core\Admin\AdminSettings();
+            }
         }
 
+        // 2. Register REST API Routes
         add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
+        if ( did_action( 'rest_api_init' ) ) {
+            $this->register_rest_routes();
+        }
     }
 
     public function register_rest_routes(): void {
+        // Core Handshake
         register_rest_route( 'craftor/v1', '/auth/handshake', [
-            'methods'  => 'GET',
-            'callback' => [ $this, 'handle_handshake' ],
+            'methods'             => 'GET',
+            'callback'            => [ $this, 'handle_handshake' ],
             'permission_callback' => '__return_true',
         ] );
 
-        // 1. Elementor Controller
+        // 1. Load & Register Elementor Controller
+        $elementor_file = CRAFTOR_CORE_PATH . 'src/controllers/elementor-controller.php';
+        if ( file_exists( $elementor_file ) ) {
+            require_once $elementor_file;
+        }
         if ( class_exists( 'Craftor\\Core\\Controllers\\ElementorController' ) ) {
-            $elementor_ctrl = new ElementorController();
-            $elementor_ctrl->register_routes();
+            $this->elementor_controller = new \Craftor\Core\Controllers\ElementorController();
+            $this->elementor_controller->register_routes();
         }
 
-        // 2. WooCommerce Controller
+        // 2. Load & Register WooCommerce Controller
+        $woo_file = CRAFTOR_CORE_PATH . 'src/controllers/woocommerce-controller.php';
+        if ( file_exists( $woo_file ) ) {
+            require_once $woo_file;
+        }
         if ( class_exists( 'Craftor\\Core\\Controllers\\WooCommerceController' ) ) {
-            $woo_ctrl = new WooCommerceController();
-            $woo_ctrl->register_routes();
+            $this->woocommerce_controller = new \Craftor\Core\Controllers\WooCommerceController();
+            $this->woocommerce_controller->register_routes();
         }
     }
 
@@ -58,6 +79,7 @@ class Plugin {
             'server_status' => 'listening',
             'elementor'     => class_exists( '\\Elementor\\Plugin' ) ? 'active' : 'standby',
             'woocommerce'   => class_exists( '\\WooCommerce' ) ? 'active' : 'standby',
+            'db_version'    => get_option( 'craftor_db_version', CRAFTOR_CORE_VERSION ),
         ], 200 );
     }
 }
