@@ -1,5 +1,5 @@
 /**
- * Craftor Visual Intelligence & Closed-Loop Verification Types
+ * Craftor Visual Intelligence & Playwright Verification Types
  */
 
 export interface ViewportProfile {
@@ -8,11 +8,75 @@ export interface ViewportProfile {
   height: number;
 }
 
-export const VIEWPORT_PROFILES: Record<'desktop' | 'tablet' | 'mobile', ViewportProfile> = {
+export const VIEWPORTS: Record<'desktop' | 'tablet' | 'mobile', ViewportProfile> = {
   desktop: { name: 'desktop', width: 1440, height: 900 },
   tablet: { name: 'tablet', width: 768, height: 1024 },
   mobile: { name: 'mobile', width: 375, height: 812 },
 };
+
+export const VIEWPORT_PROFILES = VIEWPORTS;
+
+export interface ScreenshotOutput {
+  desktop: string;
+  tablet: string;
+  mobile: string;
+}
+
+export interface ScreenshotCaptureOptions {
+  url: string;
+  outputDir?: string;
+  prefix?: string;
+  fullPage?: boolean;
+  timeoutMs?: number;
+  waitForSelector?: string;
+}
+
+export interface ScreenshotOptions {
+  url: string;
+  viewports?: Array<'desktop' | 'tablet' | 'mobile'>;
+  timeoutMs?: number;
+  fullPage?: boolean;
+  outputDir?: string;
+}
+
+export interface DiffRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface DiffOutput {
+  similarity: number;
+  changedPixels: number;
+  diffPercentage: number;
+  regions: DiffRegion[];
+  diffImagePath?: string;
+}
+
+export interface VisualReportViewportResult {
+  baselineScreenshot: string;
+  currentScreenshot: string;
+  diffImage?: string;
+  diff: DiffOutput;
+}
+
+export interface VisualReport {
+  url: string;
+  timestamp: string;
+  viewports: {
+    desktop: VisualReportViewportResult;
+    tablet: VisualReportViewportResult;
+    mobile: VisualReportViewportResult;
+  };
+  passed: boolean;
+  summary: {
+    desktopSimilarity: number;
+    tabletSimilarity: number;
+    mobileSimilarity: number;
+    totalChangedRegions: number;
+  };
+}
 
 export interface ElementorDomMetrics {
   hasElementorRoot: boolean;
@@ -34,14 +98,6 @@ export interface OverflowMetrics {
   scrollWidth: number;
   innerWidth: number;
   overflowPx: number;
-}
-
-export interface ScreenshotOptions {
-  url: string;
-  viewports?: Array<'desktop' | 'tablet' | 'mobile'>;
-  timeoutMs?: number;
-  fullPage?: boolean;
-  outputDir?: string;
 }
 
 export interface ScreenshotResult {
@@ -66,7 +122,7 @@ export interface VisualDiffResult {
   currentPath: string;
   pixelDifference: number;
   differencePercentage: number;
-  changedRegions: Array<{ x: number; y: number; width: number; height: number }>;
+  changedRegions: DiffRegion[];
   status: 'IDENTICAL' | 'INTENDED_MUTATION' | 'REGRESSION';
   severity: 'NONE' | 'LOW' | 'HIGH';
   description: string;

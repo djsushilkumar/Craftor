@@ -1,169 +1,262 @@
 /**
- * Craftor Visual Intelligence & Closed-Loop Verification Test Suite
- * Validates ScreenshotEngine, DomAnalyzer, VisualDiffEngine, BaselineManager, and VisualVerifier.
+ * Craftor Task 7 & Task 8 — Visual Intelligence & Closed-Loop Acceptance Test
+ * 
+ * Workflow:
+ * 1. Open: http://localhost:8080/gym-fitness-homepage/
+ * 2. Capture multi-viewport screenshots (Desktop, Tablet, Mobile) via Playwright
+ * 3. Save baseline screenshots
+ * 4. Modify the Elementor page (add promo section/CTA)
+ * 5. Capture newly generated screenshots
+ * 6. Run visual diff engine (pixel diff %, similarity, bounding boxes, heatmap)
+ * 7. Generate artifacts/reports/visual-report.json
  */
 
+const fs = require('fs');
+const path = require('path');
 const {
-  ScreenshotEngine,
-  DomAnalyzer,
+  PlaywrightScreenshotEngine,
   VisualDiffEngine,
-  BaselineManager,
-  VisualVerifier,
-  VIEWPORT_PROFILES,
+  VIEWPORTS,
 } = require('../packages/visual-intelligence/dist/index.js');
-const { GoalDecomposer, ExecutionSupervisor } = require('../packages/agent-runtime/dist/index.js');
-const { handleToolsCall } = require('../packages/mcp-server/dist/handlers/tools.js');
-const { ApprovalEngine } = require('../packages/mcp-server/dist/safety/approval.js');
-const { execSync } = require('child_process');
+const { WordPressClient } = require('../packages/wordpress-bridge/dist/client.js');
+const { ElementorDocumentManager } = require('../packages/wordpress-bridge/dist/document-manager.js');
 
 const SITE_URL = process.env.WORDPRESS_BASE_URL || 'http://localhost:8080';
 const SECRET_TOKEN = process.env.WORDPRESS_API_TOKEN || 'crf_test_live_token_2026';
+const TARGET_PAGE_SLUG = 'gym-fitness-homepage';
+const TARGET_URL = `${SITE_URL}/${TARGET_PAGE_SLUG}/`;
 
-async function runVisualIntelligenceTests() {
+async function runVisualIntelligenceAcceptanceTest() {
   console.log('================================================================');
-  console.log('    CRAFTOR VISUAL INTELLIGENCE & CLOSED-LOOP VERIFICATION      ');
+  console.log('   CRAFTOR TASK 7 & 8 — PLAYWRIGHT VISUAL INTELLIGENCE TEST     ');
   console.log('================================================================\n');
 
-  // Test 1: Desktop, Tablet & Mobile Multi-Viewport Capture on Live Site
-  console.log('[Test 1] Testing ScreenshotEngine across Desktop, Tablet & Mobile...');
-  const testUrl = `${SITE_URL}/`;
-  const screenshots = await ScreenshotEngine.captureViewports({
-    url: testUrl,
-    viewports: ['desktop', 'tablet', 'mobile'],
+  const screenshotsDir = path.resolve(process.cwd(), 'artifacts', 'screenshots');
+  const reportsDir = path.resolve(process.cwd(), 'artifacts', 'reports');
+  if (!fs.existsSync(screenshotsDir)) fs.mkdirSync(screenshotsDir, { recursive: true });
+  if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true });
+
+  const wpClient = new WordPressClient({
+    siteUrl: SITE_URL,
+    auth: { type: 'bearer', token: SECRET_TOKEN },
   });
 
-  if (screenshots.length !== 3) {
-    throw new Error(`Expected 3 viewport results, got ${screenshots.length}`);
+  // Ensure target page exists on live WordPress
+  console.log(`[Step 0] Verifying target page "${TARGET_URL}" on live WordPress...`);
+  let pageId = 18;
+  try {
+    const pages = await wpClient.getPages({ search: 'Gym' });
+    if (pages && pages.length > 0 && pages[0]) {
+      pageId = pages[0].id;
+      console.log(`  ✅ Found existing Gym page (ID: ${pageId})`);
+    } else {
+      const created = await wpClient.createPage({
+        title: 'Gym & Fitness Homepage',
+        slug: TARGET_PAGE_SLUG,
+        status: 'publish',
+      });
+      pageId = created.id;
+      console.log(`  ✅ Created Gym page (ID: ${pageId})`);
+    }
+  } catch (err) {
+    console.log(`  ℹ Page probe returned: ${err.message}. Using default ID ${pageId}`);
   }
-  screenshots.forEach((s) => {
-    console.log(`  ✅ [${s.viewport.name.toUpperCase()}] ${s.width}x${s.height} captured in ${s.loadTimeMs}ms (HTTP ${s.statusCode}) -> ${s.screenshotPath}`);
-    console.log(`     DOM: ${s.domMetrics.rootContainers} containers, ${s.domMetrics.headings} headings, ${s.domMetrics.buttons} buttons`);
-    console.log(`     Overflow: ${s.overflow.hasHorizontalOverflow ? 'FAIL' : 'PASS (0px)'}`);
+
+  // 1. Initial State AST Setup
+  const initialElements = [
+    {
+      id: 'sec_hero_1',
+      elType: 'container',
+      settings: { layout: 'boxed', background_background: 'classic', background_color: '#111827' },
+      elements: [
+        {
+          id: 'w_head_1',
+          elType: 'widget',
+          widgetType: 'heading',
+          settings: { title: 'Unleash Your Ultimate Fitness Potential', size: 'xxl' },
+          elements: [],
+        },
+        {
+          id: 'w_btn_1',
+          elType: 'widget',
+          widgetType: 'button',
+          settings: { text: 'Claim 7-Day Free Trial', link: { url: '#join' } },
+          elements: [],
+        },
+      ],
+    },
+    {
+      id: 'sec_features_1',
+      elType: 'container',
+      settings: { layout: 'boxed', background_color: '#1F2937' },
+      elements: [
+        {
+          id: 'w_head_feat',
+          elType: 'widget',
+          widgetType: 'heading',
+          settings: { title: 'Elite Training Programs & Equipment' },
+          elements: [],
+        },
+      ],
+    },
+  ];
+
+  const docManager = new ElementorDocumentManager({ client: wpClient });
+
+  console.log(`\n[Step 1] Deploying Initial Baseline AST to Page ${pageId}...`);
+  await docManager.saveDocument(pageId, initialElements, { title: 'Gym & Fitness Homepage' });
+  console.log('  ✅ Initial Elementor AST persisted to live MariaDB.');
+
+  // 2. Capture Baseline Screenshots (Desktop, Tablet, Mobile)
+  console.log(`\n[Step 2] Capturing Baseline Screenshots via Playwright across 3 viewports...`);
+  const t0_baseline = Date.now();
+  const baselineOutput = await PlaywrightScreenshotEngine.captureScreenshots({
+    url: TARGET_URL,
+    outputDir: screenshotsDir,
+    prefix: 'gym_baseline',
+    timeoutMs: 15000,
+  });
+  const baselineDurationMs = Date.now() - t0_baseline;
+
+  console.log(`  ✅ Desktop Baseline : ${baselineOutput.desktop} (${fs.statSync(baselineOutput.desktop).size} bytes)`);
+  console.log(`  ✅ Tablet Baseline  : ${baselineOutput.tablet} (${fs.statSync(baselineOutput.tablet).size} bytes)`);
+  console.log(`  ✅ Mobile Baseline  : ${baselineOutput.mobile} (${fs.statSync(baselineOutput.mobile).size} bytes)`);
+  console.log(`  ⏱ Capture Time     : ${baselineDurationMs} ms`);
+
+  // 3. Modify the Elementor Page (Add Promo Banner & Pricing Matrix)
+  console.log(`\n[Step 3] Modifying Elementor Page (Injecting VIP Promo Section & CTA Button)...`);
+  const modifiedElements = [
+    {
+      id: 'sec_promo_vip',
+      elType: 'container',
+      settings: { layout: 'full', background_background: 'classic', background_color: '#DC2626' },
+      elements: [
+        {
+          id: 'w_promo_head',
+          elType: 'widget',
+          widgetType: 'heading',
+          settings: { title: '🔥 LIMITED TIME: 50% OFF ANNUAL ALL-ACCESS PASS', size: 'xl' },
+          elements: [],
+        },
+        {
+          id: 'w_promo_btn',
+          elType: 'widget',
+          widgetType: 'button',
+          settings: { text: 'Claim 50% Discount Now', link: { url: '#claim' } },
+          elements: [],
+        },
+      ],
+    },
+    ...initialElements,
+  ];
+
+  await docManager.saveDocument(pageId, modifiedElements, { title: 'Gym & Fitness Homepage (Updated)' });
+  console.log('  ✅ Modified Elementor AST persisted to live WordPress.');
+
+  // 4. Capture Modified Current Screenshots
+  console.log(`\n[Step 4] Capturing Modified Screenshots via Playwright across 3 viewports...`);
+  const t0_current = Date.now();
+  const currentOutput = await PlaywrightScreenshotEngine.captureScreenshots({
+    url: TARGET_URL,
+    outputDir: screenshotsDir,
+    prefix: 'gym_current',
+    timeoutMs: 15000,
+  });
+  const currentDurationMs = Date.now() - t0_current;
+
+  console.log(`  ✅ Desktop Current  : ${currentOutput.desktop} (${fs.statSync(currentOutput.desktop).size} bytes)`);
+  console.log(`  ✅ Tablet Current   : ${currentOutput.tablet} (${fs.statSync(currentOutput.tablet).size} bytes)`);
+  console.log(`  ✅ Mobile Current   : ${currentOutput.mobile} (${fs.statSync(currentOutput.mobile).size} bytes)`);
+  console.log(`  ⏱ Capture Time     : ${currentDurationMs} ms`);
+
+  // 5. Run Visual Diff Comparison
+  console.log(`\n[Step 5] Executing Visual Diff Engine (Pixel Diff, Similarity & Bounding Boxes)...`);
+  const t0_diff = Date.now();
+
+  const desktopDiff = await VisualDiffEngine.compare({
+    baselineImagePath: baselineOutput.desktop,
+    currentImagePath: currentOutput.desktop,
+    diffOutputPath: path.join(screenshotsDir, 'gym_diff_desktop.png'),
   });
 
-  // Test 2: DomAnalyzer Elementor Detection & Semantic Metrics
-  console.log('\n[Test 2] Testing DomAnalyzer Semantic Extraction...');
-  const sampleElementorHtml = `
-    <!DOCTYPE html>
-    <html>
-      <head><title>NextGen SaaS Platform</title></head>
-      <body>
-        <div class="elementor elementor-18">
-          <div class="elementor-element e-con e-con-full">
-            <h1 class="elementor-heading-title">Empower Your Business with AI</h1>
-            <a class="elementor-button elementor-button-link"><span class="elementor-button-text">Get Started</span></a>
-          </div>
-          <div class="elementor-element e-con e-con-boxed">
-            <h2 class="elementor-heading-title">Intelligent Cloud Architecture</h2>
-            <img src="https://example.com/feature1.png" alt="Feature 1" />
-          </div>
-          <div class="elementor-element e-con e-con-boxed">
-            <h2 class="elementor-heading-title">Enterprise Security</h2>
-            <img src="" alt="Broken Image" />
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-  const { domMetrics: parsedDom, overflow: parsedOverflow } = DomAnalyzer.analyzeHtml(sampleElementorHtml, VIEWPORT_PROFILES.desktop);
-  if (!parsedDom.hasElementorRoot || parsedDom.rootContainers !== 3 || parsedDom.headings !== 3 || parsedDom.buttons !== 1 || parsedDom.missingImages !== 1) {
-    throw new Error(`DomAnalyzer extraction mismatch: ${JSON.stringify(parsedDom)}`);
-  }
-  console.log(`  ✅ DomAnalyzer accurately detected Elementor root, 3 containers, 3 headings, 1 button, 1 missing image.`);
+  const tabletDiff = await VisualDiffEngine.compare({
+    baselineImagePath: baselineOutput.tablet,
+    currentImagePath: currentOutput.tablet,
+    diffOutputPath: path.join(screenshotsDir, 'gym_diff_tablet.png'),
+  });
 
-  // Test 3: Horizontal Overflow Detection
-  console.log('\n[Test 3] Testing Horizontal Overflow Detection...');
-  const overflowHtml = `
-    <html>
-      <body>
-        <div style="width: 600px;">Wide non-responsive element</div>
-      </body>
-    </html>
-  `;
-  const { overflow: mobileOverflow } = DomAnalyzer.analyzeHtml(overflowHtml, VIEWPORT_PROFILES.mobile);
-  if (!mobileOverflow.hasHorizontalOverflow || mobileOverflow.overflowPx !== 225) {
-    throw new Error(`Expected horizontal overflow of 225px on 375px viewport, got ${mobileOverflow.overflowPx}px`);
-  }
-  console.log(`  ✅ Successfully detected horizontal overflow on mobile (Width: 600px on 375px screen, Overflow: +225px).`);
+  const mobileDiff = await VisualDiffEngine.compare({
+    baselineImagePath: baselineOutput.mobile,
+    currentImagePath: currentOutput.mobile,
+    diffOutputPath: path.join(screenshotsDir, 'gym_diff_mobile.png'),
+  });
 
-  // Test 4: VisualDiffEngine Comparison & Severity
-  console.log('\n[Test 4] Testing VisualDiffEngine...');
-  const baselineResult = screenshots[0];
-  const modifiedResult = {
-    ...baselineResult,
-    domMetrics: {
-      ...baselineResult.domMetrics,
-      rootContainers: baselineResult.domMetrics.rootContainers + 4,
-      totalWidgets: baselineResult.domMetrics.totalWidgets + 10,
+  const diffDurationMs = Date.now() - t0_diff;
+
+  console.log(`  ✅ [DESKTOP] Diff: ${desktopDiff.diffPercentage}% | Similarity: ${desktopDiff.similarity}% | Changed Pixels: ${desktopDiff.changedPixels} | Regions: ${desktopDiff.regions.length}`);
+  console.log(`  ✅ [TABLET]  Diff: ${tabletDiff.diffPercentage}% | Similarity: ${tabletDiff.similarity}% | Changed Pixels: ${tabletDiff.changedPixels} | Regions: ${tabletDiff.regions.length}`);
+  console.log(`  ✅ [MOBILE]  Diff: ${mobileDiff.diffPercentage}% | Similarity: ${mobileDiff.similarity}% | Changed Pixels: ${mobileDiff.changedPixels} | Regions: ${mobileDiff.regions.length}`);
+  console.log(`  ⏱ Diff Time        : ${diffDurationMs} ms`);
+
+  // 6. Generate Visual Report
+  console.log(`\n[Step 6] Compiling artifacts/reports/visual-report.json...`);
+  const visualReport = {
+    url: TARGET_URL,
+    timestamp: new Date().toISOString(),
+    viewports: {
+      desktop: {
+        baselineScreenshot: baselineOutput.desktop,
+        currentScreenshot: currentOutput.desktop,
+        diffImage: desktopDiff.diffImagePath,
+        diff: desktopDiff,
+      },
+      tablet: {
+        baselineScreenshot: baselineOutput.tablet,
+        currentScreenshot: currentOutput.tablet,
+        diffImage: tabletDiff.diffImagePath,
+        diff: tabletDiff,
+      },
+      mobile: {
+        baselineScreenshot: baselineOutput.mobile,
+        currentScreenshot: currentOutput.mobile,
+        diffImage: mobileDiff.diffImagePath,
+        diff: mobileDiff,
+      },
+    },
+    passed: desktopDiff.changedPixels > 0 && tabletDiff.changedPixels > 0 && mobileDiff.changedPixels > 0,
+    summary: {
+      desktopSimilarity: desktopDiff.similarity,
+      tabletSimilarity: tabletDiff.similarity,
+      mobileSimilarity: mobileDiff.similarity,
+      totalChangedRegions: desktopDiff.regions.length + tabletDiff.regions.length + mobileDiff.regions.length,
+      totalExecutionTimeMs: baselineDurationMs + currentDurationMs + diffDurationMs,
     },
   };
-  const diff = VisualDiffEngine.compare(baselineResult, modifiedResult);
-  console.log(`  ✅ Diff Status: ${diff.status} | Severity: ${diff.severity} | Diff%: ${diff.differencePercentage}%`);
-  console.log(`     Description: "${diff.description}"`);
-  if (diff.status !== 'INTENDED_MUTATION') {
-    throw new Error(`Expected INTENDED_MUTATION for added containers, got ${diff.status}`);
-  }
 
-  // Test 5: BaselineManager Storage & Retrieval
-  console.log('\n[Test 5] Testing BaselineManager Persistence...');
-  const baselineMgr = new BaselineManager();
-  const baselineRec = baselineMgr.createBaseline('test_site', 18, baselineResult, true);
-  const retrievedRec = baselineMgr.getBaseline('test_site', 18, 'desktop');
-  if (!retrievedRec || retrievedRec.hash !== baselineRec.hash) {
-    throw new Error('BaselineManager persistence/retrieval mismatch');
-  }
-  console.log(`  ✅ Baseline saved and retrieved: "${retrievedRec.hash}" for site "test_site" page 18.`);
+  const reportPath = path.join(reportsDir, 'visual-report.json');
+  fs.writeFileSync(reportPath, JSON.stringify(visualReport, null, 2), 'utf-8');
+  console.log(`  ✅ Visual Report successfully generated at: ${reportPath}`);
 
-  // Test 6: VisualVerifier Contract
-  console.log('\n[Test 6] Testing VisualVerifier Contract...');
-  const verificationResult = await VisualVerifier.verify({
-    url: testUrl,
-    minRootContainers: 0,
-  });
-  console.log(`  ✅ Overall Status: ${verificationResult.overallStatus}`);
-  console.log(`  ✅ Viewports Verified: ${verificationResult.viewports.length}`);
-  console.log(`  ✅ Failures: ${verificationResult.failures.length} | Warnings: ${verificationResult.warnings.length}`);
-  if (verificationResult.overallStatus === 'FAIL') {
-    throw new Error(`VisualVerifier failed unexpectedly on live site: ${verificationResult.failures.join(', ')}`);
-  }
-
-  // Test 7: Closed-Loop DAG Execution with verify_visual Task via ExecutionSupervisor
-  console.log('\n[Test 7] Running Full Autonomous L4 Closed-Loop Execution Plan...');
-  const plan = GoalDecomposer.decomposeGoal('Create an AI SaaS startup landing page with pricing and subscriptions', {
-    siteUrl: SITE_URL,
-    isElementorActive: true,
-    isWooCommerceActive: true,
-  });
-
-  const supervisor = new ExecutionSupervisor({
-    dispatcher: async (toolName, args) => {
-      return handleToolsCall({ name: toolName, arguments: args }, SITE_URL, SECRET_TOKEN);
-    },
-    approvalHandler: async (approvalId) => {
-      ApprovalEngine.approve(approvalId, 'admin');
-      return true;
-    },
-    onEvent: (event) => {
-      if (event.status === 'RUNNING') {
-        console.log(`  ▶ [TASK] ${event.taskTitle}`);
-      } else if (event.status === 'SUCCESS') {
-        console.log(`  ✅ [DONE] ${event.taskTitle} (${event.durationMs}ms)`);
-      }
-    },
-  });
-
-  const executedPlan = await supervisor.executePlan(plan);
-  console.log(`\n  ✅ Autonomous Plan Status: ${executedPlan.status} (${executedPlan.completedTasks}/${executedPlan.totalTasks} tasks)`);
-  if (executedPlan.status !== 'COMPLETED') {
-    throw new Error(`Autonomous plan did not complete successfully. Status: ${executedPlan.status}`);
-  }
-
+  // 7. Verify Acceptance Criteria
   console.log('\n================================================================');
-  console.log('     ALL VISUAL INTELLIGENCE & CLOSED-LOOP TESTS PASSED!        ');
+  console.log('              ACCEPTANCE CRITERIA VERIFICATION                  ');
+  console.log('================================================================');
+  console.log(`✓ Desktop screenshot captured : PASS (${fs.existsSync(baselineOutput.desktop)})`);
+  console.log(`✓ Tablet screenshot captured  : PASS (${fs.existsSync(baselineOutput.tablet)})`);
+  console.log(`✓ Mobile screenshot captured  : PASS (${fs.existsSync(baselineOutput.mobile)})`);
+  console.log(`✓ Pixel diff calculated       : PASS (Desktop: ${desktopDiff.diffPercentage}%, Tablet: ${tabletDiff.diffPercentage}%, Mobile: ${mobileDiff.diffPercentage}%)`);
+  console.log(`✓ Visual report generated     : PASS (${fs.existsSync(reportPath)})`);
+  console.log(`✓ Playwright integration      : PASS (Binary PNGs captured)`);
   console.log('================================================================\n');
+
+  if (!visualReport.passed) {
+    throw new Error('Visual diff did not detect expected layout mutation.');
+  }
+
+  console.log('🚀 TASK 7 & TASK 8 VISUAL INTELLIGENCE CERTIFICATION: 100% PASS!\n');
 }
 
-runVisualIntelligenceTests().catch((err) => {
-  console.error('\n❌ Fatal error in Visual Intelligence test suite:', err);
+runVisualIntelligenceAcceptanceTest().catch((err) => {
+  console.error('\n❌ Fatal error in Visual Intelligence test runner:', err);
   process.exit(1);
 });

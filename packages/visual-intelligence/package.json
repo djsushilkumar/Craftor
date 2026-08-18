@@ -5,9 +5,14 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "@craftor/elementor-ast": "workspace:*",
     "@craftor/shared-types": "workspace:*",
     "@craftor/shared-utils": "workspace:*",
-    "@craftor/elementor-ast": "workspace:*"
+    "@types/pixelmatch": "^5.2.6",
+    "@types/pngjs": "^6.0.5",
+    "pixelmatch": "^7.2.0",
+    "playwright-core": "^1.62.1",
+    "pngjs": "^7.0.0"
   },
   "scripts": {
     "build": "tsc",
