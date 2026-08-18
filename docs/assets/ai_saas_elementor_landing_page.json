@@ -1,0 +1,1731 @@
+[
+  {
+    "id": "8aa1e68",
+    "elType": "container",
+    "isInner": false,
+    "settings": {
+      "flex_direction": "column",
+      "justify_content": "center",
+      "align_items": "center",
+      "gap": {
+        "unit": "px",
+        "size": 20
+      },
+      "padding": {
+        "unit": "rem",
+        "top": "6",
+        "bottom": "6",
+        "left": "2",
+        "right": "2"
+      },
+      "background_background": "classic",
+      "background_color": "#0B0F19",
+      "border_border": "none",
+      "border_color": "transparent",
+      "border_radius": {
+        "unit": "px",
+        "size": 12
+      },
+      "border_bottom_width": "1px",
+      "border_bottom_color": "rgba(99, 102, 241, 0.2)"
+    },
+    "elements": [
+      {
+        "id": "68235e3",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "⚡ NEXT-GENERATION AUTONOMOUS AI FOR WORDPRESS",
+          "header_size": "span",
+          "align": "center",
+          "title_color": "#818CF8",
+          "typography_typography": "custom",
+          "typography_font_size": {
+            "unit": "px",
+            "size": 14
+          },
+          "typography_font_weight": "700",
+          "typography_letter_spacing": {
+            "unit": "px",
+            "size": 1.5
+          }
+        },
+        "elements": []
+      },
+      {
+        "id": "fb1a8e1",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "Transform Ideas into WordPress Reality at the Speed of Thought",
+          "header_size": "h1",
+          "align": "center",
+          "title_color": "#FFFFFF",
+          "typography_typography": "custom",
+          "typography_font_size": {
+            "unit": "rem",
+            "size": 3.5
+          },
+          "typography_font_weight": "800",
+          "typography_line_height": {
+            "unit": "em",
+            "size": 1.15
+          }
+        },
+        "elements": []
+      },
+      {
+        "id": "4323463",
+        "elType": "widget",
+        "widgetType": "text-editor",
+        "settings": {
+          "editor": "<p style=\"text-align: center; color: #9CA3AF; font-size: 1.2rem; max-width: 780px; margin: 0 auto; line-height: 1.6;\">The ultimate autonomous AI platform with 86+ MCP tools, direct Elementor AST synthesis, and sub-15ms serverless edge intelligence. Build pixel-perfect sites in seconds.</p>"
+        },
+        "elements": []
+      },
+      {
+        "id": "fcb1c12",
+        "elType": "container",
+        "isInner": false,
+        "settings": {
+          "flex_direction": "row",
+          "justify_content": "center",
+          "align_items": "center",
+          "gap": {
+            "unit": "px",
+            "size": 16
+          },
+          "padding": {
+            "unit": "rem",
+            "top": "1.5",
+            "bottom": "1.5",
+            "left": "0",
+            "right": "0"
+          },
+          "background_background": "transparent",
+          "background_color": "transparent",
+          "border_border": "none",
+          "border_color": "transparent",
+          "border_radius": {
+            "unit": "px",
+            "size": 12
+          }
+        },
+        "elements": [
+          {
+            "id": "a6e58e1",
+            "elType": "widget",
+            "widgetType": "button",
+            "settings": {
+              "text": "🚀 Start Free 14-Day Trial",
+              "align": "center",
+              "button_type": "primary",
+              "link": {
+                "url": "#pricing"
+              }
+            },
+            "elements": []
+          },
+          {
+            "id": "2285648",
+            "elType": "widget",
+            "widgetType": "button",
+            "settings": {
+              "text": "📺 Watch 2-Min Live Demo",
+              "align": "center",
+              "button_type": "secondary",
+              "link": {
+                "url": "#features"
+              }
+            },
+            "elements": []
+          }
+        ]
+      },
+      {
+        "id": "c2c5d88",
+        "elType": "widget",
+        "widgetType": "image",
+        "settings": {
+          "image": {
+            "url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"
+          },
+          "align": "center",
+          "caption": "Craftor Visual Web Studio & Elementor Live Canvas Bridge"
+        },
+        "elements": []
+      }
+    ]
+  },
+  {
+    "id": "1ae53a5",
+    "elType": "container",
+    "isInner": false,
+    "settings": {
+      "flex_direction": "column",
+      "justify_content": "flex-start",
+      "align_items": "center",
+      "gap": {
+        "unit": "px",
+        "size": 20
+      },
+      "padding": {
+        "unit": "rem",
+        "top": "5",
+        "bottom": "5",
+        "left": "2",
+        "right": "2"
+      },
+      "background_background": "classic",
+      "background_color": "#0F172A",
+      "border_border": "none",
+      "border_color": "transparent",
+      "border_radius": {
+        "unit": "px",
+        "size": 12
+      }
+    },
+    "elements": [
+      {
+        "id": "911cf93",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "CORE CAPABILITIES",
+          "header_size": "span",
+          "align": "center",
+          "title_color": "#38BDF8",
+          "typography_font_size": {
+            "unit": "px",
+            "size": 13
+          },
+          "typography_font_weight": "700"
+        },
+        "elements": []
+      },
+      {
+        "id": "4f31c8f",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "Engineered for Autonomous WordPress Excellence",
+          "header_size": "h2",
+          "align": "center",
+          "title_color": "#FFFFFF",
+          "typography_font_size": {
+            "unit": "rem",
+            "size": 2.5
+          }
+        },
+        "elements": []
+      },
+      {
+        "id": "0db5068",
+        "elType": "container",
+        "isInner": false,
+        "settings": {
+          "flex_direction": "row",
+          "justify_content": "space-between",
+          "align_items": "stretch",
+          "gap": {
+            "unit": "px",
+            "size": 24
+          },
+          "padding": {
+            "unit": "rem",
+            "top": "2",
+            "bottom": "1",
+            "left": "0",
+            "right": "0"
+          },
+          "background_background": "transparent",
+          "background_color": "transparent",
+          "border_border": "none",
+          "border_color": "transparent",
+          "border_radius": {
+            "unit": "px",
+            "size": 12
+          }
+        },
+        "elements": [
+          {
+            "id": "7ca1ee1",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2",
+                "bottom": "2",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 12
+              }
+            },
+            "elements": [
+              {
+                "id": "8089d36",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "✦ Direct Elementor AST Synthesis",
+                  "header_size": "h3",
+                  "title_color": "#F9FAFB",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.25
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "69191d5",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; font-size: 0.95rem;\">Zero layout corruption. Generates native Flexbox and CSS Grid containers with typed properties and Global Kit variable bindings.</p>"
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "4ffd916",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2",
+                "bottom": "2",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 12
+              }
+            },
+            "elements": [
+              {
+                "id": "f8950e1",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "✦ 86+ Universal MCP Tools",
+                  "header_size": "h3",
+                  "title_color": "#F9FAFB",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.25
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "661ff82",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; font-size: 0.95rem;\">Connects effortlessly to Claude Desktop, Cursor, Antigravity, VS Code, Roo Code, Windsurf, Zed, and OpenCode.</p>"
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "eab3627",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2",
+                "bottom": "2",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 12
+              }
+            },
+            "elements": [
+              {
+                "id": "548e6f2",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "✦ Sub-15ms Serverless Edge Mesh",
+                  "header_size": "h3",
+                  "title_color": "#F9FAFB",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.25
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "1275b83",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; font-size: 0.95rem;\">Cloudflare Workers and Geo-distributed KV caching deliver instantaneous AST parsing and zero-lag editor previews.</p>"
+                },
+                "elements": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "3058a33",
+        "elType": "container",
+        "isInner": false,
+        "settings": {
+          "flex_direction": "row",
+          "justify_content": "space-between",
+          "align_items": "stretch",
+          "gap": {
+            "unit": "px",
+            "size": 24
+          },
+          "padding": {
+            "unit": "rem",
+            "top": "1",
+            "bottom": "2",
+            "left": "0",
+            "right": "0"
+          },
+          "background_background": "transparent",
+          "background_color": "transparent",
+          "border_border": "none",
+          "border_color": "transparent",
+          "border_radius": {
+            "unit": "px",
+            "size": 12
+          }
+        },
+        "elements": [
+          {
+            "id": "dc28302",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2",
+                "bottom": "2",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 12
+              }
+            },
+            "elements": [
+              {
+                "id": "8e180de",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "✦ Zero-Trust Security & Injection Shield",
+                  "header_size": "h3",
+                  "title_color": "#F9FAFB",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.25
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "412f962",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; font-size: 0.95rem;\">Continuous AST sanitization intercepts malicious scripts, XSS vectors, and unauthorized prompt injections.</p>"
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "5718745",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2",
+                "bottom": "2",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 12
+              }
+            },
+            "elements": [
+              {
+                "id": "0ab6942",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "✦ Multi-Agent Swarm Collaboration",
+                  "header_size": "h3",
+                  "title_color": "#F9FAFB",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.25
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "fcb1a4a",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; font-size: 0.95rem;\">CRDT conflict-free synchronization allows UI Designers, SEO Copywriters, and E-Commerce Architects to build simultaneously.</p>"
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "d4a8e71",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2",
+                "bottom": "2",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 12
+              }
+            },
+            "elements": [
+              {
+                "id": "e839d10",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "✦ Real-Time Voice Studio",
+                  "header_size": "h3",
+                  "title_color": "#F9FAFB",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.25
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "3f87cdb",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; font-size: 0.95rem;\">Hands-free Elementor editing with speech-to-intent natural language classification and instant AST mutation dispatching.</p>"
+                },
+                "elements": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "a99383a",
+    "elType": "container",
+    "isInner": false,
+    "settings": {
+      "flex_direction": "column",
+      "justify_content": "flex-start",
+      "align_items": "center",
+      "gap": {
+        "unit": "px",
+        "size": 20
+      },
+      "padding": {
+        "unit": "rem",
+        "top": "5",
+        "bottom": "5",
+        "left": "2",
+        "right": "2"
+      },
+      "background_background": "classic",
+      "background_color": "#0B0F19",
+      "border_border": "none",
+      "border_color": "transparent",
+      "border_radius": {
+        "unit": "px",
+        "size": 12
+      }
+    },
+    "elements": [
+      {
+        "id": "5cfc538",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "FLEXIBLE PRICING",
+          "header_size": "span",
+          "align": "center",
+          "title_color": "#818CF8",
+          "typography_font_size": {
+            "unit": "px",
+            "size": 13
+          },
+          "typography_font_weight": "700"
+        },
+        "elements": []
+      },
+      {
+        "id": "b519f0b",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "Simple, Transparent Plans for Every Team",
+          "header_size": "h2",
+          "align": "center",
+          "title_color": "#FFFFFF",
+          "typography_font_size": {
+            "unit": "rem",
+            "size": 2.5
+          }
+        },
+        "elements": []
+      },
+      {
+        "id": "8d33583",
+        "elType": "container",
+        "isInner": false,
+        "settings": {
+          "flex_direction": "row",
+          "justify_content": "center",
+          "align_items": "stretch",
+          "gap": {
+            "unit": "px",
+            "size": 24
+          },
+          "padding": {
+            "unit": "rem",
+            "top": "2.5",
+            "bottom": "1",
+            "left": "0",
+            "right": "0"
+          },
+          "background_background": "transparent",
+          "background_color": "transparent",
+          "border_border": "none",
+          "border_color": "transparent",
+          "border_radius": {
+            "unit": "px",
+            "size": 12
+          }
+        },
+        "elements": [
+          {
+            "id": "8ea55ea",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "space-between",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2.5",
+                "bottom": "2.5",
+                "left": "2",
+                "right": "2"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 16
+              },
+              "box_shadow": "none"
+            },
+            "elements": [
+              {
+                "id": "9f9673c",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "Starter Tier",
+                  "header_size": "h3",
+                  "title_color": "#F3F4F6",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.3
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "ee038d8",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "$29 <span style=\"font-size: 1rem; color: #9CA3AF; font-weight: 400;\">/ month</span>",
+                  "header_size": "h2",
+                  "title_color": "#FFFFFF",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 2.8
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "83fc274",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; font-size: 0.9rem; margin-bottom: 1.5rem;\">Ideal for freelance developers and individual WordPress site creators.</p>\n                   <ul style=\"color: #D1D5DB; line-height: 1.8; padding-left: 1.2rem; font-size: 0.95rem;\">\n                     <li>Up to 5 WordPress Sites</li><li>45 Essential MCP Tools</li><li>Standard AST Synthesis</li><li>Community Discord Support</li>\n                   </ul>"
+                },
+                "elements": []
+              },
+              {
+                "id": "7915e65",
+                "elType": "widget",
+                "widgetType": "button",
+                "settings": {
+                  "text": "Choose Plan",
+                  "button_type": "secondary",
+                  "align": "center",
+                  "link": {
+                    "url": "#contact"
+                  }
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "b52901d",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "space-between",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2.5",
+                "bottom": "2.5",
+                "left": "2",
+                "right": "2"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(30, 27, 75, 0.85)",
+              "border_border": "solid",
+              "border_color": "#6366F1",
+              "border_radius": {
+                "unit": "px",
+                "size": 16
+              },
+              "box_shadow": "0 10px 30px rgba(99, 102, 241, 0.3)"
+            },
+            "elements": [
+              {
+                "id": "f256948",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "⭐ Agency Pro Tier (MOST POPULAR)",
+                  "header_size": "h3",
+                  "title_color": "#A5B4FC",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.3
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "3df435a",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "$79 <span style=\"font-size: 1rem; color: #9CA3AF; font-weight: 400;\">/ month</span>",
+                  "header_size": "h2",
+                  "title_color": "#FFFFFF",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 2.8
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "7018911",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; font-size: 0.9rem; margin-bottom: 1.5rem;\">The complete autonomous studio for fast-growing digital agencies.</p>\n                   <ul style=\"color: #D1D5DB; line-height: 1.8; padding-left: 1.2rem; font-size: 0.95rem;\">\n                     <li>Unlimited WordPress & Multisite</li><li>Complete 86+ MCP Tools Catalog</li><li>Real-Time AI Voice Studio</li><li>Sub-15ms Serverless Edge Mesh</li><li>Multi-Agent Collaborative Swarm</li><li>24/7 Priority VIP Support</li>\n                   </ul>"
+                },
+                "elements": []
+              },
+              {
+                "id": "4b9b5bd",
+                "elType": "widget",
+                "widgetType": "button",
+                "settings": {
+                  "text": "Get Started with Pro",
+                  "button_type": "primary",
+                  "align": "center",
+                  "link": {
+                    "url": "#contact"
+                  }
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "7f7cf5a",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "space-between",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2.5",
+                "bottom": "2.5",
+                "left": "2",
+                "right": "2"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 16
+              },
+              "box_shadow": "none"
+            },
+            "elements": [
+              {
+                "id": "6dfd15e",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "Enterprise Tier",
+                  "header_size": "h3",
+                  "title_color": "#F3F4F6",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.3
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "4550f1e",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "$199 <span style=\"font-size: 1rem; color: #9CA3AF; font-weight: 400;\">/ month</span>",
+                  "header_size": "h2",
+                  "title_color": "#FFFFFF",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 2.8
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "32d25a1",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; font-size: 0.9rem; margin-bottom: 1.5rem;\">Custom dedicated clusters with enterprise SLA and security guarantees.</p>\n                   <ul style=\"color: #D1D5DB; line-height: 1.8; padding-left: 1.2rem; font-size: 0.95rem;\">\n                     <li>Dedicated Kubernetes Pods</li><li>Custom LLM Fine-Tuning</li><li>99.99% Guaranteed SLA</li><li>Zero-Trust AES-256 Vault</li><li>Dedicated Solutions Architect</li>\n                   </ul>"
+                },
+                "elements": []
+              },
+              {
+                "id": "04ee9f4",
+                "elType": "widget",
+                "widgetType": "button",
+                "settings": {
+                  "text": "Choose Plan",
+                  "button_type": "secondary",
+                  "align": "center",
+                  "link": {
+                    "url": "#contact"
+                  }
+                },
+                "elements": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bc617e5",
+    "elType": "container",
+    "isInner": false,
+    "settings": {
+      "flex_direction": "column",
+      "justify_content": "flex-start",
+      "align_items": "center",
+      "gap": {
+        "unit": "px",
+        "size": 20
+      },
+      "padding": {
+        "unit": "rem",
+        "top": "5",
+        "bottom": "5",
+        "left": "2",
+        "right": "2"
+      },
+      "background_background": "classic",
+      "background_color": "#0F172A",
+      "border_border": "none",
+      "border_color": "transparent",
+      "border_radius": {
+        "unit": "px",
+        "size": 12
+      }
+    },
+    "elements": [
+      {
+        "id": "788dbf8",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "HAVE QUESTIONS?",
+          "header_size": "span",
+          "align": "center",
+          "title_color": "#38BDF8",
+          "typography_font_size": {
+            "unit": "px",
+            "size": 13
+          },
+          "typography_font_weight": "700"
+        },
+        "elements": []
+      },
+      {
+        "id": "77822bc",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "Frequently Asked Questions",
+          "header_size": "h2",
+          "align": "center",
+          "title_color": "#FFFFFF",
+          "typography_font_size": {
+            "unit": "rem",
+            "size": 2.5
+          }
+        },
+        "elements": []
+      },
+      {
+        "id": "de4ce8f",
+        "elType": "container",
+        "isInner": false,
+        "settings": {
+          "flex_direction": "column",
+          "justify_content": "flex-start",
+          "align_items": "stretch",
+          "gap": {
+            "unit": "px",
+            "size": 16
+          },
+          "padding": {
+            "unit": "rem",
+            "top": "2",
+            "bottom": "1",
+            "left": "0",
+            "right": "0"
+          },
+          "background_background": "transparent",
+          "background_color": "transparent",
+          "border_border": "none",
+          "border_color": "transparent",
+          "border_radius": {
+            "unit": "px",
+            "size": 12
+          }
+        },
+        "elements": [
+          {
+            "id": "0694961",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "1.25",
+                "bottom": "1.25",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.6)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.3)",
+              "border_radius": {
+                "unit": "px",
+                "size": 10
+              }
+            },
+            "elements": [
+              {
+                "id": "02fc430",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "❓ How does Craftor integrate directly into Elementor without causing layout breakage?",
+                  "header_size": "h4",
+                  "title_color": "#F3F4F6",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.1
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "d6c5849",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; margin: 0.5rem 0 0 0; font-size: 0.95rem;\">Craftor operates on the native Elementor JSON AST (Abstract Syntax Tree), applying deterministic schema validation against Elementor container and widget control stacks prior to committing any database postmeta.</p>"
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "1a821c1",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "1.25",
+                "bottom": "1.25",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.6)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.3)",
+              "border_radius": {
+                "unit": "px",
+                "size": 10
+              }
+            },
+            "elements": [
+              {
+                "id": "252289c",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "❓ Which AI models and code editors are natively supported?",
+                  "header_size": "h4",
+                  "title_color": "#F3F4F6",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.1
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "b8a09d8",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; margin: 0.5rem 0 0 0; font-size: 0.95rem;\">Craftor supports Claude 3.5 Sonnet, GPT-4o, Gemini 2.0, DeepSeek R1, and local Ollama models across 8 official client adapters (Claude Desktop, Cursor, Antigravity, VS Code, Roo Code, Windsurf, Zed, and OpenCode).</p>"
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "176eff6",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "1.25",
+                "bottom": "1.25",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.6)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.3)",
+              "border_radius": {
+                "unit": "px",
+                "size": 10
+              }
+            },
+            "elements": [
+              {
+                "id": "407fded",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "❓ Can I rollback an AI generation if I do not like the outcome?",
+                  "header_size": "h4",
+                  "title_color": "#F3F4F6",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.1
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "6c83c82",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; margin: 0.5rem 0 0 0; font-size: 0.95rem;\">Yes! Craftor automatically takes transactional database snapshots ($wpdb) before every mutation. You can instantly restore any prior state with 1-click micro-rollback.</p>"
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "0d400ac",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "1.25",
+                "bottom": "1.25",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.6)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.3)",
+              "border_radius": {
+                "unit": "px",
+                "size": 10
+              }
+            },
+            "elements": [
+              {
+                "id": "72a00f4",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "❓ Is Craftor compatible with Elementor Pro and 3rd-Party Addons?",
+                  "header_size": "h4",
+                  "title_color": "#F3F4F6",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.1
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "7cb1d73",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; line-height: 1.6; margin: 0.5rem 0 0 0; font-size: 0.95rem;\">Absolutely. Craftor includes first-party adapters for Elementor Pro, Crocoblock JetEngine, and Essential Addons with an open Developer SDK for custom widgets.</p>"
+                },
+                "elements": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2b3844",
+    "elType": "container",
+    "isInner": false,
+    "settings": {
+      "flex_direction": "column",
+      "justify_content": "flex-start",
+      "align_items": "center",
+      "gap": {
+        "unit": "px",
+        "size": 20
+      },
+      "padding": {
+        "unit": "rem",
+        "top": "5",
+        "bottom": "5",
+        "left": "2",
+        "right": "2"
+      },
+      "background_background": "classic",
+      "background_color": "#0B0F19",
+      "border_border": "none",
+      "border_color": "transparent",
+      "border_radius": {
+        "unit": "px",
+        "size": 12
+      }
+    },
+    "elements": [
+      {
+        "id": "b90f5ec",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "TESTIMONIALS",
+          "header_size": "span",
+          "align": "center",
+          "title_color": "#818CF8",
+          "typography_font_size": {
+            "unit": "px",
+            "size": 13
+          },
+          "typography_font_weight": "700"
+        },
+        "elements": []
+      },
+      {
+        "id": "55b64a9",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "Loved by Developers & Agencies Worldwide",
+          "header_size": "h2",
+          "align": "center",
+          "title_color": "#FFFFFF",
+          "typography_font_size": {
+            "unit": "rem",
+            "size": 2.5
+          }
+        },
+        "elements": []
+      },
+      {
+        "id": "c1f45c0",
+        "elType": "container",
+        "isInner": false,
+        "settings": {
+          "flex_direction": "row",
+          "justify_content": "space-between",
+          "align_items": "stretch",
+          "gap": {
+            "unit": "px",
+            "size": 24
+          },
+          "padding": {
+            "unit": "rem",
+            "top": "2",
+            "bottom": "1",
+            "left": "0",
+            "right": "0"
+          },
+          "background_background": "transparent",
+          "background_color": "transparent",
+          "border_border": "none",
+          "border_color": "transparent",
+          "border_radius": {
+            "unit": "px",
+            "size": 12
+          }
+        },
+        "elements": [
+          {
+            "id": "c1de875",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2",
+                "bottom": "2",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 12
+              }
+            },
+            "elements": [
+              {
+                "id": "45df25b",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "⭐⭐⭐⭐⭐",
+                  "header_size": "span",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.1
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "35f2557",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<blockquote style=\"color: #E5E7EB; font-style: italic; margin: 0.8rem 0; line-height: 1.6; font-size: 1rem;\">\"Craftor cut our WordPress agency delivery cycle from 3 days to under 15 minutes. The live canvas sync feels like science fiction.\"</blockquote>"
+                },
+                "elements": []
+              },
+              {
+                "id": "6955d05",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "Sarah Jenkins",
+                  "header_size": "h4",
+                  "title_color": "#818CF8",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.05
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "3ce2f0e",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; font-size: 0.85rem; margin: 0;\">VP of Engineering, Apex Digital Agency</p>"
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "05014f8",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2",
+                "bottom": "2",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 12
+              }
+            },
+            "elements": [
+              {
+                "id": "d63ba6c",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "⭐⭐⭐⭐⭐",
+                  "header_size": "span",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.1
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "f9d8a7f",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<blockquote style=\"color: #E5E7EB; font-style: italic; margin: 0.8rem 0; line-height: 1.6; font-size: 1rem;\">\"The JSON-RPC 2.0 MCP interface is flawless. Connecting Cursor directly to Elementor AST gives us superpowers.\"</blockquote>"
+                },
+                "elements": []
+              },
+              {
+                "id": "8e1622a",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "Alex Rivera",
+                  "header_size": "h4",
+                  "title_color": "#818CF8",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.05
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "4ee06cb",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; font-size: 0.85rem; margin: 0;\">Lead Architect, CodeCraft Studio</p>"
+                },
+                "elements": []
+              }
+            ]
+          },
+          {
+            "id": "6851187",
+            "elType": "container",
+            "isInner": false,
+            "settings": {
+              "flex_direction": "column",
+              "justify_content": "flex-start",
+              "align_items": "stretch",
+              "gap": {
+                "unit": "px",
+                "size": 20
+              },
+              "padding": {
+                "unit": "rem",
+                "top": "2",
+                "bottom": "2",
+                "left": "1.5",
+                "right": "1.5"
+              },
+              "background_background": "classic",
+              "background_color": "rgba(17, 24, 39, 0.7)",
+              "border_border": "solid",
+              "border_color": "rgba(75, 85, 99, 0.4)",
+              "border_radius": {
+                "unit": "px",
+                "size": 12
+              }
+            },
+            "elements": [
+              {
+                "id": "13f0e2c",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "⭐⭐⭐⭐⭐",
+                  "header_size": "span",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.1
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "6484267",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<blockquote style=\"color: #E5E7EB; font-style: italic; margin: 0.8rem 0; line-height: 1.6; font-size: 1rem;\">\"Voice Studio allowed our content editors to adjust sales funnels hands-free on live client calls with 100% accuracy.\"</blockquote>"
+                },
+                "elements": []
+              },
+              {
+                "id": "d0f8e7e",
+                "elType": "widget",
+                "widgetType": "heading",
+                "settings": {
+                  "title": "Elena Rostova",
+                  "header_size": "h4",
+                  "title_color": "#818CF8",
+                  "typography_font_size": {
+                    "unit": "rem",
+                    "size": 1.05
+                  }
+                },
+                "elements": []
+              },
+              {
+                "id": "5efbd5a",
+                "elType": "widget",
+                "widgetType": "text-editor",
+                "settings": {
+                  "editor": "<p style=\"color: #9CA3AF; font-size: 0.85rem; margin: 0;\">Head of Growth, Trendify Global</p>"
+                },
+                "elements": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ed47ae6",
+    "elType": "container",
+    "isInner": false,
+    "settings": {
+      "flex_direction": "column",
+      "justify_content": "flex-start",
+      "align_items": "center",
+      "gap": {
+        "unit": "px",
+        "size": 20
+      },
+      "padding": {
+        "unit": "rem",
+        "top": "5",
+        "bottom": "5",
+        "left": "2",
+        "right": "2"
+      },
+      "background_background": "classic",
+      "background_color": "linear-gradient(135deg, #1E1B4B 0%, #0F172A 100%)",
+      "border_border": "solid",
+      "border_color": "rgba(99, 102, 241, 0.4)",
+      "border_radius": {
+        "unit": "px",
+        "size": 20
+      }
+    },
+    "elements": [
+      {
+        "id": "de90534",
+        "elType": "widget",
+        "widgetType": "heading",
+        "settings": {
+          "title": "Ready to Build the Future of WordPress with AI?",
+          "header_size": "h2",
+          "align": "center",
+          "title_color": "#FFFFFF",
+          "typography_font_size": {
+            "unit": "rem",
+            "size": 2.6
+          }
+        },
+        "elements": []
+      },
+      {
+        "id": "7ea0fd0",
+        "elType": "widget",
+        "widgetType": "text-editor",
+        "settings": {
+          "editor": "<p style=\"color: #C7D2FE; text-align: center; max-width: 640px; margin: 0 auto 1.5rem auto; line-height: 1.6; font-size: 1.1rem;\">Join 10,000+ creators building lightning-fast, high-converting Elementor experiences autonomously.</p>"
+        },
+        "elements": []
+      },
+      {
+        "id": "6fc2205",
+        "elType": "container",
+        "isInner": false,
+        "settings": {
+          "flex_direction": "column",
+          "justify_content": "flex-start",
+          "align_items": "stretch",
+          "gap": {
+            "unit": "px",
+            "size": 14
+          },
+          "padding": {
+            "unit": "rem",
+            "top": "1.5",
+            "bottom": "1.5",
+            "left": "2",
+            "right": "2"
+          },
+          "background_background": "classic",
+          "background_color": "rgba(15, 23, 42, 0.7)",
+          "border_border": "solid",
+          "border_color": "rgba(99, 102, 241, 0.3)",
+          "border_radius": {
+            "unit": "px",
+            "size": 12
+          },
+          "width": "100%",
+          "max_width": "560px"
+        },
+        "elements": [
+          {
+            "id": "94d2331",
+            "elType": "widget",
+            "widgetType": "heading",
+            "settings": {
+              "title": "Request Early VIP Access",
+              "header_size": "h3",
+              "align": "center",
+              "title_color": "#F9FAFB"
+            },
+            "elements": []
+          },
+          {
+            "id": "2101f7d",
+            "elType": "widget",
+            "widgetType": "text-editor",
+            "settings": {
+              "editor": "\n              <div style=\"display: flex; flex-direction: column; gap: 10px;\">\n                <input type=\"text\" placeholder=\"Your Name\" style=\"width: 100%; padding: 12px; border-radius: 6px; background: rgba(31, 41, 55, 0.8); border: 1px solid #4B5563; color: #FFF;\" />\n                <input type=\"email\" placeholder=\"Work Email Address\" style=\"width: 100%; padding: 12px; border-radius: 6px; background: rgba(31, 41, 55, 0.8); border: 1px solid #4B5563; color: #FFF;\" />\n                <input type=\"text\" placeholder=\"WordPress Site URL (Optional)\" style=\"width: 100%; padding: 12px; border-radius: 6px; background: rgba(31, 41, 55, 0.8); border: 1px solid #4B5563; color: #FFF;\" />\n              </div>\n            "
+            },
+            "elements": []
+          },
+          {
+            "id": "6696691",
+            "elType": "widget",
+            "widgetType": "button",
+            "settings": {
+              "text": "⚡ Claim Instant Access",
+              "align": "center",
+              "button_type": "primary"
+            },
+            "elements": []
+          }
+        ]
+      }
+    ]
+  }
+]
