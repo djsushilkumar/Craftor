@@ -122,7 +122,24 @@ class Plugin {
             $approval_controller->register_routes();
         }
 
-        // 7. Native Built-in MCP SSE Endpoint (Direct AI Client Connection)
+        // 7. Load & Register 3-Step AI Wizard Controller (Channel 2)
+        $arch_reg_file = CRAFTOR_CORE_PATH . 'src/Archetypes/ArchetypeRegistry.php';
+        if ( file_exists( $arch_reg_file ) ) {
+            require_once $arch_reg_file;
+            if ( class_exists( 'Craftor\\Core\\Archetypes\\ArchetypeRegistry' ) ) {
+                \Craftor\Core\Archetypes\ArchetypeRegistry::init();
+            }
+        }
+        $wizard_ctrl_file = CRAFTOR_CORE_PATH . 'src/controllers/wizard-controller.php';
+        if ( file_exists( $wizard_ctrl_file ) ) {
+            require_once $wizard_ctrl_file;
+        }
+        if ( class_exists( 'Craftor\\Core\\Controllers\\WizardController' ) ) {
+            $wizard_controller = new \Craftor\Core\Controllers\WizardController();
+            $wizard_controller->register_routes();
+        }
+
+        // 8. Native Built-in MCP SSE Endpoint (Direct AI Client Connection)
         register_rest_route( 'craftor/v1', '/sse', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'handle_sse_stream' ],

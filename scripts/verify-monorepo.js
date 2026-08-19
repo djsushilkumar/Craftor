@@ -40,8 +40,7 @@ const REQUIRED_APPS = [
 
 const REQUIRED_PLUGINS = [
   'plugins/craftor-core',
-  'plugins/craftor-pro',
-  'plugins/craftor-enterprise',
+  'plugins/craftor-addons-pro',
 ];
 
 const REQUIRED_SERVICES = [

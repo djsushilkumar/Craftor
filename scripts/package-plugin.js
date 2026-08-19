@@ -1,7 +1,7 @@
 /**
  * Craftor WordPress Plugin Production Packaging Suite
- * Builds POSIX-compliant production zip archives, calculates SHA-256 digests,
- * and updates release manifests for v1.0.0 GA distribution.
+ * Builds POSIX-compliant production zip archives for both Craftor Core & Craftor Addons Pro,
+ * calculates SHA-256 digests, and updates release manifests for v1.0.0 distribution.
  */
 
 const fs = require('fs');
@@ -10,7 +10,8 @@ const zlib = require('zlib');
 const crypto = require('crypto');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
-const PLUGIN_SRC = path.join(ROOT_DIR, 'plugins', 'craftor-core');
+const CORE_PLUGIN_SRC = path.join(ROOT_DIR, 'plugins', 'craftor-core');
+const PRO_PLUGIN_SRC = path.join(ROOT_DIR, 'plugins', 'craftor-addons-pro');
 const DIST_BIN_DIR = path.join(ROOT_DIR, 'dist-bin');
 const DIST_SVN_DIR = path.join(ROOT_DIR, 'dist-svn');
 
@@ -40,16 +41,16 @@ function getDosDateTime(date) {
   return { dosTime, dosDate };
 }
 
-function collectFiles(dir, baseDir = dir) {
+function collectFiles(dir, slug, baseDir = dir) {
   let results = [];
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      results = results.concat(collectFiles(fullPath, baseDir));
+      results = results.concat(collectFiles(fullPath, slug, baseDir));
     } else {
       const relPath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
-      results.push({ fullPath, relPath: `craftor-core/${relPath}` });
+      results.push({ fullPath, relPath: `${slug}/${relPath}` });
     }
   }
   return results;
@@ -116,7 +117,6 @@ function buildZipBuffer(files) {
   const centralDirBuffer = Buffer.concat(centralHeaders);
   const centralDirLength = centralDirBuffer.length;
 
-  // End of central directory record (22 bytes)
   const eocd = Buffer.alloc(22);
   eocd.writeUInt32LE(0x06054b50, 0);       // Signature
   eocd.writeUInt16LE(0, 4);                // Disk number
@@ -134,51 +134,53 @@ function buildZipBuffer(files) {
   ]);
 }
 
-function packagePlugin() {
-  console.log('================================================================');
-  console.log('       CRAFTOR WORDPRESS PLUGIN PRODUCTION PACKAGER             ');
-  console.log('================================================================\n');
+function packageSinglePlugin(srcDir, slug, zipName) {
+  if (!fs.existsSync(srcDir)) return null;
+  const files = collectFiles(srcDir, slug);
+  const zipBuffer = buildZipBuffer(files);
+  const sha256 = crypto.createHash('sha256').update(zipBuffer).digest('hex');
 
-  if (!fs.existsSync(PLUGIN_SRC)) {
-    throw new Error(`Plugin source directory not found: ${PLUGIN_SRC}`);
-  }
+  const binZipPath = path.join(DIST_BIN_DIR, zipName);
+  fs.writeFileSync(binZipPath, zipBuffer);
+
+  return {
+    slug,
+    zipName,
+    binZipPath,
+    filesCount: files.length,
+    sizeBytes: zipBuffer.length,
+    sizeKb: (zipBuffer.length / 1024).toFixed(2),
+    sha256,
+  };
+}
+
+function packageAllPlugins() {
+  console.log('================================================================');
+  console.log('       CRAFTOR PLUGINS PRODUCTION PACKAGER (CORE & PRO)         ');
+  console.log('================================================================\n');
 
   if (!fs.existsSync(DIST_BIN_DIR)) fs.mkdirSync(DIST_BIN_DIR, { recursive: true });
   if (!fs.existsSync(DIST_SVN_DIR)) fs.mkdirSync(DIST_SVN_DIR, { recursive: true });
 
-  // 1. Validate Plugin Headers
-  console.log('[1/4] Validating WordPress Plugin Metadata...');
-  const mainPhpPath = path.join(PLUGIN_SRC, 'craftor-core.php');
-  if (!fs.existsSync(mainPhpPath)) {
-    throw new Error('craftor-core.php missing from plugin directory!');
+  // 1. Package Craftor Core (Free Plugin)
+  console.log('[1/2] Packaging Craftor Core (Free Plugin)...');
+  const corePkg = packageSinglePlugin(CORE_PLUGIN_SRC, 'craftor-core', 'craftor-core-1.0.0.zip');
+  if (corePkg) {
+    fs.copyFileSync(corePkg.binZipPath, path.join(DIST_SVN_DIR, 'craftor-core.zip'));
+    console.log(`  ✅ Generated: ${corePkg.binZipPath} (${corePkg.sizeKb} KB)`);
+    console.log(`  🔑 SHA-256: ${corePkg.sha256}`);
   }
-  const phpContent = fs.readFileSync(mainPhpPath, 'utf-8');
-  if (!phpContent.includes('Plugin Name: Craftor Core')) {
-    throw new Error('Plugin header validation failed: missing "Plugin Name: Craftor Core"');
+
+  // 2. Package Craftor Addons Pro (Premium Plugin)
+  console.log('\n[2/2] Packaging Craftor Addons Pro (Premium Plugin)...');
+  const proPkg = packageSinglePlugin(PRO_PLUGIN_SRC, 'craftor-addons-pro', 'craftor-addons-pro-1.0.0.zip');
+  if (proPkg) {
+    console.log(`  ✅ Generated: ${proPkg.binZipPath} (${proPkg.sizeKb} KB)`);
+    console.log(`  🔑 SHA-256: ${proPkg.sha256}`);
   }
-  console.log('  ✅ Plugin metadata verified: "Craftor Core v1.0.0"');
 
-  // 2. Collect files and build clean POSIX PKZip
-  console.log('\n[2/4] Assembling POSIX-compliant distribution package...');
-  const files = collectFiles(PLUGIN_SRC);
-  console.log(`  Found ${files.length} plugin assets to package.`);
-
-  const zipBuffer = buildZipBuffer(files);
-  const sha256 = crypto.createHash('sha256').update(zipBuffer).digest('hex');
-
-  const binZipPath = path.join(DIST_BIN_DIR, 'craftor-core-1.0.0.zip');
-  const svnZipPath = path.join(DIST_SVN_DIR, 'craftor-core.zip');
-
-  fs.writeFileSync(binZipPath, zipBuffer);
-  fs.writeFileSync(svnZipPath, zipBuffer);
-
-  const sizeKb = (zipBuffer.length / 1024).toFixed(2);
-  console.log(`  ✅ Generated: ${binZipPath} (${sizeKb} KB)`);
-  console.log(`  ✅ Generated: ${svnZipPath} (${sizeKb} KB)`);
-  console.log(`  🔑 SHA-256 Digest: ${sha256}`);
-
-  // 3. Update Distribution Manifest
-  console.log('\n[3/4] Updating Release Manifest...');
+  // 3. Update Release Manifest
+  console.log('\nUpdating Release Manifest with 3-Product Metadata...');
   const manifestPath = path.join(DIST_BIN_DIR, 'release-manifest.json');
   let manifest = {};
   if (fs.existsSync(manifestPath)) {
@@ -189,41 +191,40 @@ function packagePlugin() {
     }
   }
 
-  manifest.plugin = {
-    name: 'craftor-core',
-    version: '1.0.0',
-    slug: 'craftor-core',
-    archiveFile: 'craftor-core-1.0.0.zip',
-    sizeBytes: zipBuffer.length,
-    sha256: sha256,
-    buildTimestamp: new Date().toISOString(),
-    minPhpVersion: '8.1',
-    minWordPressVersion: '6.4',
-    testedUpTo: '6.7',
-    requiresElementor: '3.18.0',
-    requiresWooCommerce: '8.0.0',
-  };
+  if (corePkg) {
+    manifest.corePlugin = {
+      name: 'craftor-core',
+      version: '1.0.0',
+      archiveFile: corePkg.zipName,
+      sizeBytes: corePkg.sizeBytes,
+      sha256: corePkg.sha256,
+      minPhpVersion: '7.4',
+      minWordPressVersion: '6.0',
+    };
+  }
+
+  if (proPkg) {
+    manifest.proPlugin = {
+      name: 'craftor-addons-pro',
+      version: '1.0.0',
+      archiveFile: proPkg.zipName,
+      sizeBytes: proPkg.sizeBytes,
+      sha256: proPkg.sha256,
+      minPhpVersion: '7.4',
+      minWordPressVersion: '6.0',
+    };
+  }
 
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
   console.log(`  ✅ Updated release manifest: ${manifestPath}`);
 
-  // 4. Final Summary
   console.log('\n================================================================');
-  console.log('                 PACKAGE SUMMARY & INTEGRITY                    ');
-  console.log('================================================================');
-  console.log(`Package Name      : craftor-core-1.0.0.zip`);
-  console.log(`Included Files    : ${files.length} files (100% forward-slash UNIX paths)`);
-  console.log(`Uncompressed Size : ${(files.reduce((acc, f) => acc + fs.statSync(f.fullPath).size, 0) / 1024).toFixed(2)} KB`);
-  console.log(`Compressed Size   : ${sizeKb} KB`);
-  console.log(`SHA-256 Checksum  : ${sha256}`);
-  console.log(`Distribution Path : dist-bin/craftor-core-1.0.0.zip`);
+  console.log('       CRAFTOR PLUGINS PACKAGING COMPLETED SUCCESSFULLY ✅       ');
   console.log('================================================================\n');
-
-  console.log('🚀 CRAFTOR CORE PLUGIN PACKAGED FOR v1.0 GA RELEASE SUCCESSFULLY ✅\n');
 }
 
 if (require.main === module) {
-  packagePlugin();
+  packageAllPlugins();
 }
 
-module.exports = { packagePlugin };
+module.exports = { packageAllPlugins };

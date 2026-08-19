@@ -1,0 +1,20 @@
+{
+  "name": "craftor/craftor-addons-pro",
+  "description": "Commercial extension for Craftor Core with Theme Builder, Live Canvas SSE Sync, and WooCommerce Pro.",
+  "type": "wordpress-plugin",
+  "license": "Commercial",
+  "authors": [
+    {
+      "name": "Craftor AI Core Organization",
+      "homepage": "https://craftor.ai"
+    }
+  ],
+  "require": {
+    "php": ">=7.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Craftor\\Pro\\": "src/"
+    }
+  }
+}
