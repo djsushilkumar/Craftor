@@ -22,6 +22,39 @@ import {
 import { logger } from '../../shared-utils/dist/index.js';
 import { WordPressAuthConfig, maskAuthCredentials } from './auth.js';
 import { WordPressRestClient, RequestOptions } from './rest.js';
+import {
+  assertPositiveId,
+  applyElementorMeta,
+  buildQueryParams,
+  pickDefined,
+  taxonomyEndpoint,
+} from './payloads.js';
+
+const POST_QUERY_KEYS = [
+  'page',
+  'per_page',
+  'search',
+  'status',
+  'order',
+  'orderby',
+  'categories',
+  'tags',
+] as const;
+
+const PAGE_QUERY_KEYS = ['page', 'per_page', 'search', 'status', 'parent', 'order', 'orderby'] as const;
+
+const PAGE_BODY_KEYS = ['content', 'slug', 'template', 'parent', 'menu_order'] as const;
+
+const POST_BODY_KEYS = [
+  'content',
+  'slug',
+  'excerpt',
+  'author',
+  'categories',
+  'tags',
+  'featured_media',
+  'meta',
+] as const;
 
 export interface WordPressClientConfig {
   siteUrl: string;
@@ -140,21 +173,9 @@ export class WordPressClient {
    * Retrieves a list of posts matching optional query criteria.
    */
   public async getPosts(query?: WordPressPostQuery, options?: RequestOptions): Promise<WordPressPost[]> {
-    const params: Record<string, string | number | boolean | undefined> = {};
-    if (query) {
-      if (query.page) params.page = query.page;
-      if (query.per_page) params.per_page = query.per_page;
-      if (query.search) params.search = query.search;
-      if (query.status) params.status = query.status;
-      if (query.order) params.order = query.order;
-      if (query.orderby) params.orderby = query.orderby;
-      if (query.categories && query.categories.length > 0) params.categories = query.categories.join(',');
-      if (query.tags && query.tags.length > 0) params.tags = query.tags.join(',');
-    }
-
     return this.rest.get<WordPressPost[]>('/wp-json/wp/v2/posts', {
       ...options,
-      params: { ...params, ...(options?.params ?? {}) },
+      params: buildQueryParams(query, POST_QUERY_KEYS, options?.params),
     });
   }
 
@@ -162,9 +183,7 @@ export class WordPressClient {
    * Retrieves a single post by ID.
    */
   public async getPost(id: number, options?: RequestOptions): Promise<WordPressPost> {
-    if (typeof id !== 'number' || id <= 0) {
-      throw new Error(`Invalid post ID: ${id}. ID must be a positive integer.`);
-    }
+    assertPositiveId(id, 'post');
     return this.rest.get<WordPressPost>(`/wp-json/wp/v2/posts/${id}`, options);
   }
 
@@ -172,20 +191,9 @@ export class WordPressClient {
    * Retrieves a list of pages matching optional query criteria.
    */
   public async getPages(query?: WordPressPageQuery, options?: RequestOptions): Promise<WordPressPage[]> {
-    const params: Record<string, string | number | boolean | undefined> = {};
-    if (query) {
-      if (query.page) params.page = query.page;
-      if (query.per_page) params.per_page = query.per_page;
-      if (query.search) params.search = query.search;
-      if (query.status) params.status = query.status;
-      if (query.parent !== undefined) params.parent = query.parent;
-      if (query.order) params.order = query.order;
-      if (query.orderby) params.orderby = query.orderby;
-    }
-
     return this.rest.get<WordPressPage[]>('/wp-json/wp/v2/pages', {
       ...options,
-      params: { ...params, ...(options?.params ?? {}) },
+      params: buildQueryParams(query, PAGE_QUERY_KEYS, options?.params),
     });
   }
 
@@ -193,9 +201,7 @@ export class WordPressClient {
    * Retrieves a single page by ID.
    */
   public async getPage(id: number, options?: RequestOptions): Promise<WordPressPage> {
-    if (typeof id !== 'number' || id <= 0) {
-      throw new Error(`Invalid page ID: ${id}. ID must be a positive integer.`);
-    }
+    assertPositiveId(id, 'page');
     return this.rest.get<WordPressPage>(`/wp-json/wp/v2/pages/${id}`, options);
   }
 
@@ -213,25 +219,10 @@ export class WordPressClient {
     const requestBody: Record<string, unknown> = {
       title: payload.title.trim(),
       status: payload.status ?? 'draft',
+      ...pickDefined(payload, PAGE_BODY_KEYS),
     };
 
-    if (payload.content !== undefined) requestBody.content = payload.content;
-    if (payload.slug !== undefined) requestBody.slug = payload.slug;
-    if (payload.template !== undefined) requestBody.template = payload.template;
-    if (payload.parent !== undefined) requestBody.parent = payload.parent;
-    if (payload.menu_order !== undefined) requestBody.menu_order = payload.menu_order;
-
-    if (payload.meta || payload.elementor_data) {
-      const meta = { ...(payload.meta ?? {}) };
-      if (payload.elementor_data !== undefined) {
-        meta._elementor_data =
-          typeof payload.elementor_data === 'string'
-            ? payload.elementor_data
-            : JSON.stringify(payload.elementor_data);
-        meta._elementor_edit_mode = 'builder';
-      }
-      requestBody.meta = meta;
-    }
+    applyElementorMeta(requestBody, payload);
 
     try {
       return await this.rest.post<WordPressPage>('/wp-json/wp/v2/pages', requestBody, options);
@@ -269,30 +260,10 @@ export class WordPressClient {
     payload: UpdateWordPressPagePayload,
     options?: RequestOptions,
   ): Promise<WordPressPage> {
-    if (typeof id !== 'number' || id <= 0) {
-      throw new Error(`Invalid page ID: ${id}. ID must be a positive integer.`);
-    }
+    assertPositiveId(id, 'page');
 
-    const requestBody: Record<string, unknown> = {};
-    if (payload.title !== undefined) requestBody.title = payload.title;
-    if (payload.content !== undefined) requestBody.content = payload.content;
-    if (payload.status !== undefined) requestBody.status = payload.status;
-    if (payload.slug !== undefined) requestBody.slug = payload.slug;
-    if (payload.template !== undefined) requestBody.template = payload.template;
-    if (payload.parent !== undefined) requestBody.parent = payload.parent;
-    if (payload.menu_order !== undefined) requestBody.menu_order = payload.menu_order;
-
-    if (payload.meta || payload.elementor_data) {
-      const meta = { ...(payload.meta ?? {}) };
-      if (payload.elementor_data !== undefined) {
-        meta._elementor_data =
-          typeof payload.elementor_data === 'string'
-            ? payload.elementor_data
-            : JSON.stringify(payload.elementor_data);
-        meta._elementor_edit_mode = 'builder';
-      }
-      requestBody.meta = meta;
-    }
+    const requestBody = pickDefined(payload, ['title', 'status', ...PAGE_BODY_KEYS] as const);
+    applyElementorMeta(requestBody, payload);
 
     return this.rest.post<WordPressPage>(`/wp-json/wp/v2/pages/${id}`, requestBody, options);
   }
@@ -305,9 +276,7 @@ export class WordPressClient {
     force: boolean = false,
     options?: RequestOptions,
   ): Promise<{ deleted: boolean; previous: WordPressPage }> {
-    if (typeof id !== 'number' || id <= 0) {
-      throw new Error(`Invalid page ID: ${id}. ID must be a positive integer.`);
-    }
+    assertPositiveId(id, 'page');
 
     return this.rest.delete<{ deleted: boolean; previous: WordPressPage }>(
       `/wp-json/wp/v2/pages/${id}`,
@@ -375,16 +344,8 @@ export class WordPressClient {
     const requestBody: Record<string, unknown> = {
       title: payload.title.trim(),
       status: payload.status ?? 'draft',
+      ...pickDefined(payload, POST_BODY_KEYS),
     };
-
-    if (payload.content !== undefined) requestBody.content = payload.content;
-    if (payload.slug !== undefined) requestBody.slug = payload.slug;
-    if (payload.excerpt !== undefined) requestBody.excerpt = payload.excerpt;
-    if (payload.author !== undefined) requestBody.author = payload.author;
-    if (payload.categories !== undefined) requestBody.categories = payload.categories;
-    if (payload.tags !== undefined) requestBody.tags = payload.tags;
-    if (payload.featured_media !== undefined) requestBody.featured_media = payload.featured_media;
-    if (payload.meta !== undefined) requestBody.meta = payload.meta;
 
     return this.rest.post<WordPressPost>('/wp-json/wp/v2/posts', requestBody, options);
   }
@@ -397,21 +358,9 @@ export class WordPressClient {
     payload: UpdateWordPressPostPayload,
     options?: RequestOptions,
   ): Promise<WordPressPost> {
-    if (typeof id !== 'number' || id <= 0) {
-      throw new Error(`Invalid post ID: ${id}. ID must be a positive integer.`);
-    }
+    assertPositiveId(id, 'post');
 
-    const requestBody: Record<string, unknown> = {};
-    if (payload.title !== undefined) requestBody.title = payload.title;
-    if (payload.content !== undefined) requestBody.content = payload.content;
-    if (payload.status !== undefined) requestBody.status = payload.status;
-    if (payload.slug !== undefined) requestBody.slug = payload.slug;
-    if (payload.excerpt !== undefined) requestBody.excerpt = payload.excerpt;
-    if (payload.author !== undefined) requestBody.author = payload.author;
-    if (payload.categories !== undefined) requestBody.categories = payload.categories;
-    if (payload.tags !== undefined) requestBody.tags = payload.tags;
-    if (payload.featured_media !== undefined) requestBody.featured_media = payload.featured_media;
-    if (payload.meta !== undefined) requestBody.meta = payload.meta;
+    const requestBody = pickDefined(payload, ['title', 'status', ...POST_BODY_KEYS] as const);
 
     return this.rest.post<WordPressPost>(`/wp-json/wp/v2/posts/${id}`, requestBody, options);
   }
@@ -424,9 +373,7 @@ export class WordPressClient {
     force: boolean = false,
     options?: RequestOptions,
   ): Promise<{ deleted: boolean; previous: WordPressPost }> {
-    if (typeof id !== 'number' || id <= 0) {
-      throw new Error(`Invalid post ID: ${id}. ID must be a positive integer.`);
-    }
+    assertPositiveId(id, 'post');
 
     return this.rest.delete<{ deleted: boolean; previous: WordPressPost }>(
       `/wp-json/wp/v2/posts/${id}`,
@@ -469,7 +416,7 @@ export class WordPressClient {
     taxonomy: string = 'categories',
     options?: RequestOptions,
   ): Promise<WordPressTaxonomyTerm[]> {
-    const endpoint = taxonomy === 'tags' ? '/wp-json/wp/v2/tags' : `/wp-json/wp/v2/${taxonomy}`;
+    const endpoint = taxonomyEndpoint(taxonomy);
     try {
       return await this.rest.get<WordPressTaxonomyTerm[]>(endpoint, options);
     } catch {
@@ -484,8 +431,7 @@ export class WordPressClient {
     payload: CreateWordPressTermPayload,
     options?: RequestOptions,
   ): Promise<WordPressTaxonomyTerm> {
-    const taxonomy = payload.taxonomy ?? 'categories';
-    const endpoint = taxonomy === 'tags' ? '/wp-json/wp/v2/tags' : `/wp-json/wp/v2/${taxonomy}`;
+    const endpoint = taxonomyEndpoint(payload.taxonomy);
 
     return this.rest.post<WordPressTaxonomyTerm>(
       endpoint,
@@ -507,8 +453,7 @@ export class WordPressClient {
     payload: UpdateWordPressTermPayload,
     options?: RequestOptions,
   ): Promise<WordPressTaxonomyTerm> {
-    const taxonomy = payload.taxonomy ?? 'categories';
-    const endpoint = taxonomy === 'tags' ? `/wp-json/wp/v2/tags/${id}` : `/wp-json/wp/v2/${taxonomy}/${id}`;
+    const endpoint = taxonomyEndpoint(payload.taxonomy, id);
 
     return this.rest.post<WordPressTaxonomyTerm>(
       endpoint,
@@ -531,7 +476,7 @@ export class WordPressClient {
     force: boolean = true,
     options?: RequestOptions,
   ): Promise<{ deleted: boolean; previous: WordPressTaxonomyTerm }> {
-    const endpoint = taxonomy === 'tags' ? `/wp-json/wp/v2/tags/${id}` : `/wp-json/wp/v2/${taxonomy}/${id}`;
+    const endpoint = taxonomyEndpoint(taxonomy, id);
 
     return this.rest.delete<{ deleted: boolean; previous: WordPressTaxonomyTerm }>(
       endpoint,

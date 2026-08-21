@@ -6,19 +6,13 @@
 const fs = require('fs');
 const path = require('path');
 
-const ROOT_DIR = path.resolve(__dirname, '..');
+const { ROOT_DIR, ensureDir, writeJsonFile } = require('./lib/fs-utils');
+const { printBanner, printFooter } = require('./lib/report');
+
 const DIST_BIN_DIR = path.join(ROOT_DIR, 'dist-bin');
 
-function ensureDir(dir) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-}
-
 function generateBinaryLaunchers() {
-  console.log('================================================================');
-  console.log('       CRAFTOR STANDALONE BINARY & RUNNER PACKAGER              ');
-  console.log('================================================================\n');
+  printBanner('CRAFTOR STANDALONE BINARY & RUNNER PACKAGER');
 
   ensureDir(DIST_BIN_DIR);
 
@@ -70,12 +64,10 @@ exec node packages/mcp-server/dist/index.js "$@"
     defaultTransport: 'stdio',
     availableToolsCount: 68,
   };
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+  writeJsonFile(manifestPath, manifest);
   console.log(`[PACKAGED] Binary Manifest -> ${path.relative(ROOT_DIR, manifestPath)}`);
 
-  console.log('\n================================================================');
-  console.log('PORTABLE BINARY LAUNCHERS PACKAGED SUCCESSFULLY ✅');
-  console.log('================================================================\n');
+  printFooter('PORTABLE BINARY LAUNCHERS PACKAGED SUCCESSFULLY ✅');
 }
 
 if (require.main === module) {
