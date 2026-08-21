@@ -3,22 +3,15 @@
  * Generates ready-to-copy JSON configuration files for all 8 supported AI clients.
  */
 
-const fs = require('fs');
 const path = require('path');
 
-const ROOT_DIR = path.resolve(__dirname, '..');
+const { ROOT_DIR, ensureDir, writeJsonFile } = require('./lib/fs-utils');
+const { printBanner, printFooter } = require('./lib/report');
+
 const CONFIGS_OUTPUT_DIR = path.join(ROOT_DIR, 'configs', 'clients');
 
-function ensureDir(dir) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-}
-
 function generateClientConfigs() {
-  console.log('================================================================');
-  console.log('       CRAFTOR UNIVERSAL AI CLIENT CONFIG GENERATOR             ');
-  console.log('================================================================\n');
+  printBanner('CRAFTOR UNIVERSAL AI CLIENT CONFIG GENERATOR');
 
   ensureDir(CONFIGS_OUTPUT_DIR);
 
@@ -31,69 +24,29 @@ function generateClientConfigs() {
     },
   };
 
+  const writeConfig = (fileName, config) =>
+    writeJsonFile(path.join(CONFIGS_OUTPUT_DIR, fileName), config);
+
   // 1. Claude Desktop Config (claude_desktop_config.json)
-  const claudeDesktop = {
-    mcpServers: {
-      craftor: defaultServerConfig,
-    },
-  };
-  fs.writeFileSync(
-    path.join(CONFIGS_OUTPUT_DIR, 'claude_desktop_config.json'),
-    JSON.stringify(claudeDesktop, null, 2),
-    'utf-8',
-  );
+  writeConfig('claude_desktop_config.json', { mcpServers: { craftor: defaultServerConfig } });
   console.log('[CONFIG] Generated Claude Desktop config');
 
   // 2. Cursor Config (mcp.json)
-  const cursorConfig = {
-    mcpServers: {
-      craftor: defaultServerConfig,
-    },
-  };
-  fs.writeFileSync(
-    path.join(CONFIGS_OUTPUT_DIR, 'cursor_mcp.json'),
-    JSON.stringify(cursorConfig, null, 2),
-    'utf-8',
-  );
+  writeConfig('cursor_mcp.json', { mcpServers: { craftor: defaultServerConfig } });
   console.log('[CONFIG] Generated Cursor MCP config');
 
   // 3. Antigravity Config (agy_mcp_config.json)
-  const agyConfig = {
-    mcpServers: {
-      'craftor-elementor': defaultServerConfig,
-    },
-  };
-  fs.writeFileSync(
-    path.join(CONFIGS_OUTPUT_DIR, 'agy_mcp_config.json'),
-    JSON.stringify(agyConfig, null, 2),
-    'utf-8',
-  );
+  writeConfig('agy_mcp_config.json', {
+    mcpServers: { 'craftor-elementor': defaultServerConfig },
+  });
   console.log('[CONFIG] Generated Antigravity config');
 
   // 4. VS Code MCP Config (vscode_settings.json)
-  const vscodeConfig = {
-    'mcp.servers': {
-      craftor: defaultServerConfig,
-    },
-  };
-  fs.writeFileSync(
-    path.join(CONFIGS_OUTPUT_DIR, 'vscode_settings.json'),
-    JSON.stringify(vscodeConfig, null, 2),
-    'utf-8',
-  );
+  writeConfig('vscode_settings.json', { 'mcp.servers': { craftor: defaultServerConfig } });
   console.log('[CONFIG] Generated VS Code config');
 
   // 5. Claude Code CLI Config (claude_code.json)
-  const claudeCode = {
-    mcpServers: {
-      craftor: defaultServerConfig,
-    },
-  };
-  fs.writeFileSync(
-    path.join(CONFIGS_OUTPUT_DIR, 'claude_code.json'),
-    JSON.stringify(claudeCode, null, 2),
-    'utf-8',
-  );
+  writeConfig('claude_code.json', { mcpServers: { craftor: defaultServerConfig } });
   console.log('[CONFIG] Generated Claude Code CLI config');
 
   // 6. Codex / Windsurf / JetBrains MCP Configs
@@ -103,26 +56,12 @@ function generateClientConfigs() {
       craftor: defaultServerConfig,
     },
   };
-  fs.writeFileSync(
-    path.join(CONFIGS_OUTPUT_DIR, 'windsurf_mcp.json'),
-    JSON.stringify(genericMcp, null, 2),
-    'utf-8',
-  );
-  fs.writeFileSync(
-    path.join(CONFIGS_OUTPUT_DIR, 'jetbrains_mcp.json'),
-    JSON.stringify(genericMcp, null, 2),
-    'utf-8',
-  );
-  fs.writeFileSync(
-    path.join(CONFIGS_OUTPUT_DIR, 'codex_mcp.json'),
-    JSON.stringify(genericMcp, null, 2),
-    'utf-8',
-  );
+  for (const fileName of ['windsurf_mcp.json', 'jetbrains_mcp.json', 'codex_mcp.json']) {
+    writeConfig(fileName, genericMcp);
+  }
   console.log('[CONFIG] Generated Windsurf, JetBrains & Codex configs');
 
-  console.log('\n================================================================');
-  console.log('ALL 8 AI CLIENT CONFIGURATIONS GENERATED SUCCESSFULLY ✅');
-  console.log('================================================================\n');
+  printFooter('ALL 8 AI CLIENT CONFIGURATIONS GENERATED SUCCESSFULLY ✅');
 }
 
 if (require.main === module) {

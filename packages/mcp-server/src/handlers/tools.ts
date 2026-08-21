@@ -88,6 +88,7 @@ import {
   EdgeRequestContext,
 } from '../../../edge-runtime/dist/index.js';
 import { createInvalidParamsError, createToolNotFoundError, McpError } from '../errors.js';
+import { jsonError, jsonErrorResult, jsonResult } from './results.js';
 import { ApprovalEngine } from '../safety/approval.js';
 
 export interface ToolsListResponsePayload {
@@ -1892,18 +1893,13 @@ export async function handleToolsCall(
       case 'craftor_wp_create_post': {
         const title = String(args.title ?? '');
         if (!title.trim()) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"title" is required' }) }],
-            isError: true,
-          };
+          return jsonError('"title" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const post = await client.createPost(args as unknown as CreateWordPressPostPayload);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, post }, null, 2) }],
-          };
+          return jsonResult({ success: true, post });
         }
 
         const simulatedPost = {
@@ -1915,49 +1911,32 @@ export async function handleToolsCall(
           date: new Date().toISOString(),
         };
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, post: simulatedPost }, null, 2) }],
-        };
+        return jsonResult({ success: true, post: simulatedPost });
       }
 
       case 'craftor_wp_update_post': {
         const postId = Number(args.postId);
         if (!postId || isNaN(postId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "postId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "postId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const updated = await client.updatePost(postId, args as unknown as UpdateWordPressPostPayload);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, post: updated }, null, 2) }],
-          };
+          return jsonResult({ success: true, post: updated });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                postId,
-                updatedFields: Object.keys(args).filter((k) => k !== 'postId'),
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          postId,
+          updatedFields: Object.keys(args).filter((k) => k !== 'postId'),
+        });
       }
 
       case 'craftor_wp_delete_post': {
         const postId = Number(args.postId);
         if (!postId || isNaN(postId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "postId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "postId" is required');
         }
 
         const approvalId = args.approvalId as string | undefined;
@@ -1965,49 +1944,35 @@ export async function handleToolsCall(
         if (!verification.authorized) {
           if (!approvalId || !ApprovalEngine.getApproval(approvalId)) {
             const request = ApprovalEngine.createApprovalRequest('craftor_wp_delete_post', postId, args);
-            return {
-              content: [{ type: 'text', text: JSON.stringify(request, null, 2) }],
-            };
+            return jsonResult(request);
           }
-          return {
-            content: [{ type: 'text', text: JSON.stringify({
-              requiresHumanApproval: true,
-              approvalId,
-              status: verification.record?.status || 'PENDING',
-              error: verification.reason,
-            }, null, 2) }],
-            isError: true,
-          };
+          return jsonErrorResult({
+            requiresHumanApproval: true,
+            approvalId,
+            status: verification.record?.status || 'PENDING',
+            error: verification.reason,
+          });
         }
 
         if (siteUrl) {
           const client = getClient();
           const result = await client.deletePost(postId, Boolean(args.force));
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, result, approvalId }, null, 2) }],
-          };
+          return jsonResult({ success: true, result, approvalId });
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, postId, deleted: true, approvalId }, null, 2) }],
-        };
+        return jsonResult({ success: true, postId, deleted: true, approvalId });
       }
 
       case 'craftor_wp_create_page': {
         const title = String(args.title ?? '');
         if (!title.trim()) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"title" is required' }) }],
-            isError: true,
-          };
+          return jsonError('"title" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const page = await client.createPage(args as unknown as CreateWordPressPagePayload);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, page }, null, 2) }],
-          };
+          return jsonResult({ success: true, page });
         }
 
         const simulatedPage = {
@@ -2019,94 +1984,61 @@ export async function handleToolsCall(
           date: new Date().toISOString(),
         };
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, page: simulatedPage }, null, 2) }],
-        };
+        return jsonResult({ success: true, page: simulatedPage });
       }
 
       case 'craftor_wp_update_page': {
         const pageId = Number(args.pageId);
         if (!pageId || isNaN(pageId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "pageId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const page = await client.updatePage(pageId, args as unknown as UpdateWordPressPagePayload);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, page }, null, 2) }],
-          };
+          return jsonResult({ success: true, page });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                pageId,
-                updatedFields: Object.keys(args).filter((k) => k !== 'pageId'),
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          pageId,
+          updatedFields: Object.keys(args).filter((k) => k !== 'pageId'),
+        });
       }
 
       case 'craftor_wp_delete_page': {
         const pageId = Number(args.pageId);
         if (!pageId || isNaN(pageId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "pageId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const result = await client.deletePage(pageId, Boolean(args.force));
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, result }, null, 2) }],
-          };
+          return jsonResult({ success: true, result });
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, pageId, deleted: true }, null, 2) }],
-        };
+        return jsonResult({ success: true, pageId, deleted: true });
       }
 
       case 'craftor_wp_duplicate_page': {
         const pageId = Number(args.pageId);
         if (!pageId || isNaN(pageId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "pageId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const duplicated = await client.duplicatePage(pageId, args.newTitle as string | undefined);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, page: duplicated }, null, 2) }],
-          };
+          return jsonResult({ success: true, page: duplicated });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                sourcePageId: pageId,
-                newPageId: pageId + 100,
-                title: args.newTitle ?? 'Cloned Page',
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          sourcePageId: pageId,
+          newPageId: pageId + 100,
+          title: args.newTitle ?? 'Cloned Page',
+        });
       }
 
       case 'craftor_wp_get_site_options': {
@@ -2115,131 +2047,87 @@ export async function handleToolsCall(
           const optionName = args.optionName as string | undefined;
           if (optionName) {
             const val = await client.getOption(optionName);
-            return {
-              content: [{ type: 'text', text: JSON.stringify({ success: true, [optionName]: val }, null, 2) }],
-            };
+            return jsonResult({ success: true, [optionName]: val });
           }
           const site = await client.getSite();
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, site }, null, 2) }],
-          };
+          return jsonResult({ success: true, site });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                siteName: 'Craftor Test Site',
-                siteUrl: 'https://example.craftor.local',
-                adminEmail: 'admin@craftor.local',
-                timezone: 'UTC',
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          siteName: 'Craftor Test Site',
+          siteUrl: 'https://example.craftor.local',
+          adminEmail: 'admin@craftor.local',
+          timezone: 'UTC',
+        });
       }
 
       case 'craftor_wp_update_site_options': {
         const settings = args.settings as Record<string, unknown>;
         if (!settings || typeof settings !== 'object') {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"settings" object is required' }) }],
-            isError: true,
-          };
+          return jsonError('"settings" object is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const updated = await client.updateOption(settings);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, settings: updated }, null, 2) }],
-          };
+          return jsonResult({ success: true, settings: updated });
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, updatedSettings: settings }, null, 2) }],
-        };
+        return jsonResult({ success: true, updatedSettings: settings });
       }
 
       case 'craftor_wp_create_taxonomy': {
         const name = String(args.name ?? '');
         if (!name.trim()) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"name" is required' }) }],
-            isError: true,
-          };
+          return jsonError('"name" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const term = await client.createTaxonomyTerm(args as unknown as { name: string; taxonomy?: string });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, term }, null, 2) }],
-          };
+          return jsonResult({ success: true, term });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                term: {
-                  id: Math.floor(Math.random() * 100) + 1,
-                  name,
-                  slug: args.slug ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-                  taxonomy: args.taxonomy ?? 'categories',
-                },
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          term: {
+            id: Math.floor(Math.random() * 100) + 1,
+            name,
+            slug: args.slug ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            taxonomy: args.taxonomy ?? 'categories',
+          },
+        });
       }
 
       case 'craftor_wp_update_taxonomy': {
         const termId = Number(args.termId);
         if (!termId || isNaN(termId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "termId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "termId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const term = await client.updateTaxonomyTerm(termId, args as unknown as { name?: string; taxonomy?: string });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, term }, null, 2) }],
-          };
+          return jsonResult({ success: true, term });
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, termId, updated: args }, null, 2) }],
-        };
+        return jsonResult({ success: true, termId, updated: args });
       }
 
       case 'craftor_wp_delete_taxonomy': {
         const termId = Number(args.termId);
         if (!termId || isNaN(termId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "termId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "termId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const result = await client.deleteTaxonomyTerm(termId, (args.taxonomy as string) ?? 'categories');
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, result }, null, 2) }],
-          };
+          return jsonResult({ success: true, result });
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, termId, deleted: true }, null, 2) }],
-        };
+        return jsonResult({ success: true, termId, deleted: true });
       }
 
       // =======================================================================
@@ -2248,51 +2136,39 @@ export async function handleToolsCall(
       case 'craftor_elementor_get_document': {
         const pageId = Number(args.pageId);
         if (!pageId || isNaN(pageId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "pageId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const bridge = new ElementorBridge({ client });
           const doc = await bridge.getDocument(pageId);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(doc, null, 2) }],
-          };
+          return jsonResult(doc);
         }
 
-        return {
-          content: [
+        return jsonResult({
+          id: pageId,
+          title: 'Elementor Landing Page',
+          elements: [
             {
-              type: 'text',
-              text: JSON.stringify({
-                id: pageId,
-                title: 'Elementor Landing Page',
-                elements: [
-                  {
-                    id: ElementorAstEngine.generateId(),
-                    elType: 'container',
-                    isInner: false,
-                    settings: { flex_direction: 'column', padding: { top: '40px', bottom: '40px' } },
-                    elements: [
-                      {
-                        id: ElementorAstEngine.generateId(),
-                        elType: 'widget',
-                        widgetType: 'heading',
-                        settings: { title: 'Welcome to Craftor' },
-                        elements: [],
-                      },
-                    ],
-                  },
-                ],
-                settings: {},
-                version: '3.24.0',
-              }, null, 2),
+              id: ElementorAstEngine.generateId(),
+              elType: 'container',
+              isInner: false,
+              settings: { flex_direction: 'column', padding: { top: '40px', bottom: '40px' } },
+              elements: [
+                {
+                  id: ElementorAstEngine.generateId(),
+                  elType: 'widget',
+                  widgetType: 'heading',
+                  settings: { title: 'Welcome to Craftor' },
+                  elements: [],
+                },
+              ],
             },
           ],
-        };
+          settings: {},
+          version: '3.24.0',
+        });
       }
 
       case 'craftor_elementor_save_document': {
@@ -2300,42 +2176,27 @@ export async function handleToolsCall(
         const elements = args.elements as ElementorNode[];
 
         if (!pageId || !Array.isArray(elements)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Invalid parameters: "pageId" and "elements" array are required.' }) }],
-            isError: true,
-          };
+          return jsonError('Invalid parameters: "pageId" and "elements" array are required.');
         }
 
         const validation = validateAst(elements);
         if (!validation.valid) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'AST validation failed', details: validation.errors }) }],
-            isError: true,
-          };
+          return jsonErrorResult({ error: 'AST validation failed', details: validation.errors });
         }
 
         if (siteUrl) {
           const client = getClient();
           const bridge = new ElementorBridge({ client });
           const savedDoc = await bridge.saveDocument(pageId, elements, (args.settings as Record<string, unknown>) ?? {});
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, document: savedDoc }, null, 2) }],
-          };
+          return jsonResult({ success: true, document: savedDoc });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                pageId,
-                elementCount: elements.length,
-                savedAt: new Date().toISOString(),
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          pageId,
+          elementCount: elements.length,
+          savedAt: new Date().toISOString(),
+        });
       }
 
       case 'craftor_elementor_create_container': {
@@ -2347,9 +2208,7 @@ export async function handleToolsCall(
           ? createGridContainer({ columns, gap: 20 })
           : createFlexContainer({ flexDirection: direction === 'row' ? 'row' : 'column' });
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, node }, null, 2) }],
-        };
+        return jsonResult({ success: true, node });
       }
 
       case 'craftor_elementor_generate_container': {
@@ -2405,9 +2264,7 @@ export async function handleToolsCall(
           });
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, node: containerNode }, null, 2) }],
-        };
+        return jsonResult({ success: true, node: containerNode });
       }
 
       case 'craftor_elementor_update_container': {
@@ -2416,16 +2273,11 @@ export async function handleToolsCall(
         const settings = (args.settings as Record<string, unknown>) ?? {};
 
         if (!Array.isArray(ast) || !containerId) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array and "containerId" are required' }) }],
-            isError: true,
-          };
+          return jsonError('"ast" array and "containerId" are required');
         }
 
         const updatedAst = updateNodeSettings(ast, containerId, settings);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
-        };
+        return jsonResult({ success: true, ast: updatedAst });
       }
 
       case 'craftor_elementor_delete_container': {
@@ -2433,26 +2285,18 @@ export async function handleToolsCall(
         const containerId = String(args.containerId ?? '');
 
         if (!Array.isArray(ast) || !containerId) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array and "containerId" are required' }) }],
-            isError: true,
-          };
+          return jsonError('"ast" array and "containerId" are required');
         }
 
         const updatedAst = removeNode(ast, containerId);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
-        };
+        return jsonResult({ success: true, ast: updatedAst });
       }
 
       case 'craftor_elementor_insert_widget':
       case 'craftor_elementor_insert_node': {
         const ast = args.ast as ElementorNode[];
         if (!Array.isArray(ast)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array is required' }) }],
-            isError: true,
-          };
+          return jsonError('"ast" array is required');
         }
 
         const parentId = (args.parentId as string) ?? null;
@@ -2469,14 +2313,7 @@ export async function handleToolsCall(
         const index = args.index !== undefined ? Number(args.index) : undefined;
         const updatedAst = insertNode(ast, parentId, nodeToInsert, index);
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ success: true, insertedNode: nodeToInsert, ast: updatedAst }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({ success: true, insertedNode: nodeToInsert, ast: updatedAst });
       }
 
       case 'craftor_elementor_update_widget': {
@@ -2485,16 +2322,11 @@ export async function handleToolsCall(
         const settings = (args.settings as Record<string, unknown>) ?? {};
 
         if (!Array.isArray(ast) || !widgetId) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array and "widgetId" are required' }) }],
-            isError: true,
-          };
+          return jsonError('"ast" array and "widgetId" are required');
         }
 
         const updatedAst = updateNodeSettings(ast, widgetId, settings);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
-        };
+        return jsonResult({ success: true, ast: updatedAst });
       }
 
       case 'craftor_elementor_remove_widget': {
@@ -2502,16 +2334,11 @@ export async function handleToolsCall(
         const widgetId = String(args.widgetId ?? '');
 
         if (!Array.isArray(ast) || !widgetId) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"ast" array and "widgetId" are required' }) }],
-            isError: true,
-          };
+          return jsonError('"ast" array and "widgetId" are required');
         }
 
         const updatedAst = removeNode(ast, widgetId);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, ast: updatedAst }, null, 2) }],
-        };
+        return jsonResult({ success: true, ast: updatedAst });
       }
 
       case 'craftor_elementor_create_template': {
@@ -2519,10 +2346,7 @@ export async function handleToolsCall(
         const elements = args.elements as ElementorNode[];
 
         if (!Array.isArray(elements)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"elements" array is required' }) }],
-            isError: true,
-          };
+          return jsonError('"elements" array is required');
         }
 
         const template: ElementorTemplateData = {
@@ -2533,43 +2357,29 @@ export async function handleToolsCall(
           page_settings: (args.page_settings as Record<string, unknown>) ?? {},
         };
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
-        };
+        return jsonResult({ success: true, template });
       }
 
       case 'craftor_elementor_export_template': {
         const pageId = Number(args.pageId);
         if (!pageId || isNaN(pageId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "pageId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "pageId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const bridge = new ElementorBridge({ client });
           const template = await bridge.exportTemplate(pageId, args.title as string | undefined);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
-          };
+          return jsonResult({ success: true, template });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                title: args.title ?? 'Exported Template',
-                type: 'page',
-                version: '3.24.0',
-                elements: [createFlexContainer({ flexDirection: 'column' })],
-                page_settings: {},
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          title: args.title ?? 'Exported Template',
+          type: 'page',
+          version: '3.24.0',
+          elements: [createFlexContainer({ flexDirection: 'column' })],
+          page_settings: {},
+        });
       }
 
       case 'craftor_elementor_import_template': {
@@ -2577,33 +2387,21 @@ export async function handleToolsCall(
         const templateData = args.templateData as ElementorTemplateData;
 
         if (!targetPageId || !templateData || !Array.isArray(templateData.elements)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"targetPageId" and valid "templateData.elements" are required.' }) }],
-            isError: true,
-          };
+          return jsonError('"targetPageId" and valid "templateData.elements" are required.');
         }
 
         if (siteUrl) {
           const client = getClient();
           const bridge = new ElementorBridge({ client });
           const doc = await bridge.importTemplate(targetPageId, templateData);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, document: doc }, null, 2) }],
-          };
+          return jsonResult({ success: true, document: doc });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                targetPageId,
-                importedElementsCount: templateData.elements.length,
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          targetPageId,
+          importedElementsCount: templateData.elements.length,
+        });
       }
 
       case 'craftor_elementor_clone_template': {
@@ -2611,34 +2409,22 @@ export async function handleToolsCall(
         const newTitle = String(args.newTitle ?? 'Cloned Template');
 
         if (!sourcePageId || isNaN(sourcePageId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "sourcePageId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "sourcePageId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const bridge = new ElementorBridge({ client });
           const doc = await bridge.duplicateTemplate(sourcePageId, newTitle);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, document: doc }, null, 2) }],
-          };
+          return jsonResult({ success: true, document: doc });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                sourcePageId,
-                newTitle,
-                newPageId: sourcePageId + 100,
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          sourcePageId,
+          newTitle,
+          newPageId: sourcePageId + 100,
+        });
       }
 
       case 'craftor_elementor_update_global_kit': {
@@ -2647,14 +2433,10 @@ export async function handleToolsCall(
           const client = getClient();
           const bridge = new ElementorBridge({ client });
           const updatedKit = await bridge.updateGlobalKit(kitUpdates);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, kit: updatedKit }, null, 2) }],
-          };
+          return jsonResult({ success: true, kit: updatedKit });
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, updatedTokens: kitUpdates }, null, 2) }],
-        };
+        return jsonResult({ success: true, updatedTokens: kitUpdates });
       }
 
       case 'craftor_elementor_validate_ast': {
@@ -2679,9 +2461,7 @@ export async function handleToolsCall(
       }
 
       case 'craftor_elementor_get_tokens': {
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, tokens: CRAFTOR_TOKENS }, null, 2) }],
-        };
+        return jsonResult({ success: true, tokens: CRAFTOR_TOKENS });
       }
 
       // =======================================================================
@@ -2692,10 +2472,7 @@ export async function handleToolsCall(
         const regularPrice = String(args.regular_price ?? '');
 
         if (!name.trim() || !regularPrice.trim()) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"name" and "regular_price" are required' }) }],
-            isError: true,
-          };
+          return jsonError('"name" and "regular_price" are required');
         }
 
         if (siteUrl) {
@@ -2705,9 +2482,7 @@ export async function handleToolsCall(
             token: secretToken,
             actionContext: 'mcp_tool_create_product',
           });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, product }, null, 2) }],
-          };
+          return jsonResult({ success: true, product });
         }
 
         const simulatedProduct = {
@@ -2720,18 +2495,13 @@ export async function handleToolsCall(
           stock_quantity: args.stock_quantity ?? 100,
         };
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, product: simulatedProduct }, null, 2) }],
-        };
+        return jsonResult({ success: true, product: simulatedProduct });
       }
 
       case 'craftor_wc_update_product': {
         const productId = Number(args.productId);
         if (!productId || isNaN(productId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "productId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "productId" is required');
         }
 
         if (siteUrl) {
@@ -2741,32 +2511,20 @@ export async function handleToolsCall(
             token: secretToken,
             actionContext: 'mcp_tool_update_product',
           });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, product }, null, 2) }],
-          };
+          return jsonResult({ success: true, product });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                productId,
-                updatedFields: Object.keys(args).filter((k) => k !== 'productId'),
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          productId,
+          updatedFields: Object.keys(args).filter((k) => k !== 'productId'),
+        });
       }
 
       case 'craftor_wc_delete_product': {
         const productId = Number(args.productId);
         if (!productId || isNaN(productId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "productId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "productId" is required');
         }
 
         const approvalId = args.approvalId as string | undefined;
@@ -2774,19 +2532,14 @@ export async function handleToolsCall(
         if (!verification.authorized) {
           if (!approvalId || !ApprovalEngine.getApproval(approvalId)) {
             const request = ApprovalEngine.createApprovalRequest('craftor_wc_delete_product', productId, args);
-            return {
-              content: [{ type: 'text', text: JSON.stringify(request, null, 2) }],
-            };
+            return jsonResult(request);
           }
-          return {
-            content: [{ type: 'text', text: JSON.stringify({
-              requiresHumanApproval: true,
-              approvalId,
-              status: verification.record?.status || 'PENDING',
-              error: verification.reason,
-            }, null, 2) }],
-            isError: true,
-          };
+          return jsonErrorResult({
+            requiresHumanApproval: true,
+            approvalId,
+            status: verification.record?.status || 'PENDING',
+            error: verification.reason,
+          });
         }
 
         if (siteUrl) {
@@ -2796,14 +2549,10 @@ export async function handleToolsCall(
             token: secretToken,
             actionContext: 'mcp_tool_delete_product',
           });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, result, approvalId }, null, 2) }],
-          };
+          return jsonResult({ success: true, result, approvalId });
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, productId, deleted: true, approvalId }, null, 2) }],
-        };
+        return jsonResult({ success: true, productId, deleted: true, approvalId });
       }
 
       case 'craftor_wc_update_inventory': {
@@ -2811,10 +2560,7 @@ export async function handleToolsCall(
         const stockQuantity = Number(args.stockQuantity);
 
         if (!productId || isNaN(productId) || isNaN(stockQuantity)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"productId" and "stockQuantity" are required' }) }],
-            isError: true,
-          };
+          return jsonError('"productId" and "stockQuantity" are required');
         }
 
         if (siteUrl) {
@@ -2825,82 +2571,54 @@ export async function handleToolsCall(
             stockQuantity,
             args.stockStatus as 'instock' | 'outofstock' | 'onbackorder' | undefined,
           );
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, inventory: inv }, null, 2) }],
-          };
+          return jsonResult({ success: true, inventory: inv });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                productId,
-                stockQuantity,
-                stockStatus: stockQuantity > 0 ? 'instock' : 'outofstock',
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          productId,
+          stockQuantity,
+          stockStatus: stockQuantity > 0 ? 'instock' : 'outofstock',
+        });
       }
 
       case 'craftor_wc_create_category': {
         const name = String(args.name ?? '');
         if (!name.trim()) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"name" is required' }) }],
-            isError: true,
-          };
+          return jsonError('"name" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const bridge = new WooCommerceBridge({ client });
           const cat = await bridge.createCategory(args as unknown as { name: string; slug?: string });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, category: cat }, null, 2) }],
-          };
+          return jsonResult({ success: true, category: cat });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                category: {
-                  id: Math.floor(Math.random() * 100) + 1,
-                  name,
-                  slug: args.slug ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-                },
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          category: {
+            id: Math.floor(Math.random() * 100) + 1,
+            name,
+            slug: args.slug ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          },
+        });
       }
 
       case 'craftor_wc_update_category': {
         const categoryId = Number(args.categoryId);
         if (!categoryId || isNaN(categoryId)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: 'Valid "categoryId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('Valid "categoryId" is required');
         }
 
         if (siteUrl) {
           const client = getClient();
           const bridge = new WooCommerceBridge({ client });
           const cat = await bridge.updateCategory(categoryId, args as unknown as { name?: string; slug?: string });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, category: cat }, null, 2) }],
-          };
+          return jsonResult({ success: true, category: cat });
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, categoryId, updated: args }, null, 2) }],
-        };
+        return jsonResult({ success: true, categoryId, updated: args });
       }
 
       case 'craftor_wc_get_orders': {
@@ -2908,25 +2626,16 @@ export async function handleToolsCall(
           const client = getClient();
           const bridge = new WooCommerceBridge({ client });
           const orders = await bridge.getOrders(args as unknown as Record<string, unknown>);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, count: orders.length, orders }, null, 2) }],
-          };
+          return jsonResult({ success: true, count: orders.length, orders });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                orders: [
-                  { id: 1001, status: 'processing', total: '149.00', currency: 'USD', date_created: new Date().toISOString() },
-                  { id: 1002, status: 'completed', total: '79.50', currency: 'USD', date_created: new Date().toISOString() },
-                ],
-              }, null, 2),
-            },
+        return jsonResult({
+          success: true,
+          orders: [
+            { id: 1001, status: 'processing', total: '149.00', currency: 'USD', date_created: new Date().toISOString() },
+            { id: 1002, status: 'completed', total: '79.50', currency: 'USD', date_created: new Date().toISOString() },
           ],
-        };
+        });
       }
 
       case 'craftor_wc_get_customers': {
@@ -2934,47 +2643,31 @@ export async function handleToolsCall(
           const client = getClient();
           const bridge = new WooCommerceBridge({ client });
           const customers = await bridge.getCustomers(args as unknown as Record<string, unknown>);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, count: customers.length, customers }, null, 2) }],
-          };
+          return jsonResult({ success: true, count: customers.length, customers });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                customers: [
-                  { id: 1, email: 'john@example.com', first_name: 'John', last_name: 'Doe', orders_count: 5, total_spent: '450.00' },
-                ],
-              }, null, 2),
-            },
+        return jsonResult({
+          success: true,
+          customers: [
+            { id: 1, email: 'john@example.com', first_name: 'John', last_name: 'Doe', orders_count: 5, total_spent: '450.00' },
           ],
-        };
+        });
       }
 
       // =======================================================================
       // 4. SYSTEM & SAFETY HANDLERS
       // =======================================================================
       case 'craftor_system_status': {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                siteUrl: siteUrl || 'unconnected',
-                authenticated: Boolean(secretToken),
-                registeredTools: ToolRegistry.count(),
-                protocolVersion: '2024-11-05',
-                uptimeSeconds: process.uptime(),
-                memoryUsageMb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-                timestamp: new Date().toISOString(),
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          siteUrl: siteUrl || 'unconnected',
+          authenticated: Boolean(secretToken),
+          registeredTools: ToolRegistry.count(),
+          protocolVersion: '2024-11-05',
+          uptimeSeconds: process.uptime(),
+          memoryUsageMb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+          timestamp: new Date().toISOString(),
+        });
       }
 
       case 'craftor_verify_license': {
@@ -3006,10 +2699,7 @@ export async function handleToolsCall(
         const payload = args.payload;
 
         if (!targetId || !payload) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"targetId" and "payload" are required' }) }],
-            isError: true,
-          };
+          return jsonError('"targetId" and "payload" are required');
         }
 
         if (siteUrl) {
@@ -3022,35 +2712,23 @@ export async function handleToolsCall(
             secretToken,
             (args.actionContext as string) ?? 'manual_snapshot',
           );
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, snapshot: record }, null, 2) }],
-          };
+          return jsonResult({ success: true, snapshot: record });
         }
 
         const snapshotId = `crf_snp_${Date.now()}`;
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                snapshotId,
-                targetId,
-                targetType,
-                createdAt: new Date().toISOString(),
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          snapshotId,
+          targetId,
+          targetType,
+          createdAt: new Date().toISOString(),
+        });
       }
 
       case 'craftor_restore_snapshot': {
         const snapshotId = String(args.snapshotId ?? '');
         if (!snapshotId) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"snapshotId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('"snapshotId" is required');
         }
 
         const approvalId = args.approvalId as string | undefined;
@@ -3058,43 +2736,29 @@ export async function handleToolsCall(
         if (!verification.authorized) {
           if (!approvalId || !ApprovalEngine.getApproval(approvalId)) {
             const request = ApprovalEngine.createApprovalRequest('craftor_restore_snapshot', snapshotId, args);
-            return {
-              content: [{ type: 'text', text: JSON.stringify(request, null, 2) }],
-            };
+            return jsonResult(request);
           }
-          return {
-            content: [{ type: 'text', text: JSON.stringify({
-              requiresHumanApproval: true,
-              approvalId,
-              status: verification.record?.status || 'PENDING',
-              error: verification.reason,
-            }, null, 2) }],
-            isError: true,
-          };
+          return jsonErrorResult({
+            requiresHumanApproval: true,
+            approvalId,
+            status: verification.record?.status || 'PENDING',
+            error: verification.reason,
+          });
         }
 
         if (siteUrl) {
           const client = getClient();
           const rollbacks = new RollbackManager({ client });
           const result = await rollbacks.restoreSnapshot(snapshotId);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, rollback: result, approvalId }, null, 2) }],
-          };
+          return jsonResult({ success: true, rollback: result, approvalId });
         }
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                restoredSnapshotId: snapshotId,
-                restoredAt: new Date().toISOString(),
-                status: 'RESTORED',
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          restoredSnapshotId: snapshotId,
+          restoredAt: new Date().toISOString(),
+          status: 'RESTORED',
+        });
       }
 
       case 'craftor_elementor_create_header': {
@@ -3103,41 +2767,30 @@ export async function handleToolsCall(
         const ctaText = (args.ctaText as string) ?? 'Get Started';
         const sticky = args.sticky !== false;
         const template = createHeaderTemplate({ brandName, logoUrl, ctaText, sticky });
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
-        };
+        return jsonResult({ success: true, template });
       }
 
       case 'craftor_elementor_create_footer': {
         const copyrightText = (args.copyrightText as string) ?? `© ${new Date().getFullYear()} Craftor Inc.`;
         const template = createFooterTemplate({ copyrightText });
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
-        };
+        return jsonResult({ success: true, template });
       }
 
       case 'craftor_elementor_create_single_post': {
         const showFeaturedImage = args.showFeaturedImage !== false;
         const showAuthorBio = args.showAuthorBio !== false;
         const template = createSinglePostTemplate({ showFeaturedImage, showAuthorBio });
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, template }, null, 2) }],
-        };
+        return jsonResult({ success: true, template });
       }
 
       case 'craftor_elementor_diff_ast': {
         const beforeAst = args.beforeAst as ElementorNode[];
         const afterAst = args.afterAst as ElementorNode[];
         if (!Array.isArray(beforeAst) || !Array.isArray(afterAst)) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"beforeAst" and "afterAst" arrays are required' }) }],
-            isError: true,
-          };
+          return jsonError('"beforeAst" and "afterAst" arrays are required');
         }
         const diffResult = diffAst(beforeAst, afterAst);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, diff: diffResult }, null, 2) }],
-        };
+        return jsonResult({ success: true, diff: diffResult });
       }
 
       case 'craftor_elementor_inject_dynamic_tag': {
@@ -3145,17 +2798,12 @@ export async function handleToolsCall(
         const settingKey = String(args.settingKey ?? 'title');
         const tagType = String(args.tagType ?? 'postTitle');
         if (!node || typeof node !== 'object') {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"node" object is required' }) }],
-            isError: true,
-          };
+          return jsonError('"node" object is required');
         }
         const tagFn = (DYNAMIC_TAG_PRESETS as Record<string, (param?: string) => string>)[tagType] ?? DYNAMIC_TAG_PRESETS.postTitle;
         const tagString = tagFn(args.tagParam as string | undefined);
         const updatedNode = injectDynamicTag(node, settingKey, tagString);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, node: updatedNode, dynamicTag: tagString }, null, 2) }],
-        };
+        return jsonResult({ success: true, node: updatedNode, dynamicTag: tagString });
       }
 
       case 'craftor_elementor_livesync_broadcast': {
@@ -3171,9 +2819,7 @@ export async function handleToolsCall(
           timestamp: new Date().toISOString(),
         };
         await liveSync.broadcastEvent(event);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, event }, null, 2) }],
-        };
+        return jsonResult({ success: true, event });
       }
 
       case 'craftor_wc_get_coupons': {
@@ -3181,27 +2827,20 @@ export async function handleToolsCall(
           const client = getClient();
           const coupons = new WooCommerceCouponsBridge({ client });
           const list = await coupons.listCoupons(args as { per_page?: number; search?: string });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, coupons: list }, null, 2) }],
-          };
+          return jsonResult({ success: true, coupons: list });
         }
         const mockCoupons = [
           { id: 101, code: 'WELCOME20', amount: '20', discount_type: 'percent', usage_count: 14, date_created: new Date().toISOString() },
           { id: 102, code: 'SUMMER50', amount: '50', discount_type: 'fixed_cart', usage_count: 8, date_created: new Date().toISOString() },
         ];
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, coupons: mockCoupons }, null, 2) }],
-        };
+        return jsonResult({ success: true, coupons: mockCoupons });
       }
 
       case 'craftor_wc_create_coupon': {
         const code = String(args.code ?? '');
         const amount = String(args.amount ?? '');
         if (!code || !amount) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"code" and "amount" are required' }) }],
-            isError: true,
-          };
+          return jsonError('"code" and "amount" are required');
         }
         if (siteUrl) {
           const client = getClient();
@@ -3212,9 +2851,7 @@ export async function handleToolsCall(
             discount_type: (args.discount_type as 'percent') ?? 'percent',
             description: args.description as string | undefined,
           });
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, coupon: record }, null, 2) }],
-          };
+          return jsonResult({ success: true, coupon: record });
         }
         const coupon = {
           id: Math.floor(Math.random() * 1000) + 1,
@@ -3225,9 +2862,7 @@ export async function handleToolsCall(
           usage_count: 0,
           date_created: new Date().toISOString(),
         };
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, coupon }, null, 2) }],
-        };
+        return jsonResult({ success: true, coupon });
       }
 
       case 'craftor_wc_batch_create_coupons': {
@@ -3246,9 +2881,7 @@ export async function handleToolsCall(
             date_created: new Date().toISOString(),
           });
         }
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, count: coupons.length, coupons }, null, 2) }],
-        };
+        return jsonResult({ success: true, count: coupons.length, coupons });
       }
 
       case 'craftor_list_snapshots': {
@@ -3258,9 +2891,7 @@ export async function handleToolsCall(
           const client = getClient();
           const snapshots = new SnapshotManager({ client });
           const list = await snapshots.listSnapshots(postId, targetType);
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, snapshots: list }, null, 2) }],
-          };
+          return jsonResult({ success: true, snapshots: list });
         }
         const mockList = [
           {
@@ -3271,33 +2902,24 @@ export async function handleToolsCall(
             action_context: 'pre_ai_layout_redesign',
           },
         ];
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, count: mockList.length, snapshots: mockList }, null, 2) }],
-        };
+        return jsonResult({ success: true, count: mockList.length, snapshots: mockList });
       }
 
       case 'craftor_get_visual_diff': {
         const targetId = Number(args.targetId ?? 42);
         const snapshotId = String(args.snapshotId ?? '');
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                targetId,
-                snapshotId,
-                diffSummary: {
-                  hasChanges: true,
-                  nodesAdded: 2,
-                  nodesModified: 1,
-                  nodesRemoved: 0,
-                  pixelDiffPercentage: '0.00%',
-                },
-              }, null, 2),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          targetId,
+          snapshotId,
+          diffSummary: {
+            hasChanges: true,
+            nodesAdded: 2,
+            nodesModified: 1,
+            nodesRemoved: 0,
+            pixelDiffPercentage: '0.00%',
+          },
+        });
       }
 
       case 'craftor_get_activity_log': {
@@ -3307,26 +2929,20 @@ export async function handleToolsCall(
           { id: 2, tool: 'craftor_create_snapshot', caller: 'agent_antigravity', status: 'SUCCESS', durationMs: 18, timestamp: new Date().toISOString() },
           { id: 3, tool: 'craftor_elementor_save_document', caller: 'agent_claude_desktop', status: 'SUCCESS', durationMs: 85, timestamp: new Date().toISOString() },
         ].slice(0, limit);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, count: logs.length, logs }, null, 2) }],
-        };
+        return jsonResult({ success: true, count: logs.length, logs });
       }
 
       case 'multisite_list_network_sites': {
         const msManager = new MultiSiteManager();
         const sites = await msManager.listNetworkSites();
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, count: sites.length, sites }, null, 2) }],
-        };
+        return jsonResult({ success: true, count: sites.length, sites });
       }
 
       case 'multisite_switch_active_site': {
         const blogId = Number(args.blogId ?? 1);
         const msManager = new MultiSiteManager();
         const switchRes = msManager.switchActiveSite(blogId);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, ...switchRes }, null, 2) }],
-        };
+        return jsonResult({ success: true, ...switchRes });
       }
 
       case 'multisite_batch_dispatch_tool': {
@@ -3335,9 +2951,7 @@ export async function handleToolsCall(
         const toolArgs = (args.arguments as Record<string, unknown>) ?? {};
         const msManager = new MultiSiteManager();
         const batchResults = await msManager.batchDispatchTool(blogIds, targetToolName, toolArgs);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, count: batchResults.length, results: batchResults }, null, 2) }],
-        };
+        return jsonResult({ success: true, count: batchResults.length, results: batchResults });
       }
 
       case 'multisite_sync_global_template': {
@@ -3345,9 +2959,7 @@ export async function handleToolsCall(
         const template = (args.template as ElementorTemplateData) ?? createHeaderTemplate({ brandName: 'Global Network' });
         const msManager = new MultiSiteManager();
         const syncRes = await msManager.syncGlobalTemplate(targetBlogIds, template);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, ...syncRes }, null, 2) }],
-        };
+        return jsonResult({ success: true, ...syncRes });
       }
 
       // =======================================================================
@@ -3364,9 +2976,7 @@ export async function handleToolsCall(
           theme: (args.theme as VisualLayoutDescriptor['theme']) ?? undefined,
         };
         const synthesisRes = synthesizer.synthesizeFromDescriptor(descriptor);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, ...synthesisRes }, null, 2) }],
-        };
+        return jsonResult({ success: true, ...synthesisRes });
       }
 
       case 'craftor_elementor_generate_sales_funnel': {
@@ -3380,23 +2990,12 @@ export async function handleToolsCall(
           ctaText: args.ctaText ? String(args.ctaText) : undefined,
         };
         const funnelSteps = funnelGen.generateFullFunnel(funnelConfig);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  success: true,
-                  funnelName: funnelConfig.funnelName,
-                  stepCount: funnelSteps.length,
-                  steps: funnelSteps,
-                },
-                null,
-                2,
-              ),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          funnelName: funnelConfig.funnelName,
+          stepCount: funnelSteps.length,
+          steps: funnelSteps,
+        });
       }
 
       case 'craftor_llm_query_local_model': {
@@ -3407,18 +3006,14 @@ export async function handleToolsCall(
 
         const localLlm = new LocalLlmBridge({ provider, model, temperature });
         const llmRes = await localLlm.query(prompt);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, ...llmRes }, null, 2) }],
-        };
+        return jsonResult({ success: true, ...llmRes });
       }
 
       case 'craftor_ast_compress_payload': {
         const compressor = new AstCompressor();
         const inputAst = (args.ast as ElementorNode[]) ?? [];
         const compressionRes = compressor.compress(inputAst);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, ...compressionRes }, null, 2) }],
-        };
+        return jsonResult({ success: true, ...compressionRes });
       }
 
       case 'craftor_elementor_extract_palette': {
@@ -3426,9 +3021,7 @@ export async function handleToolsCall(
         const vibe = (args.vibe as 'modern_dark' | 'clean_light' | 'luxury_gold' | 'vibrant_saas') ?? 'modern_dark';
         const extractor = new PaletteExtractor();
         const palette = extractor.extractPalette(seedColor, vibe);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, vibe, palette }, null, 2) }],
-        };
+        return jsonResult({ success: true, vibe, palette });
       }
 
       case 'craftor_elementor_inject_schema_org': {
@@ -3446,9 +3039,7 @@ export async function handleToolsCall(
           schemaNode = injector.generateFaqSchemaNode(faqs);
         }
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, schemaType, schemaNode }, null, 2) }],
-        };
+        return jsonResult({ success: true, schemaType, schemaNode });
       }
 
       case 'craftor_elementor_generate_faq_section': {
@@ -3466,9 +3057,7 @@ export async function handleToolsCall(
         });
         accordionAst.ast[0]?.elements.push(schemaNode);
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, faqCount: faqs.length, ast: accordionAst.ast }, null, 2) }],
-        };
+        return jsonResult({ success: true, faqCount: faqs.length, ast: accordionAst.ast });
       }
 
       case 'craftor_elementor_generate_hero_variant': {
@@ -3480,9 +3069,7 @@ export async function handleToolsCall(
           items: [{ title: 'CTA', buttonText: args.ctaText ? String(args.ctaText) : 'Explore Now' }],
         });
 
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, variant, ...heroResult }, null, 2) }],
-        };
+        return jsonResult({ success: true, variant, ...heroResult });
       }
 
       // =======================================================================
@@ -3494,27 +3081,21 @@ export async function handleToolsCall(
         collector.recordCall(true, 24);
         collector.recordCall(true, 32);
         const snapshot = collector.getSnapshot();
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, telemetry: snapshot }, null, 2) }],
-        };
+        return jsonResult({ success: true, telemetry: snapshot });
       }
 
       case 'craftor_enterprise_set_whitelabel': {
         const whiteLabel = new WhiteLabelManager(args as Record<string, unknown>);
         const config = whiteLabel.getConfig();
         const phpOverrides = whiteLabel.generatePhpOverrides();
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, config, phpOverrides }, null, 2) }],
-        };
+        return jsonResult({ success: true, config, phpOverrides });
       }
 
       case 'craftor_security_scan_ast': {
         const shield = new SecurityShield();
         const inputAst = (args.ast as ElementorNode[]) ?? [];
         const scanRes = shield.scanAst(inputAst);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, scan: scanRes }, null, 2) }],
-        };
+        return jsonResult({ success: true, scan: scanRes });
       }
 
       case 'craftor_license_check_quota': {
@@ -3522,9 +3103,7 @@ export async function handleToolsCall(
         const enforcer = new QuotaEnforcer(tier);
         const quotaRes = enforcer.checkQuota(1);
         const limits = enforcer.getTierLimits();
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, tier, quota: quotaRes, limits }, null, 2) }],
-        };
+        return jsonResult({ success: true, tier, quota: quotaRes, limits });
       }
 
       // =======================================================================
@@ -3533,41 +3112,31 @@ export async function handleToolsCall(
       case 'craftor_acf_register_field_group': {
         const acf = new AcfBridge();
         const res = acf.registerFieldGroup(args as unknown as AcfFieldGroupConfig);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_cpt_register_post_type': {
         const acf = new AcfBridge();
         const res = acf.registerCpt(args as unknown as CustomPostTypeConfig);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_seo_update_metadata': {
         const seo = new SeoBridge();
         const res = seo.updateMetadata(args as unknown as SeoMetadataPayload);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_multilingual_translate_page': {
         const multi = new MultilingualBridge();
         const res = multi.translatePageAst(args as unknown as PageTranslationRequest);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_elementor_generate_popup': {
         const pop = new PopupGenerator();
         const res = pop.generatePopup(args as unknown as PopupGeneratorConfig);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_elementor_apply_motion_effects': {
@@ -3575,9 +3144,7 @@ export async function handleToolsCall(
         const node = (args.node as ElementorNode) ?? { id: 'node_1', elType: 'widget', settings: {}, elements: [] };
         const effects = (args.effects as unknown as MotionEffectsConfig) ?? {};
         const updatedNode = pop.applyMotionEffects(node, effects);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, node: updatedNode }, null, 2) }],
-        };
+        return jsonResult({ success: true, node: updatedNode });
       }
 
       // =======================================================================
@@ -3587,36 +3154,28 @@ export async function handleToolsCall(
         const engine = new AutoRepairEngine();
         const rawAst = (args.rawAst as unknown[]) ?? [];
         const res = engine.repairAst(rawAst);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_self_healing_triage_error': {
         const triage = new PhpErrorTriage();
         const errorContext = (args.errorContext as PhpErrorContext) ?? { errorCode: 500, errorMessage: 'Unknown', errorFile: 'index.php', errorLine: 1 };
         const res = triage.triageError(errorContext);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_performance_auto_tune': {
         const tuner = new PerformanceAutoTuner();
         const opts = (args.options as PerformanceTuneOptions) ?? { siteUrl: 'https://example.com' };
         const res = tuner.autoTune(opts);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_cdn_purge_cache': {
         const tuner = new PerformanceAutoTuner();
         const req = (args.request as CdnPurgeRequest) ?? { provider: 'cloudflare', purgeAll: true };
         const res = tuner.purgeCdn(req);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       // =======================================================================
@@ -3626,9 +3185,7 @@ export async function handleToolsCall(
         const classifier = new VoiceIntentClassifier();
         const transcript = String(args.transcript || '');
         const intent = classifier.classify(transcript);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: true, intent }, null, 2) }],
-        };
+        return jsonResult({ success: true, intent });
       }
 
       case 'craftor_voice_dispatch_action': {
@@ -3641,24 +3198,13 @@ export async function handleToolsCall(
         sessionMgr.recordTurn(sessionId, 'user', transcript);
         sessionMgr.recordTurn(sessionId, 'assistant', intent.spokenConfirmation);
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(
-                {
-                  success: true,
-                  sessionId,
-                  intent,
-                  spokenResponse: intent.spokenConfirmation,
-                  status: 'executed',
-                },
-                null,
-                2,
-              ),
-            },
-          ],
-        };
+        return jsonResult({
+          success: true,
+          sessionId,
+          intent,
+          spokenResponse: intent.spokenConfirmation,
+          status: 'executed',
+        });
       }
 
       // =======================================================================
@@ -3681,17 +3227,13 @@ export async function handleToolsCall(
           }),
         };
         const res = registry.registerWidget(widgetDef);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_addon_get_catalog': {
         const registry = AddonWidgetRegistry.getInstance();
         const catalog = registry.getCatalog();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(catalog, null, 2) }],
-        };
+        return jsonResult(catalog);
       }
 
       // =======================================================================
@@ -3702,9 +3244,7 @@ export async function handleToolsCall(
         const tasks = (args.tasks as AgentTask[]) || [];
         const baseAst = (args.baseAst as unknown as ElementorNode[]) || [];
         const res = orchestrator.executeSwarm(tasks, baseAst);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_crdt_sync_document': {
@@ -3720,9 +3260,7 @@ export async function handleToolsCall(
           value: 'Synced Title',
         };
         const res = syncEngine.applyMutation(docId, delta);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       // =======================================================================
@@ -3741,17 +3279,13 @@ export async function handleToolsCall(
           originUrl,
         };
         const res = gateway.routeRequest(context, method, params);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
-        };
+        return jsonResult(res);
       }
 
       case 'craftor_edge_get_node_status': {
         const gateway = new EdgeMcpGateway();
         const status = gateway.getNodeStatus();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(status, null, 2) }],
-        };
+        return jsonResult(status);
       }
 
       // =========================================================================
@@ -3761,52 +3295,37 @@ export async function handleToolsCall(
         const imageUrl = String(args.imageUrl || '');
         const altText = String(args.altText || 'Craftor Media Asset');
         const postId = Number(args.postId || 0);
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success: true,
-              imageUrl,
-              altText,
-              postId,
-              attachmentId: Math.floor(Math.random() * 900) + 100,
-              url: imageUrl,
-              message: 'Media asset uploaded and attached to WordPress library',
-            }, null, 2),
-          }],
-        };
+        return jsonResult({
+          success: true,
+          imageUrl,
+          altText,
+          postId,
+          attachmentId: Math.floor(Math.random() * 900) + 100,
+          url: imageUrl,
+          message: 'Media asset uploaded and attached to WordPress library',
+        });
       }
 
       case 'craftor_set_front_page': {
         const pageId = Number(args.pageId || 0);
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success: true,
-              pageId,
-              showOnFront: 'page',
-              message: `Page ID ${pageId} successfully set as the WordPress active homepage`,
-            }, null, 2),
-          }],
-        };
+        return jsonResult({
+          success: true,
+          pageId,
+          showOnFront: 'page',
+          message: `Page ID ${pageId} successfully set as the WordPress active homepage`,
+        });
       }
 
       case 'craftor_create_nav_menu': {
         const name = String(args.name || 'Primary Navigation');
         const location = String(args.location || 'primary');
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success: true,
-              menuId: Math.floor(Math.random() * 50) + 10,
-              name,
-              location,
-              message: `Navigation menu "${name}" created and assigned to "${location}" location`,
-            }, null, 2),
-          }],
-        };
+        return jsonResult({
+          success: true,
+          menuId: Math.floor(Math.random() * 50) + 10,
+          name,
+          location,
+          message: `Navigation menu "${name}" created and assigned to "${location}" location`,
+        });
       }
 
       case 'craftor_add_menu_item': {
@@ -3814,55 +3333,40 @@ export async function handleToolsCall(
         const title = String(args.title || 'Link');
         const pageId = args.pageId ? Number(args.pageId) : undefined;
         const url = args.url ? String(args.url) : undefined;
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success: true,
-              menuId,
-              itemId: Math.floor(Math.random() * 500) + 100,
-              title,
-              pageId,
-              url,
-              message: `Menu item "${title}" added to menu #${menuId}`,
-            }, null, 2),
-          }],
-        };
+        return jsonResult({
+          success: true,
+          menuId,
+          itemId: Math.floor(Math.random() * 500) + 100,
+          title,
+          pageId,
+          url,
+          message: `Menu item "${title}" added to menu #${menuId}`,
+        });
       }
 
 
 
       case 'craftor_seo_audit_page': {
         const pageId = Number(args.pageId || 0);
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success: true,
-              pageId,
-              seoScore: 92,
-              wordCount: 780,
-              hasH1: true,
-              isOptimized: true,
-              issues: [],
-            }, null, 2),
-          }],
-        };
+        return jsonResult({
+          success: true,
+          pageId,
+          seoScore: 92,
+          wordCount: 780,
+          hasH1: true,
+          isOptimized: true,
+          issues: [],
+        });
       }
 
       case 'craftor_list_installed_plugins': {
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              plugins: [
-                { file: 'elementor/elementor.php', name: 'Elementor', version: '3.24.0', isActive: true },
-                { file: 'craftor-core/craftor-core.php', name: 'Craftor Core (EMCP Pro)', version: '1.0.0', isActive: true },
-                { file: 'woocommerce/woocommerce.php', name: 'WooCommerce', version: '9.3.0', isActive: false },
-              ],
-            }, null, 2),
-          }],
-        };
+        return jsonResult({
+          plugins: [
+            { file: 'elementor/elementor.php', name: 'Elementor', version: '3.24.0', isActive: true },
+            { file: 'craftor-core/craftor-core.php', name: 'Craftor Core (EMCP Pro)', version: '1.0.0', isActive: true },
+            { file: 'woocommerce/woocommerce.php', name: 'WooCommerce', version: '9.3.0', isActive: false },
+          ],
+        });
       }
 
       case 'craftor_manage_plugin': {
@@ -3875,50 +3379,34 @@ export async function handleToolsCall(
           if (!verification.authorized) {
             if (!approvalId || !ApprovalEngine.getApproval(approvalId)) {
               const request = ApprovalEngine.createApprovalRequest('craftor_manage_plugin', pluginFile, args);
-              return {
-                content: [{ type: 'text', text: JSON.stringify(request, null, 2) }],
-              };
+              return jsonResult(request);
             }
-            return {
-              content: [{ type: 'text', text: JSON.stringify({
-                requiresHumanApproval: true,
-                approvalId,
-                status: verification.record?.status || 'PENDING',
-                error: verification.reason,
-              }, null, 2) }],
-              isError: true,
-            };
+            return jsonErrorResult({
+              requiresHumanApproval: true,
+              approvalId,
+              status: verification.record?.status || 'PENDING',
+              error: verification.reason,
+            });
           }
         }
 
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success: true,
-              pluginFile,
-              action,
-              message: `Plugin "${pluginFile}" ${action}d successfully`,
-              approvalId: args.approvalId,
-            }, null, 2),
-          }],
-        };
+        return jsonResult({
+          success: true,
+          pluginFile,
+          action,
+          message: `Plugin "${pluginFile}" ${action}d successfully`,
+          approvalId: args.approvalId,
+        });
       }
 
       case 'craftor_get_approval_status': {
         const approvalId = String(args.approvalId || '');
         if (!approvalId) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: '"approvalId" is required' }) }],
-            isError: true,
-          };
+          return jsonError('"approvalId" is required');
         }
         const record = ApprovalEngine.getApproval(approvalId);
         if (!record) {
-          return {
-            content: [{ type: 'text', text: JSON.stringify({ error: `Approval record "${approvalId}" not found` }) }],
-            isError: true,
-          };
+          return jsonError(`Approval record "${approvalId}" not found`);
         }
         const clean = {
           approvalId: record.approvalId,
@@ -3933,9 +3421,7 @@ export async function handleToolsCall(
           deniedBy: record.deniedBy,
           consumedAt: record.consumedAt,
         };
-        return {
-          content: [{ type: 'text', text: JSON.stringify(clean, null, 2) }],
-        };
+        return jsonResult(clean);
       }
 
       default: {
@@ -3960,14 +3446,6 @@ export async function handleToolsCall(
     }
     const message = err instanceof Error ? err.message : String(err);
     logger.error(`Error executing tool ${toolName}: ${message}`, err);
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({ error: message, tool: toolName }),
-        },
-      ],
-      isError: true,
-    };
+    return jsonErrorResult({ error: message, tool: toolName });
   }
 }

@@ -3,10 +3,11 @@
  * Validates package.json metadata and creates distribution manifests for all public packages.
  */
 
-const fs = require('fs');
 const path = require('path');
 
-const ROOT_DIR = path.resolve(__dirname, '..');
+const { ROOT_DIR, ensureDir, requireJsonFile, writeJsonFile } = require('./lib/fs-utils');
+const { printBanner, printFooter } = require('./lib/report');
+
 const DIST_NPM_DIR = path.join(ROOT_DIR, 'dist-npm');
 
 const NPM_PACKAGES = [
@@ -19,16 +20,8 @@ const NPM_PACKAGES = [
   'packages/shared-types',
 ];
 
-function ensureDir(dir) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-}
-
 function packageNpmBundles() {
-  console.log('================================================================');
-  console.log('       CRAFTOR NPM DISTRIBUTION BUNDLE PACKAGER                ');
-  console.log('================================================================\n');
+  printBanner('CRAFTOR NPM DISTRIBUTION BUNDLE PACKAGER');
 
   ensureDir(DIST_NPM_DIR);
 
@@ -36,10 +29,7 @@ function packageNpmBundles() {
 
   for (const pkgRel of NPM_PACKAGES) {
     const pkgPath = path.join(ROOT_DIR, pkgRel, 'package.json');
-    if (!fs.existsSync(pkgPath)) {
-      throw new Error(`package.json missing for package: ${pkgRel}`);
-    }
-    const pkgJson = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    const pkgJson = requireJsonFile(pkgPath, `package.json missing for package: ${pkgRel}`);
 
     if (!pkgJson.name || !pkgJson.version) {
       throw new Error(`Invalid package.json in ${pkgRel}: missing name or version`);
@@ -56,12 +46,13 @@ function packageNpmBundles() {
   }
 
   const manifestFilePath = path.join(DIST_NPM_DIR, 'npm-release-manifest.json');
-  fs.writeFileSync(manifestFilePath, JSON.stringify({ packages: manifest, releaseDate: new Date().toISOString() }, null, 2), 'utf-8');
+  writeJsonFile(manifestFilePath, {
+    packages: manifest,
+    releaseDate: new Date().toISOString(),
+  });
 
   console.log(`\n[NPM] Manifest generated -> ${path.relative(ROOT_DIR, manifestFilePath)}`);
-  console.log('\n================================================================');
-  console.log('NPM DISTRIBUTION BUNDLES VALIDATED SUCCESSFULLY ✅');
-  console.log('================================================================\n');
+  printFooter('NPM DISTRIBUTION BUNDLES VALIDATED SUCCESSFULLY ✅');
 }
 
 if (require.main === module) {
